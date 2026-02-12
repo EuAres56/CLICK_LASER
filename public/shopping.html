@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo | Click Laser</title>
+    <link rel="stylesheet" href="./style/main.css">
+    <link rel="stylesheet" href="./style/shopping.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CLICK<span>LASER</span></div>
+        <nav>
+            <a href="/" style="text-decoration: none; color: var(--roxo-dark); font-weight: 600;">Voltar ao
+                Início</a>
+        </nav>
+    </header>
+
+    <div class="main">
+
+        <div class="container">
+            <div class="catalog-header">
+                <h2>Escolha sua base</h2>
+                <p>Selecione o produto que deseja personalizar com nossa tecnologia laser.</p>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+            </div>
+        </div>
+
+        <div class="btn-cart-trigger" onclick="toggleCart()">
+            <span class="cart-count" id="cartCount">0</span>
+            🛒
+        </div>
+
+        <div class="cart-overlay" id="cartOverlay">
+            <div class="cart-header">
+                <h3>Seu Pedido</h3>
+                <span class="close-cart" onclick="toggleCart()">✕</span>
+            </div>
+            <div class="cart-items" id="cartItems">
+                <p style="text-align: center; color: #999; margin-top: 50px;">Seu carrinho está vazio.</p>
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cartTotal">R$ 0,00</span>
+                </div>
+                <button class="cta-button" onclick="alert('Indo para o Customizador...')">
+                    PERSONALIZAR AGORA
+                </button>
+            </div>
+
+            <div id="loader-wrapper">
+                <div class="text-wrapper" id="mainContainer">
+                    <div class="layer-outline" id="outline">CLICK LASER</div>
+                    <div class="layer-fill" id="fill">CLICK LASER</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <Script src="./script/main.js"></Script>
+    <Script src="./script/main_ui.js"></Script>
+    <script src="./script/shopping_ui.js"></script>
+</body>
+
+</html>

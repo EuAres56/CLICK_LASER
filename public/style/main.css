@@ -1,0 +1,479 @@
+ :root {
+     --roxo-dark: #560e52;
+     --roxo-light: #7b1a75;
+     --neon-yellow: #ffb800;
+     /* Tom vibrante da logo */
+     --bg-light: #ffffff;
+     --text-dark: #2d2d2d;
+     --gray-soft: #f4f4f9;
+ }
+
+ * {
+     margin: 0;
+     padding: 0;
+     box-sizing: border-box;
+     font-family: 'Poppins', sans-serif;
+ }
+
+ body {
+     background-color: var(--bg-light);
+     color: var(--text-dark);
+     overflow-x: hidden;
+ }
+
+ /* --- Header --- */
+ header {
+     top: 0;
+     padding: 20px 5%;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     background: rgba(255, 255, 255, 0.9);
+     backdrop-filter: blur(10px);
+     position: fixed;
+     width: 100%;
+     z-index: 1000;
+     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+ }
+
+ .main {
+     margin-top: 80px;
+     height: 100vh;
+     width: 100%;
+     display: flex;
+
+     flex-direction: column;
+ }
+
+ .logo {
+     font-weight: 800;
+     font-size: 1.5rem;
+     color: var(--roxo-dark);
+     display: flex;
+     align-items: center;
+     gap: 5px;
+ }
+
+ .logo span {
+     color: var(--neon-yellow);
+ }
+
+ /* --- Hero Section --- */
+ .hero {
+     height: 100vh;
+     display: flex;
+     align-items: center;
+     padding: 0 8%;
+     background: radial-gradient(circle at top right, #fff5e6, #ffffff);
+     padding-top: 80px;
+ }
+
+ .hero-content {
+     flex: 1;
+     max-width: 600px;
+ }
+
+ .hero-content h1 {
+     font-size: 3.5rem;
+     line-height: 1.1;
+     color: var(--roxo-dark);
+     margin-bottom: 20px;
+ }
+
+ .hero-content p {
+     font-size: 1.1rem;
+     margin-bottom: 30px;
+     color: #555;
+ }
+
+ .btn {
+     display: flex;
+     gap: 10px;
+     align-items: center;
+     justify-content: center;
+     border-radius: 50px;
+     padding: 18px 35px;
+     background-color: var(--roxo-dark);
+     color: white;
+     text-decoration: none;
+     font-weight: 600;
+     font-size: 1.1rem;
+     transition: all 0.3s ease;
+     box-shadow: 0 10px 20px rgba(86, 14, 82, 0.2);
+     border: 2px solid transparent;
+     text-wrap: nowrap;
+
+ }
+
+ .cta-button {
+     display: inline-block;
+     padding: 18px 35px;
+     background-color: var(--roxo-dark);
+     color: white;
+     text-decoration: none;
+     border-radius: 50px;
+     font-weight: 600;
+     font-size: 1.1rem;
+     transition: all 0.3s ease;
+     box-shadow: 0 10px 20px rgba(86, 14, 82, 0.2);
+     border: 2px solid transparent;
+ }
+
+ .cta-button:hover {
+     background-color: var(--neon-yellow);
+     color: var(--roxo-dark);
+     transform: translateY(-3px);
+     box-shadow: 0 15px 30px rgba(255, 184, 0, 0.3);
+ }
+
+ .hero-image {
+     flex: 1;
+     display: flex;
+     justify-content: center;
+     position: relative;
+ }
+
+ /* Representação visual tech do copo/laser */
+ .product-mockup {
+     width: 300px;
+     height: 450px;
+     background: #eee;
+     border-radius: 20px;
+     position: relative;
+     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+     overflow: hidden;
+     border: 8px solid white;
+ }
+
+ .laser-beam {
+     position: absolute;
+     top: 0;
+     width: 100%;
+     height: 2px;
+     background: var(--neon-yellow);
+     box-shadow: 0 0 15px var(--neon-yellow);
+     animation: scan 3s infinite ease-in-out;
+ }
+
+ @keyframes scan {
+
+     0%,
+     100% {
+         top: 10%;
+     }
+
+     50% {
+         top: 90%;
+     }
+ }
+
+ /* --- Features Section --- */
+ .features {
+     padding: 100px 8%;
+     background-color: var(--gray-soft);
+     text-align: center;
+ }
+
+ .section-title {
+     color: var(--roxo-dark);
+     font-size: 2.5rem;
+     margin-bottom: 50px;
+ }
+
+ .grid-features {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+     gap: 30px;
+ }
+
+ .feature-card {
+     background: white;
+     padding: 40px;
+     border-radius: 20px;
+     transition: 0.3s;
+     border-bottom: 4px solid transparent;
+ }
+
+ .feature-card:hover {
+     transform: translateY(-10px);
+     border-color: var(--neon-yellow);
+ }
+
+ .feature-card i {
+     font-size: 2.5rem;
+     color: var(--roxo-dark);
+     margin-bottom: 20px;
+     display: block;
+ }
+
+ /* --- Personalizer CTA Section --- */
+ .builder-section {
+     padding: 100px 8%;
+     display: flex;
+     align-items: center;
+     gap: 50px;
+     background: white;
+ }
+
+ .builder-text {
+     flex: 1;
+ }
+
+ .builder-visual {
+     flex: 1;
+     background: var(--roxo-dark);
+     height: 400px;
+     border-radius: 30px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     color: white;
+     text-align: center;
+     padding: 20px;
+     position: relative;
+ }
+
+ .builder-visual::after {
+     content: "INTERFACE DO SISTEMA";
+     font-size: 0.8rem;
+     letter-spacing: 3px;
+     opacity: 0.5;
+ }
+
+ /* --- Footer --- */
+ footer {
+     background: var(--roxo-dark);
+     color: white;
+     padding: 50px 8% 20px;
+     text-align: center;
+ }
+
+ .footer-logo {
+     font-size: 1.8rem;
+     margin-bottom: 20px;
+ }
+
+ @media (max-width: 768px) {
+     .hero {
+         flex-direction: column;
+         text-align: center;
+         height: auto;
+         padding-bottom: 50px;
+     }
+
+     .hero-content h1 {
+         font-size: 2.5rem;
+     }
+
+     .builder-section {
+         flex-direction: column;
+     }
+ }
+
+
+
+
+
+
+
+
+ /* PAGE LOADER */
+ #loader-wrapper {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100vw;
+     /* 100% da largura da janela */
+     height: 100vh;
+     /* 100% da altura da janela */
+     background: #ffffff;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     z-index: 9999;
+     /* Fica acima de qualquer outro elemento do site */
+     overflow: hidden;
+     /* Evita barras de rolagem durante a animação */
+ }
+
+ /* Opcional: Garante que o corpo do site não role enquanto o loader está ativo */
+ body.loader-active {
+     overflow: hidden;
+ }
+
+ #loader-wrapper.fade-out {
+     opacity: 0;
+     pointer-events: none;
+     transition: opacity 0.8s ease-out;
+ }
+
+ .text-wrapper {
+     position: relative;
+     font-family: 'Poppins', sans-serif;
+     font-size: 80px;
+     font-weight: 900;
+     text-transform: uppercase;
+     letter-spacing: 5px;
+     white-space: nowrap;
+ }
+
+ /* Camada 1: Contorno (Aparece de cima para baixo) */
+ .layer-outline {
+     color: transparent;
+     -webkit-text-stroke: 2px #560e52;
+     clip-path: inset(100% 0 0 0);
+     /* Escondido embaixo */
+ }
+
+ /* Camada 2: Preenchimento (Aparece da esquerda para a direita) */
+ .layer-fill {
+     position: absolute;
+     top: 0;
+     left: 0;
+     color: #560e52;
+     clip-path: inset(0 100% 0 0);
+     /* Escondido na direita */
+ }
+
+ .spark {
+     position: absolute;
+     width: 3px;
+     height: 3px;
+     background: #ffcc00;
+     border-radius: 50%;
+     box-shadow: 0 0 10px #ffaa00;
+     pointer-events: none;
+     z-index: 100;
+ }
+
+ @keyframes burn {
+     to {
+         transform: translate(var(--dx), var(--dy)) scale(0);
+         opacity: 0;
+     }
+ }
+
+
+ /* ============================================================== */
+ /* Loader */
+ /* ============================================================== */
+ /* ============================================================== */
+ .page_loader {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100vw;
+     height: 100vh;
+     background: var(--roxo-dark);
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     z-index: 10000;
+     /* Acima de tudo (inclusive modais) */
+     transition: all 0.5s ease-in-out;
+ }
+
+ /* Quando o loader sumir */
+ .page_loader.hidden {
+     opacity: 0;
+     visibility: hidden;
+ }
+
+ .loader_content {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 15px;
+ }
+
+ .loader_content p {
+     font-size: 0.9rem;
+     letter-spacing: 1px;
+     color: var(--neon-yellow);
+     animation: pulse 1.5s infinite ease-in-out;
+ }
+
+ .micro_loader {
+     display: flex;
+     width: 100%;
+     height: 100%;
+     min-height: 30px;
+     min-width: 30px;
+     justify-content: center;
+     align-items: center;
+     margin-left: 6px;
+
+     .spinner {
+         width: 25px !important;
+         height: 25px !important;
+     }
+ }
+
+ /* O Spinner */
+ .spinner {
+     width: 45px;
+     opacity: 1;
+     aspect-ratio: 1;
+     border: 3px solid var(--neon-yellow);
+     border-top: 3px solid var(--neon-yellow);
+     border-radius: 50%;
+     animation: spin 1s linear infinite;
+ }
+
+ .spinner.hidden {
+     opacity: 0;
+     animation: none;
+ }
+
+ @keyframes spin {
+     to {
+         transform: rotate(360deg);
+     }
+ }
+
+ @keyframes pulse {
+
+     0%,
+     100% {
+         opacity: 0.5;
+     }
+
+     50% {
+         opacity: 1;
+     }
+ }
+
+ /* --- AJUSTES PARA RESPONSIVIDADE --- */
+
+ /* Tablets e Telas Médias (até 992px) */
+ @media (max-width: 992px) {
+     .text-wrapper {
+         font-size: 8vw;
+         /* Fonte cresce conforme a largura da tela */
+         letter-spacing: 3px;
+     }
+ }
+
+ /* Smartphones (até 600px) */
+ @media (max-width: 600px) {
+     .text-wrapper {
+         font-size: 10vw;
+         /* Ajuste para ocupar bem a largura do celular */
+         letter-spacing: 2px;
+         -webkit-text-stroke: 1.5px #560e52;
+         /* Borda um pouco mais fina para não borrar */
+     }
+
+     /* Opcional: Diminuir o tamanho das faíscas no mobile para não poluir a tela */
+     .spark {
+         width: 2px;
+         height: 2px;
+     }
+ }
+
+ /* Telas muito pequenas (iPhone SE / Relógios) */
+ @media (max-width: 320px) {
+     .text-wrapper {
+         font-size: 12vw;
+     }
+ }

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLICK LASER</title>
+
+    <link rel="stylesheet" href="./style/login.css">
+</head>
+
+<body>
+    <div class="bg_img_main">
+        <img class="logo_img_main" src="/assets/img/Logo_Zero1.png" alt="">
+    </div>
+    <section class="page_main">
+        <input type="checkbox" id="toggle_log_cad" class="toggle_checkbox_pages">
+        <label for="toggle_log_cad" class="toggle_label_pages">
+            <span class="toggle_page_left">ACESSO</span>
+            <span class="toggle_page_right">CADASTRO</span>
+        </label>
+        <div class="page_container">
+            <form id="page_access" class="page">
+                <h2>
+                    CONECTE-SE
+                </h2>
+                <div class="box_item_log_cad">
+                    <label for="log_email">Email:</label>
+                    <input id="log_email" type="email" placeholder=" ">
+                </div>
+                <div class="box_item_log_cad">
+                    <label for="log_pass">Senha:</label>
+                    <input id="log_pass" type="password" placeholder=" ">
+                </div>
+                <label class="tech-switch">
+                    <span class="label-text">Lembrar</span>
+                    <input type="checkbox" name="remember">
+                    <span class="slider"></span>
+                </label>
+                <button type="submit" id="btn_login">ACESSAR</button>
+                <a href="">Redefinir senha</a>
+                <label style="cursor: pointer;" for="toggle_log_cad">Não tem conta? <strong>Crie uma</strong></label>
+            </form>
+
+
+            <form id="page_register" class="page">
+                <h2>
+                    REGISTRE-SE
+                </h2>
+                <div class="box_item_log_cad">
+                    <label for="cad_name">Nome:</label>
+                    <input id="cad_name" type="text" placeholder=" ">
+                </div>
+                <div class="box_item_log_cad">
+                    <label for="cad_email">Email:</label>
+                    <input id="cad_email" type="email" placeholder=" ">
+                </div>
+                <div class="box_item_log_cad">
+                    <label for="cad_pass">Senha:</label>
+                    <input id="cad_pass" type="password" placeholder=" ">
+                </div>
+
+                <div class="horizontal_box">
+                    <label for="toggle_log_cad">Já tem uma conta?
+                        <strong style="cursor: pointer;">Conecte-se</strong>
+                    </label>
+
+                </div>
+
+                <button type="submit" id="btn_register">CADASTRAR</button>
+            </form>
+        </div>
+    </section>
+
+    <div id="page_loader" class="page_loader hidden">
+        <div class="loader_content">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+</body>
+
+<script src="./script/login_main.js"></script>
+
+</html>

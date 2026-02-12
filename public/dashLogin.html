@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Laser | Staff Access</title>
+    <link rel="stylesheet" href="./style/main.css">
+    <link rel="stylesheet" href="./style/dashLogin.css">
+</head>
+
+<body>
+    <div class="bg_overlay"></div>
+
+    <section class="login_box">
+        <div class="brand">
+            <h1>CLICK LASER</h1>
+            <span>PAINEL ADMINISTRATIVO</span>
+        </div>
+
+        <div class="form_container">
+            <form id="staff_login" class="auth_form active">
+                <h3>Acesso Colaborador</h3>
+                <div class="input_group">
+                    <label>E-mail Corporativo</label>
+                    <input type="email" id="user_email" required>
+                </div>
+                <div class="input_group">
+                    <label>Senha</label>
+                    <input type="password" id="user_pass" required>
+                </div>
+                <button type="submit" class="btn_main">ENTRAR NO PAINEL</button>
+            </form>
+
+            <form id="staff_activate" class="auth_form">
+                <h3>Definir Senha</h3>
+                <p class="subtitle">Atualize sua senha para acessar o painel.</p>
+
+                <div class="input_group">
+                    <label>Nova Senha</label>
+                    <input type="password" id="act_new_pass" required>
+                </div>
+                <div class="input_group">
+                    <label>Repetir Senha</label>
+                    <input type="password" id="act_new_pass_confirm" required>
+                </div>
+
+                <button type="submit" id="btn_finalize" class="btn_main">FINALIZAR E ENTRAR</button>
+
+                <p class="toggle_msg"><strong onclick="switchForm('login')">Voltar para login</strong></p>
+            </form>
+        </div>
+    </section>
+
+    <div id="page_loader" class="page_loader hidden">
+        <div class="loader_content">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+</body>
+
+<script src="./script/dashLogin_main.js"></script>
+
+</html>

@@ -1,0 +1,416 @@
+/* --- CONFIGURAÇÕES GERAIS E VARIÁVEIS --- */
+:root {
+    --bg-dark: #121212;
+    --panel-bg: #1e1e1e;
+    --accent: #007bff;
+    --danger: #d9534f;
+    --text: #e0e0e0;
+    --success: #25d366;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    /* Evita que a página inteira balance no mobile */
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+
+/* --- SEÇÃO DE PREVIEW (A GIZADA NO TOPO NO MOBILE) --- */
+#preview-section {
+    flex: 0 0 55%;
+    /* Ocupa 55% da altura no mobile */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2a2a;
+    position: relative;
+    overflow: hidden;
+
+    /* CRÍTICO: Bloqueia o scroll da página APENAS aqui para o arrasto funcionar */
+    touch-action: none;
+}
+
+#preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Camadas de Imagem da Garrafa */
+#product-base {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 1;
+}
+
+#color-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+/* Itens Arrastáveis */
+.draggable-item {
+    position: absolute;
+    /* Relativo ao #safe-zone */
+    top: 0;
+    left: 0;
+    cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+
+.active-element {
+    z-index: 11;
+    border: 1px dashed var(--accent);
+}
+
+/* 2. O Vetor - O metal agora é "recortado" pela imagem */
+#vector-img {
+    width: 100%;
+    height: 100%;
+    /* O METAL: Agora ele é apenas o fundo de um container */
+    background: linear-gradient(135deg, #a8a8a8, #f5f5f5, #a8a8a8) !important;
+
+    /* O RECORTE: Usamos a máscara SVG que definimos no HTML */
+    -webkit-mask: url(#vector-mask);
+    mask: url(#vector-mask);
+
+    display: block;
+    pointer-events: none;
+}
+
+/* --- BARRA LATERAL / PAINEL DE CONTROLES --- */
+#controls-sidebar {
+    background: var(--panel-bg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    /* ATIVA O SCROLL NO MOBILE */
+    overflow-y: auto !important;
+    touch-action: pan-y;
+    /* Permite deslizar verticalmente para ver os botões */
+    -webkit-overflow-scrolling: touch;
+
+    border-top: 1px solid #333;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+/* --- COMPONENTES DA UI --- */
+.tab-menu {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: #333;
+    border: none;
+    color: #888;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 15px;
+    padding-bottom: 30px;
+    /* Garante que o último botão não fique cortado */
+}
+
+.tab-content.active {
+    display: flex;
+}
+
+.panel-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-group label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #666;
+    font-weight: bold;
+}
+
+input[type="text"],
+select {
+    width: 100%;
+    padding: 12px;
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 8px;
+    font-size: 1rem;
+    user-select: text;
+    /* Permite que o usuário clique e digite */
+    touch-action: auto;
+}
+
+.tool-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-group {
+    display: flex;
+    background: #2d2d2d;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #444;
+}
+
+.btn-group button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.btn-group button:active {
+    background: var(--accent);
+}
+
+/* Camadas */
+.layers-container {
+    background: #111;
+    border-radius: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.layer-item {
+    padding: 15px;
+    border-bottom: 1px solid #222;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.layer-item.active {
+    background: #252525;
+    border-left: 4px solid var(--accent);
+}
+
+.btn-toggle {
+    background: #333;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: white;
+    font-size: 0.7rem;
+}
+
+/* Paleta de Cores */
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 10px;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.color-dot {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.color-dot.selected {
+    border-color: white;
+    transform: scale(1.1);
+}
+
+/* --- BOTÕES DE AÇÃO --- */
+.action-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.btn-gen {
+    background: #6f42c1;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.btn-down {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.btn-wpp {
+    background: var(--success);
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* --- Efeito de Gravação a Laser (Metal) --- */
+
+/* Textura comum para ambos */
+.metal-texture {
+    background-image: url('../assets/textures/stainless-steel.jpg');
+    /* Caminho da sua textura */
+    background-size: cover;
+    background-position: center;
+}
+
+
+/* Aplicando ao Texto */
+#target-text span {
+    -webkit-background-clip: text;
+    /* Faz o fundo aparecer só na letra */
+    background-clip: text;
+    color: transparent !important;
+    /* Esconde a cor original do texto */
+    /* filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.5)); */
+    /* Sombra interna para profundidade */
+    display: inline-block;
+}
+
+#target-vector {
+    background: transparent !important;
+    /* Nada de fundo aqui! */
+}
+
+/* 3. O Texto - Usando o método de clip para fontes */
+#text-display {
+    /* 1. O Metal: Usamos o mesmo gradiente do vetor */
+    background: linear-gradient(135deg,
+            #635f5f 0%,
+            #c4c4c4 50%,
+            #635f5f 100%);
+    filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* 1. Limpa a Safe Zone - Ela deve ser apenas um guia transparente */
+#safe-zone {
+    position: absolute;
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+    left: 50%;
+    transform: translateX(-50%);
+    background: transparent !important;
+    /* Mantenha transparente */
+    z-index: 10;
+}
+
+#vector-canvas {
+    width: 100%;
+    /* Faz o canvas respeitar o tamanho do container de arraste */
+    height: auto;
+    display: block;
+    /* Um leve brilho externo para simular o reflexo no metal */
+    filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.2));
+}
+
+#safe-zone::after {
+    content: "ÁREA DE GRAVAÇÃO";
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.4);
+    position: absolute;
+    top: -20px;
+    text-wrap: nowrap;
+}
+
+
+/* --- LAYOUT DESKTOP (Telas Grandes) --- */
+@media (min-width: 1024px) {
+    #app {
+        flex-direction: row;
+    }
+
+    #preview-section {
+        height: 100vh;
+        flex: 1;
+    }
+
+    #controls-sidebar {
+        width: 300px;
+        height: 100vh;
+        border-top: none;
+        border-left: 1px solid #333;
+        border-radius: 0;
+    }
+
+    /* No desktop mostramos as abas abertas ou mantemos o menu se preferir */
+    .tab-menu {
+        display: none;
+    }
+
+    .tab-content {
+        display: flex !important;
+    }
+}

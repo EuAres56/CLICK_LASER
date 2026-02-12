@@ -1,0 +1,11 @@
+name = "click_laser"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+SUPABASE_URL = "https://fxjatpslmtbgglexiikz.supabase.co"
+SUPABASE_KEY = "sb_publishable_aVRSl_lzuKwNDOGJsBcSew_Umu-dhAe"
+
+[assets]
+directory = "public"
+binding = "ASSETS"

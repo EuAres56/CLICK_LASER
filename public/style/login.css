@@ -1,0 +1,267 @@
+:root {
+    --primary: #560e52;
+    --primary-light: #8b1c85;
+    --bg-dark: #0f172a;
+    --text-white: #ffffff;
+    --transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Background & Logo */
+.bg_img_main {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.1;
+}
+
+.logo_img_main {
+    width: 300px;
+    filter: grayscale(1) brightness(2);
+}
+
+/* Perspective para o efeito 3D */
+.page_main {
+    width: 400px;
+    perspective: 1500px;
+}
+
+/* Toggle Switch no Topo */
+.toggle_label_pages {
+    width: 100%;
+    background: #1e293b;
+    height: 50px;
+    display: flex;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 20px;
+    border: 1px solid #334155;
+}
+
+.toggle_page_left,
+.toggle_page_right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    font-weight: 700;
+    color: #94a3b8;
+    transition: 0.3s;
+}
+
+.toggle_label_pages::before {
+    content: '';
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    background: var(--primary);
+    border-radius: 11px;
+    transition: var(--transition);
+    left: 0;
+}
+
+/* Lógica do Toggle */
+.toggle_checkbox_pages {
+    display: none;
+}
+
+.toggle_checkbox_pages:checked+.toggle_label_pages::before {
+    left: 50%;
+}
+
+.toggle_checkbox_pages:checked+.toggle_label_pages .toggle_page_right {
+    color: white;
+}
+
+.toggle_checkbox_pages:not(:checked)+.toggle_label_pages .toggle_page_left {
+    color: white;
+}
+
+/* Container Giratório */
+.page_container {
+    width: 100%;
+    height: 500px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: var(--transition);
+}
+
+.toggle_checkbox_pages:checked~.page_container {
+    transform: rotateY(180deg);
+}
+
+.page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #1e293b;
+    padding: 40px;
+    border-radius: 20px;
+    backface-visibility: hidden;
+    /* Oculta a face traseira durante a rotação */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid #334155;
+}
+
+#page_register {
+    transform: rotateY(180deg);
+    /* Começa de costas */
+}
+
+h2 {
+    color: white;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+/* Inputs Estilizados */
+.box_item_log_cad {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.box_item_log_cad label {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.box_item_log_cad input {
+    background: #0f172a;
+    border: 1px solid #334155;
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    outline: none;
+    transition: 0.3s;
+}
+
+.box_item_log_cad input:focus {
+    border-color: var(--primary);
+}
+
+/* Tech Switch (Lembrar) */
+.tech-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.tech-switch input {
+    display: none;
+}
+
+.slider {
+    width: 40px;
+    height: 20px;
+    background: #0f172a;
+    border-radius: 20px;
+    position: relative;
+    border: 1px solid #334155;
+}
+
+.slider::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #94a3b8;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: 0.3s;
+}
+
+.tech-switch input:checked+.slider {
+    background: var(--primary);
+}
+
+.tech-switch input:checked+.slider::before {
+    transform: translateX(20px);
+    background: white;
+}
+
+/* Botões */
+button {
+    background: var(--primary);
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+}
+
+a,
+label strong {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+/* Loader */
+.page_loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.hidden {
+    display: none;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #334155;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

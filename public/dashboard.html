@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Click Laser | Dashboard</title>
+    <link rel="stylesheet" href="./style/main.css">
+    <link rel="stylesheet" href="./style/dashboard.css">
+</head>
+
+<body>
+
+
+    <aside>
+        <div class="brand">CLICK LASER</div>
+        <ul class="nav-menu">
+            <li class="btn nav-item active" onclick="tab(this, 's-pedidos')">Pedidos de Gravação</li>
+            <li class="btn nav-item" onclick="tab(this, 's-vendas')">Histórico de Vendas</li>
+            <li class="btn nav-item" onclick="tab(this, 's-criador')">Desenhos e Fontes</li>
+            <li class="btn nav-item" onclick="tab(this, 's-estoque')">Gestão de Estoque</li>
+            <li class="btn nav-item" onclick="tab(this, 's-equipe')">Equipe e Permissões</li>
+            <li class="btn nav-item" onclick="tab(this, 's-config')">Configurações</li>
+        </ul>
+    </aside>
+
+    <main>
+        <section id="s-pedidos" class="content-section active">
+            <h2>Fila de Gravação</h2>
+            <div class="card">
+                <table class="table-res">
+                    <thead>
+                        <tr>
+                            <th>Pedido / Origem</th>
+                            <th>Itens</th>
+                            <th>Personalização (Texto/Imagem)</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>#OS-1024</strong><br><span class="badge bg-orange">Anúncio Instagram</span></td>
+                            <td>1x Garrafa Térmica (Azul)<br>1x Copo Stanley (Branco)</td>
+                            <td>
+                                <strong>Item 1:</strong> "Felipe 2026" (Fonte: Poppins)<br>
+                                <strong>Item 2:</strong> [Imagem: logo_empresa.svg]
+                            </td>
+                            <td><button class="btn btn-primary">Gravar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="s-criador" class="content-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Biblioteca de Ativos</h2>
+                <button class="btn btn-primary">+ Novo Desenho/Fonte</button>
+            </div>
+            <div class="grid-assets">
+                <div class="asset-item">
+                    <div class="asset-preview">SVG</div>
+                    <p>Logo Minimalista</p>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-preview">SVG</div>
+                    <p>Brasão Família</p>
+                </div>
+                <div class="asset-item">
+                    <div class="asset-preview" style="font-family: 'serif'">Abc</div>
+                    <p>Fonte Serif</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="s-estoque" class="content-section">
+            <h2>Controle de Estoque</h2>
+            <div class="card">
+                <table class="table-res">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Cor</th>
+                            <th>Saldo Atual</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Copo Stanley 473ml</td>
+                            <td>Preto Matte</td>
+                            <td><strong>42 un</strong></td>
+                            <td><button class="btn btn-outline">+ Entrada</button> <button class="btn btn-outline">-
+                                    Saída</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="s-equipe" class="content-section">
+            <h2>Gerenciamento de Funcionários</h2>
+            <div class="card">
+                <table class="table-res">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>Nível de Acesso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Carlos Alberto</td>
+                            <td>Operador Laser</td>
+                            <td><span class="badge bg-blue">Produção Apenas</span></td>
+                            <td><button class="btn btn-outline">Editar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="s-config" class="content-section">
+            <h2>Configurações do Sistema</h2>
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div>
+                        <h4>Aparência do Painel</h4>
+                        <p class="text-muted">Alternar entre modo claro e escuro</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="toggleTheme()">Trocar Tema</button>
+                </div>
+                <div style="border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                    <button class="btn" style="background: var(--danger); color: white;" onclick="logout()">Encerrar
+                        Sessão
+                        (Logout)</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./script/dashboard_main.js"></script>
+
+</body>
+
+</html>

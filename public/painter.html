@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Laser Studio</title>
+    <link rel="stylesheet" href="style/painter.css">
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</head>
+
+<body>
+
+    <div id="app">
+        <section id="preview-section">
+            <div id="preview-container">
+                <img src="assets/items/garrafa_600ml.png" id="product-base">
+                <div id="color-overlay"></div>
+
+                <div id="safe-zone">
+                    <div id="target-vector" class="draggable-item">
+                        <canvas id="vector-canvas"></canvas>
+                    </div>
+
+                    <div id="target-text" class="draggable-item">
+                        <span id="text-display">NOME</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside id="controls-sidebar">
+            <div class="tab-menu">
+                <button class="tab-btn active" onclick="openTab('tab-produto')">Produto</button>
+                <button class="tab-btn" onclick="openTab('tab-design')">Design</button>
+            </div>
+
+            <div id="tab-produto" class="tab-content active">
+                <div class="panel-group">
+                    <label>Produto e Cor</label>
+                    <select id="productSelect" onchange="changeProduct(this.value)">
+                        <option value="assets/items/garrafa_600ml.png">Garrafa 600ml</option>
+                    </select>
+                    <div id="color-palette" class="color-grid"></div>
+                </div>
+            </div>
+
+            <div id="tab-design" class="tab-content">
+                <div class="panel-group">
+                    <label>Gerenciar Camadas</label>
+                    <div id="layer-list" class="layers-container"></div>
+                </div>
+
+                <div id="controls-vector" class="contextual-controls" style="display:none;">
+                    <label>Configurações do Logo</label>
+                    <select onchange="changeVector(this.value)">
+                        <option value="assets/vetors/stitch.png">Stitch</option>
+                        <option value="assets/vetors/cachorro.png">Cachorro</option>
+                    </select>
+                    <div class="tool-grid">
+                        <button onclick="rotateStep(-1)">↺ Girar</button>
+                        <button onclick="rotateStep(1)">↻ Girar</button>
+                        <button onclick="zoomStep(-0.1)">- Tam</button>
+                        <button onclick="zoomStep(0.1)">+ Tam</button>
+                    </div>
+                </div>
+
+                <div id="controls-text" class="contextual-controls" style="display:none;">
+                    <label>Configurações de Texto</label>
+                    <input type="text" placeholder="Escreva aqui..." oninput="updateText(this.value)">
+                    <select onchange="updateFont(this.value)">
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                    <div class="tool-grid">
+                        <button onclick="rotateStep(-1)">↺ Girar</button>
+                        <button onclick="rotateStep(1)">↻ Girar</button>
+                        <button onclick="zoomStep(-0.1)">- Tam</button>
+                        <button onclick="zoomStep(0.1)">+ Tam</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button onclick="exportArt(false)" class="btn-gen">Gerar Arte (PNG)</button>
+                <button onclick="exportArt(true)" class="btn-down">Download Local</button>
+                <a href="https://wa.me/SEUNUMERO" class="btn-wpp">Atendimento WhatsApp</a>
+            </div>
+        </aside>
+    </div>
+
+    <script src="./script/painter_main.js"></script>
+    <script src="./script/painter_ui.js"></script>
+
+</body>
+
+</html>
