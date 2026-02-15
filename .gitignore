@@ -1,0 +1,32 @@
+# --- SEGURANÇA (Obrigatório) ---
+# Jamais suba arquivos de variáveis de ambiente
+.dev.vars
+.env
+.env.*
+
+# --- CLOUDFLARE WRANGLER ---
+# Pastas geradas pelo Wrangler durante o desenvolvimento local
+.wrangler/
+# Logs de erro e de sistema do Wrangler
+wrangler-debug.log
+.dev.vars.bak
+
+# --- DEPENDÊNCIAS (NODE.JS) ---
+# Mesmo que você use poucos pacotes, o Node cria essas pastas
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# --- SISTEMA OPERACIONAL ---
+# Arquivos inúteis que o Windows e Mac criam nas pastas
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- LOGS E CACHE ---
+# Logs de erro do Node
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache

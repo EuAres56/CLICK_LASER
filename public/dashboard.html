@@ -4,93 +4,561 @@
 <head>
     <meta charset="UTF-8">
     <title>Click Laser | Dashboard</title>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./style/rootMain.css">
     <link rel="stylesheet" href="./style/main.css">
     <link rel="stylesheet" href="./style/dashboard.css">
+
+    <!-- JS -->
+    <script>
+        (async function () {
+            // Bloqueia a renderização para evitar exposição de dados
+            document.documentElement.style.display = 'none';
+
+            // 1. Recupera as duas chaves necessárias para o cruzamento de dados
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+
+            // Se faltar qualquer um dos dois, nem tenta o fetch, vai direto pro login
+            if (!token || !userId) {
+                console.log("Token ou UID ausentes. Redirecionando para login.");
+                window.location.href = '/dashLogin';
+                return;
+            }
+
+            try {
+                // 2. Envia ambos para a Worker
+                // O Token vai no Header (padrão Bearer) e o UID no Header customizado ou Query
+                const response = await fetch('/api/private/auth/check', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-User-Id': userId, // Header customizado que seu verifyAuth lerá
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Sucesso: O servidor confirmou que o Token pertence a este UID
+                    document.documentElement.style.display = '';
+                    window.currentUser = data.user;
+                    console.log("Validação de Identidade Concluída.");
+                } else {
+                    // Falha no cruzamento de dados ou expiração
+
+                    console.log("Token inválido ou não corresponde ao usuário. Redirecionando para login.");
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/dashLogin';
+                }
+            } catch (error) {
+                console.error("Erro na comunicação de segurança.");
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/dashLogin';
+            }
+        })();
+    </script>
 </head>
 
 <body>
+    <header class="header-main">
+        <div class="header-toggle-menu" id="btn-toggle-menu" role="button" aria-label="Abrir Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="header-logo">
+            <div class="logo" onclick="tab(this, 's-home')">
+                <span>CLICK</span>
+                <span>LASER</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="header-theme theme-toggle" onclick="toggleTheme()">
 
+            </div>
+            <div class="header-user">
+                <div class="user-notifications btn-dialog-show"
+                    onclick="alternateDialogsBox('box-dialog-notifications')">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="user-avatar btn-dialog-show" onclick="alternateDialogsBox('box-dialog-user')">
+                    <span>A</span>
+                </div>
+            </div>
+        </div>
 
-    <aside>
-        <div class="brand">CLICK LASER</div>
+    </header>
+    <aside class="main-sidebar">
         <ul class="nav-menu">
-            <li class="btn nav-item active" onclick="tab(this, 's-pedidos')">Pedidos de Gravação</li>
-            <li class="btn nav-item" onclick="tab(this, 's-vendas')">Histórico de Vendas</li>
-            <li class="btn nav-item" onclick="tab(this, 's-criador')">Desenhos e Fontes</li>
-            <li class="btn nav-item" onclick="tab(this, 's-estoque')">Gestão de Estoque</li>
-            <li class="btn nav-item" onclick="tab(this, 's-equipe')">Equipe e Permissões</li>
-            <li class="btn nav-item" onclick="tab(this, 's-config')">Configurações</li>
+            <li class="btn-nav nav-item" onclick="tab(this, 's-gravacoes')">Gravações</li>
+            <li class="btn-nav nav-item" onclick="tab(this, 's-vendas')">Vendas</li>
+            <li class="btn-nav nav-item" onclick="tab(this, 's-criador')">Criador</li>
+            <li class="btn-nav nav-item" onclick="tab(this, 's-estoque')">Estoque</li>
+            <li class="btn-nav nav-item" onclick="tab(this, 's-equipe')">Equipe</li>
         </ul>
     </aside>
-
+    <div class="dialog-box" id="box-dialog-notifications">
+        <div class="dialog-box-header">
+            <span>Notificações:</span>
+            <button class="" onclick="">Ver todas</button>
+        </div>
+        <div class="notifications-list">
+            <div class="notification-empty">
+                <i class="bi bi-bell-slash"></i>
+                <p>Sem notificações</p>
+            </div>
+        </div>
+    </div>
+    <div class="dialog-box" id="box-dialog-user">
+        <div class="dialog-box-header">
+            <span>Perfil:</span>
+            <button class="btn-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="user-info">
+            <div class="user-avatar">
+                <span>A</span>
+            </div>
+            <div class="user-name">
+                <span title="Nome">Ares</span>
+                <small title="Cargo">Admin</small>
+            </div>
+            <div class="user-actions">
+                <button class="btn-dash-h" id="btn-user-settings">Editar Perfil</button>
+                <button class="btn-dash-h" id="btn-user-logout">Sair</button>
+            </div>
+        </div>
+    </div>
     <main>
-        <section id="s-pedidos" class="content-section active">
-            <h2>Fila de Gravação</h2>
-            <div class="card">
-                <table class="table-res">
+        <section id="s-home" class="content-section active">
+            <div class="section-header-actions">
+                <div class="brand-title">
+                    <h2>Painel de Controle</h2>
+                    <p class="text-muted">Fluxo de produção e vendas</p>
+                </div>
+                <div id="display-date" class="text-muted"></div>
+            </div>
+
+            <div class="dashboard-stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning-light"><i class="bi bi- megaphone"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Pedidos Pendentes</span>
+                        <span class="stat-value">08</span>
+                        <small>Aguardando validação</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon bg-blue-light"><i class="bi bi-play-circle"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Em Gravação</span>
+                        <span class="stat-value">14</span>
+                        <small>Jobs ativos na linha</small>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon bg-success-light"><i class="bi bi-truck"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Concluídos</span>
+                        <span class="stat-value">32</span>
+                        <small>Prontos/Despachados hoje</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-lower-grid" style="grid-template-columns: 1fr;">
+                <div class="dash-card">
+                    <div class="card-header">
+                        <h3>Últimas Movimentações</h3>
+                        <button class="btn-text" onclick="showSection('s-vendas')">Ver histórico completo</button>
+                    </div>
+                    <div class="recent-list">
+                        <div class="recent-item">
+                            <div class="recent-info">
+                                <strong>#1025</strong>
+                                <span>Maria Oliveira — 2x Copos Stanley</span>
+                            </div>
+                            <div class="recent-meta">
+                                <span class="status-pill bg-warning">Aguardando</span>
+                                <small class="text-muted">Há 5 min</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="s-gravacoes" class="content-section">
+            <div class="section-header-actions">
+                <div class="brand-title">
+                    <h2>Fila de Produção (Laser)</h2>
+                    <p class="text-muted">Acompanhe e execute as gravações pendentes</p>
+                </div>
+                <div class="status-counters box-h">
+                    <div class="counter-card">
+                        <span class="label">Pendentes:</span>
+                        <span class="value">12</span>
+                    </div>
+                    <div class="counter-card highlight">
+                        <span class="label">Produzindo:</span>
+                        <span class="value">01</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar-inventory">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="filter-job-search" placeholder="Buscar pedido ou item..."
+                        onkeyup="filterJobs()">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filter-machine" onchange="filterJobs()">
+                        <option value="all">Todas as Máquinas</option>
+                        <option value="Laser 01">Laser Fiber 01</option>
+                        <option value="Laser 02">Laser CO2 01</option>
+                    </select>
+
+                    <select id="filter-priority" onchange="filterJobs()">
+                        <option value="all">Todas as Prioridades</option>
+                        <option value="Alta">Urgente</option>
+                        <option value="Normal">Normal</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="jobs-grid" class="card-grid">
+                <div class="card-empty">
+                    <i class="bi bi-clipboard-x"></i>
+                    <span class="text-muted">Nenhuma gravação pendente</span>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="s-vendas" class="content-section">
+            <div class="section-header-actions">
+                <div class="brand-title">
+                    <h2>Gestão de Vendas e Pedidos</h2>
+                    <p class="text-muted">Controle o fluxo desde o contato inicial até o envio</p>
+                </div>
+                <div class="import-buttons">
+                    <button class="btn-import" onclick="openModalNovaVenda()">
+                        <i class="bi bi-cart-plus"></i> Novo Pedido
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-bar-inventory">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="filter-sale-search" placeholder="Buscar por Cliente ou ID..."
+                        onkeyup="filterSales()">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filter-sale-period" onchange="handlePeriodChange()">
+                        <option value="this-month">Este Mês</option>
+                        <option value="last-month">Mês Passado</option>
+                        <option value="custom">Selecionar Intervalo...</option>
+                    </select>
+
+                    <div id="custom-date-container" style="display: none; align-items: center; gap: 5px;">
+                        <input type="date" id="date-start">
+                        <span>até</span>
+                        <input type="date" id="date-end">
+                        <button class="btn-import btn-blue" style="padding: 5px 10px;" onclick="applyCustomDates()">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <select id="filter-sale-status" onchange="filterSales()">
+                        <option value="all">Todos os Status</option>
+                        <option value="Aguardando">Aguardando Confirmação</option>
+                        <option value="Produção">Em Produção</option>
+                        <option value="Pronto">Pronto para Entrega</option>
+                        <option value="Concluído">Concluído</option>
+                    </select>
+
+                    <select id="filter-sale-origin" onchange="filterSales()">
+                        <option value="all">Todas as Origens</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Site">Site</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card-inventory-container">
+                <table class="table-custom">
                     <thead>
                         <tr>
-                            <th>Pedido / Origem</th>
-                            <th>Itens</th>
-                            <th>Personalização (Texto/Imagem)</th>
-                            <th>Ação</th>
+                            <th>Nº</th>
+                            <th>Cliente</th>
+                            <th>Qtd. Itens</th>
+                            <th>Origem</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th class="actions-col">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>#OS-1024</strong><br><span class="badge bg-orange">Anúncio Instagram</span></td>
-                            <td>1x Garrafa Térmica (Azul)<br>1x Copo Stanley (Branco)</td>
-                            <td>
-                                <strong>Item 1:</strong> "Felipe 2026" (Fonte: Poppins)<br>
-                                <strong>Item 2:</strong> [Imagem: logo_empresa.svg]
-                            </td>
-                            <td><button class="btn btn-primary">Gravar</button></td>
-                        </tr>
+                    <tbody id="sales-table-body">
+
                     </tbody>
                 </table>
             </div>
         </section>
 
         <section id="s-criador" class="content-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Biblioteca de Ativos</h2>
-                <button class="btn btn-primary">+ Novo Desenho/Fonte</button>
+            <div class="section-header-actions">
+                <div class="brand-title">
+                    <h2>Biblioteca de Ativos</h2>
+                    <p class="text-muted">Gerencie suas fontes e vetores para gravação</p>
+                </div>
+                <div class="import-buttons">
+                    <button class="btn-import" onclick="document.getElementById('input-font').click()">
+                        <i class="bi bi-file-earmark-font"></i> Importar Fonte
+                    </button>
+                    <input type="file" id="input-font" accept=".ttf,.otf" hidden
+                        onchange="handleFileImport(this, 'font')">
+
+                    <button class="btn-import btn-blue" onclick="document.getElementById('input-vector').click()">
+                        <i class="bi bi-vector-pen"></i> Importar Vetor/Imagem
+                    </button>
+                    <input type="file" id="input-vector" accept=".svg,.png,.webp" hidden
+                        onchange="handleFileImport(this, 'vector')">
+                </div>
             </div>
-            <div class="grid-assets">
-                <div class="asset-item">
-                    <div class="asset-preview">SVG</div>
-                    <p>Logo Minimalista</p>
+
+            <div class="creator-container">
+
+                <div class="asset-group">
+                    <div class="group-header">
+                        <h3><i class="bi bi-fonts"></i> Fontes Disponíveis</h3>
+                        <div class="filter-controls">
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="filter-font" placeholder="Buscar fonte..."
+                                    onkeyup="filterAssets('font')">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asset-layout">
+                        <div class="asset-list" id="font-list">
+                            <div class="asset-row active" data-name="Poppins" onclick="previewFont('Poppins', this)">
+                                <div class="asset-info">
+                                    <span>Poppins</span>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn-icon" title="Editar"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-icon text-danger" title="Deletar"><i
+                                            class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="asset-row" data-name="Roboto" onclick="previewFont('Roboto', this)">
+                                <div class="asset-info">
+                                    <span>Roboto</span>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn-icon"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-icon text-danger"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="asset-viewer">
+                            <div class="viewer-label">Visualização da Fonte</div>
+                            <div id="font-preview-display" style="font-family: 'Poppins';">
+                                ABCDEFGHIJKLMN<br>
+                                abcdefghijklmn<br>
+                                0123456789
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="asset-item">
-                    <div class="asset-preview">SVG</div>
-                    <p>Brasão Família</p>
+
+                <hr class="divider">
+
+                <div class="asset-group">
+                    <div class="group-header">
+                        <h3><i class="bi bi-images"></i> Vetores e Imagens (PNG/SVG)</h3>
+                        <div class="filter-controls">
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="filter-vector-name" placeholder="Nome do arquivo..."
+                                    onkeyup="filterAssets('vector')">
+                            </div>
+                            <select id="filter-vector-category" onchange="filterAssets('vector')">
+                                <option value="all">Todas Categorias</option>
+                                <option value="Logos">Logos</option>
+                                <option value="Brasões">Brasões</option>
+                                <option value="Datas">Datas</option>
+                                <option value="Desenhos">Desenhos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="asset-layout">
+                        <div class="asset-list" id="vector-list">
+                            <div class="asset-row active" data-name="Logo Principal" data-category="Logos"
+                                onclick="previewImage('./assets/logo.svg', this)">
+                                <div class="asset-info">
+                                    <span>Logo Principal</span>
+                                    <small class="badge-category">Logos</small>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn-icon"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-icon text-danger"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="asset-row" data-name="Brasão Real" data-category="Brasões"
+                                onclick="previewImage('./assets/brasao.png', this)">
+                                <div class="asset-info">
+                                    <span>Brasão Real</span>
+                                    <small class="badge-category">Brasões</small>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn-icon"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-icon text-danger"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="asset-viewer image-checkered">
+                            <div class="viewer-label">Visualização do Vetor</div>
+                            <img id="image-preview-display" src="./assets/logo.svg" alt="Preview">
+                        </div>
+                    </div>
                 </div>
-                <div class="asset-item">
-                    <div class="asset-preview" style="font-family: 'serif'">Abc</div>
-                    <p>Fonte Serif</p>
-                </div>
+
             </div>
         </section>
 
         <section id="s-estoque" class="content-section">
-            <h2>Controle de Estoque</h2>
-            <div class="card">
-                <table class="table-res">
+            <div class="section-header-actions">
+                <div class="brand-title">
+                    <h2>Controle de Estoque</h2>
+                    <p class="text-muted">Gestão de insumos e produtos para gravação</p>
+                </div>
+                <div class="import-buttons box-h">
+                    <button class="btn-import btn-blue" onclick="exportarRelatorio()">
+                        <i class="bi bi-download"></i> Exportar Planilha
+                    </button>
+                    <button class="btn-import" onclick="openModal('modal-product')">
+                        <i class="bi bi-plus-circle"></i> Novo Produto
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-bar-inventory">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="filter-stock-name" placeholder="Buscar por produto..."
+                        onkeyup="filterStock()">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filter-stock-type" onchange="filterStock()">
+                        <option value="all">Todos os Tipos</option>
+                        <option value="Copo">Copos</option>
+                        <option value="Garrafa">Garrafas</option>
+                        <option value="Caneca">Canecas</option>
+                        <option value="Acessório">Acessórios</option>
+                    </select>
+
+                    <select id="filter-stock-color" onchange="filterStock()">
+                        <option value="all">Todas as Cores</option>
+                        <option value="Preto">Preto</option>
+                        <option value="Branco">Branco</option>
+                        <option value="Azul">Azul</option>
+                        <option value="Rosa">Rosa</option>
+                        <option value="Verde">Verde</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card-inventory-container">
+                <table class="table-custom">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Produto</th>
+                            <th>Tipo</th>
                             <th>Cor</th>
-                            <th>Saldo Atual</th>
-                            <th>Ações</th>
+                            <th>Qtd. Atual</th>
+                            <th>Qtd. Mínima</th>
+                            <th>Status</th>
+                            <th class="actions-col">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Copo Stanley 473ml</td>
-                            <td>Preto Matte</td>
-                            <td><strong>42 un</strong></td>
-                            <td><button class="btn btn-outline">+ Entrada</button> <button class="btn btn-outline">-
-                                    Saída</button></td>
+                    <tbody id="stock-table-body">
+                        <tr data-name="Copo Stanley 473ml" data-type="Copo" data-color="Preto">
+                            <td>#001</td>
+                            <td><strong>Copo Stanley 473ml</strong></td>
+                            <td>Copo</td>
+                            <td><span class="dot-color" style="background-color: #000;"></span> Preto</td>
+                            <td><span class="stock-badge">42 un</span></td>
+                            <td>10 un</td>
+                            <td><span class="status-pill bg-success">Em Dia</span></td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="btn-table" title="Entrada" onclick="updateStock(1, 'in')"><i
+                                            class="bi bi-plus-lg"></i></button>
+                                    <button class="btn-table" title="Saída" onclick="updateStock(1, 'out')"><i
+                                            class="bi bi-dash-lg"></i></button>
+                                    <button class="btn-table" title="Editar"><i class="bi bi-pencil"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr data-name="Garrafa Térmica 500ml" data-type="Garrafa" data-color="Rosa">
+                            <td>#002</td>
+                            <td><strong>Garrafa Térmica 500ml</strong></td>
+                            <td>Garrafa</td>
+                            <td><span class="dot-color" style="background-color: #ff69b4;"></span> Rosa</td>
+                            <td><span class="stock-badge warning">04 un</span></td>
+                            <td>05 un</td>
+                            <td><span class="status-pill bg-warning">Baixo</span></td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="btn-table" onclick="updateStock(2, 'in')"><i
+                                            class="bi bi-plus-lg"></i></button>
+                                    <button class="btn-table" onclick="updateStock(2, 'out')"><i
+                                            class="bi bi-dash-lg"></i></button>
+                                    <button class="btn-table"><i class="bi bi-pencil"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr data-name="Caneca Inox" data-type="Caneca" data-color="Azul">
+                            <td>#003</td>
+                            <td><strong>Caneca Inox</strong></td>
+                            <td>Caneca</td>
+                            <td><span class="dot-color" style="background-color: #007bff;"></span> Azul</td>
+                            <td><span class="stock-badge danger">00 un</span></td>
+                            <td>03 un</td>
+                            <td><span class="status-pill bg-danger">Esgotado</span></td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="btn-table" onclick="updateStock(3, 'in')"><i
+                                            class="bi bi-plus-lg"></i></button>
+                                    <button class="btn-table" onclick="updateStock(3, 'out')"><i
+                                            class="bi bi-dash-lg"></i></button>
+                                    <button class="btn-table"><i class="bi bi-pencil"></i></button>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -98,50 +566,214 @@
         </section>
 
         <section id="s-equipe" class="content-section">
-            <h2>Gerenciamento de Funcionários</h2>
-            <div class="card">
-                <table class="table-res">
+            <div class="section-header-actions">
+                <div class="brand-title">
+                    <h2>Gerenciamento da Equipe</h2>
+                    <p class="text-muted">Controle de acessos e operadores de produção</p>
+                </div>
+                <div class="import-buttons">
+                    <button class="btn-import" onclick="openModalNovoFuncionario()">
+                        <i class="bi bi-person-plus"></i> Adicionar Membro
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-bar-inventory">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="filter-staff-name" placeholder="Buscar por nome ou e-mail..."
+                        onkeyup="filterStaff()">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filter-staff-role" onchange="filterStaff()">
+                        <option value="all">Todos os Cargos</option>
+                        <option value="Gerente">Gerente</option>
+                        <option value="Operador Laser">Operador Laser</option>
+                        <option value="Vendedor">Vendedor</option>
+                        <option value="Designer">Designer</option>
+                    </select>
+
+                    <select id="filter-staff-status" onchange="filterStaff()">
+                        <option value="all">Todos os Status</option>
+                        <option value="Ativo">Ativos</option>
+                        <option value="Inativo">Inativos</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card-inventory-container">
+                <table class="table-custom">
                     <thead>
                         <tr>
-                            <th>Nome</th>
+                            <th>Colaborador</th>
                             <th>Cargo</th>
                             <th>Nível de Acesso</th>
-                            <th>Ações</th>
+                            <th>Última Atividade</th>
+                            <th>Status</th>
+                            <th class="text-center">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Carlos Alberto</td>
+                    <tbody id="staff-table-body">
+                        <tr data-name="Carlos Alberto" data-role="Operador Laser" data-status="Ativo">
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar">CA</div>
+                                    <div>
+                                        <strong>Carlos Alberto</strong><br>
+                                        <small class="text-muted">carlos@clicklaser.com</small>
+                                    </div>
+                                </div>
+                            </td>
                             <td>Operador Laser</td>
-                            <td><span class="badge bg-blue">Produção Apenas</span></td>
-                            <td><button class="btn btn-outline">Editar</button></td>
+                            <td>
+                                <div class="permissions-tags">
+                                    <span class="p-tag p-blue">Produção</span>
+                                    <span class="p-tag p-gray">Estoque (Ver)</span>
+                                </div>
+                            </td>
+                            <td>Há 10 min (Gravando #12345)</td>
+                            <td><span class="status-pill bg-success">Ativo</span></td>
+                            <td class="actions-cell">
+                                <button class="btn-table" title="Editar Permissões"><i
+                                        class="bi bi-shield-lock"></i></button>
+                                <button class="btn-table" title="Editar Perfil"><i class="bi bi-pencil"></i></button>
+                                <button class="btn-table text-danger" title="Desativar"><i
+                                        class="bi bi-person-x"></i></button>
+                            </td>
+                        </tr>
+
+                        <tr data-name="Ana Souza" data-role="Gerente" data-status="Ativo">
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar" style="background: var(--bg-purple);">AS</div>
+                                    <div>
+                                        <strong>Ana Souza</strong><br>
+                                        <small class="text-muted">ana.gerencia@clicklaser.com</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Gerente</td>
+                            <td>
+                                <div class="permissions-tags">
+                                    <span class="p-tag p-purple">Total (Admin)</span>
+                                </div>
+                            </td>
+                            <td>Online agora</td>
+                            <td><span class="status-pill bg-success">Ativo</span></td>
+                            <td class="actions-cell">
+                                <button class="btn-table" title="Editar Permissões"><i
+                                        class="bi bi-shield-lock"></i></button>
+                                <button class="btn-table" title="Editar Perfil"><i class="bi bi-pencil"></i></button>
+                                <button class="btn-table text-danger" title="Desativar"><i
+                                        class="bi bi-person-x"></i></button>
+                            </td>
+                        </tr>
+
+                        <tr data-name="Ricardo Lima" data-role="Vendedor" data-status="Inativo">
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar" style="background: #ccc;">RL</div>
+                                    <div>
+                                        <strong>Ricardo Lima</strong><br>
+                                        <small class="text-muted">ricardo.vendas@clicklaser.com</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Vendedor</td>
+                            <td>
+                                <div class="permissions-tags">
+                                    <span class="p-tag p-blue">Vendas</span>
+                                    <span class="p-tag p-gray">Criador (Ver)</span>
+                                </div>
+                            </td>
+                            <td>05/07/2025</td>
+                            <td><span class="status-pill bg-danger">Inativo</span></td>
+                            <td class="actions-cell">
+                                <button class="btn-table" title="Editar Permissões"><i
+                                        class="bi bi-shield-lock"></i></button>
+                                <button class="btn-table" title="Editar Perfil"><i class="bi bi-pencil"></i></button>
+                                <button class="btn-table" title="Reativar"><i class="bi bi-person-check"></i></button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
-
-        <section id="s-config" class="content-section">
-            <h2>Configurações do Sistema</h2>
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <div>
-                        <h4>Aparência do Painel</h4>
-                        <p class="text-muted">Alternar entre modo claro e escuro</p>
-                    </div>
-                    <button class="btn btn-outline" onclick="toggleTheme()">Trocar Tema</button>
-                </div>
-                <div style="border-top: 1px solid var(--border-color); padding-top: 2rem;">
-                    <button class="btn" style="background: var(--danger); color: white;" onclick="logout()">Encerrar
-                        Sessão
-                        (Logout)</button>
-                </div>
-            </div>
-        </section>
     </main>
 
-    <script src="./script/dashboard_main.js"></script>
+    <!-- Modals -->
+    <div class="modal" id="modal-product" data-uid="">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Produto</h2>
+                <button class="close-modal" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="stock-name">Nome:</label>
+                        <input type="text" id="stock-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock-type">Tipo:</label>
+                        <input type="text" id="stock-type"></input>
+                    </div>
+                </div>
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="stock-color">Cor:</label>
+                        <input type="text" id="stock-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock-description">Descrição:</label>
+                        <input type="text" id="stock-description">
+                    </div>
+                </div>
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="stock-amount">Quantidade atual:</label>
+                        <input type="number" id="stock-amount">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock-amount-min">Quantidade minima:</label>
+                        <input type="number" id="stock-amount-min">
+                    </div>
+                </div>
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="stock-price-buy">Preço de compra:</label>
+                        <input type="text" id="stock-price-buy">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock-price-sell">Preço de venda:</label>
+                        <input type="text" id="stock-price-sell">
+                    </div>
+                </div>
+
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="stock-image-sale">Imagem de venda:</label>
+                        <input type="image" id="stock-image">
+                    </div>
+                    <div class="form-group">
+                        <label for="stock-image-creator">Imagem do criador:</label>
+                        <input type="image" id="stock-image-creator">
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn_modal create" onclick="saveProduct()">Salvar</button>
+                <button class="btn_modal update" onclick="deleteProduct()">Deletar</button>
+                <button class="btn_modal update" onclick="updateProduct()">Salvar</button>
+            </div>
+        </div>
+    </div>
 
 </body>
+
+<script src="./script/dashboard_main.js"></script>
+<script src="./script/dashboard_ui.js"></script>
 
 </html>

@@ -22,23 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleLoader(true);
 
         try {
-            // Simulando a chamada que você enviou do Worker
-            const response = await fetch('/api/login', { // Altere para seu endpoint real
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 body: JSON.stringify({ email, password })
             });
 
             const result = await response.json();
-
+            const token = response.headers.get('Authorization')?.replace('Bearer ', '');
             if (result.success) {
                 // FUNÇÃO MANTER CONECTADO
                 if (remember) {
-                    localStorage.setItem('auth_token', result.token || 'dummy_token');
+                    localStorage.setItem('auth_token', token || 'dummy_token');
+                    localStorage.setItem('user_id', result.user_id || 'dummy_id');
                 } else {
-                    sessionStorage.setItem('auth_token', result.token || 'dummy_token');
+                    sessionStorage.setItem('auth_token', token || 'dummy_token');
+                    sessionStorage.setItem('user_id', result.user_id || 'dummy_id');
                 }
 
-                window.location.href = "dashboard.html";
+                window.location.href = "/dashboard";
             } else {
                 alert(result.error || "Erro ao acessar");
             }

@@ -53,7 +53,7 @@ async function login() {
 
         // 2. Valida e salva no localStorage
         if (token && data.user_id) {
-            localStorage.setItem("token", token);
+            localStorage.setItem("auth_token", token);
             localStorage.setItem("user_id", data.user_id); // Salvando o user_id que veio no body
 
             const user_type = data?.state_account;
