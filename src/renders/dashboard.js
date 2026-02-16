@@ -185,11 +185,12 @@ function create_product_row(json_product) {
         <td><span class="status-pill ${current_status.class}">${current_status.text}</span></td>
         <td>
             <div class="actions-cell">
-                <button class="btn-table" onclick="updateStock(${json_product.uid}, 'in')"><i
+                <button class="btn-table" onclick="updateStock('${json_product.uid}', 'in')"><i
                         class="bi bi-plus-lg"></i></button>
-                <button class="btn-table" onclick="updateStock(${json_product.uid}, 'out')"><i
+                <button class="btn-table" onclick="updateStock('${json_product.uid}', 'out')"><i
                         class="bi bi-dash-lg"></i></button>
-                <button class="btn-table"><i class="bi bi-pencil"></i></button>
+                <button class="btn-table btn-for-modal" data-uid="${json_product.uid}"  data-modal="modal-product"
+                data-callback="actions.getProductDetails" title="Editar Produto"><i class="bi bi-pencil"></i></button>
             </div>
         </td>
     `;

@@ -1,4 +1,4 @@
-import apiPrivateRouter from "./routers/privateApi_routes";
+import apiPrivateRouter from "./routers/privateApi_routes.js";
 
 export default {
     async fetch(request, env, ctx) {

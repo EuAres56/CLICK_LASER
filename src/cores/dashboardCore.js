@@ -25,8 +25,6 @@ export default async function dashboardCore(request, env) {
             const body = await request.json();
             const supabaseUrl = `${env.SUPABASE_URL}/rest/v1`;
 
-            console.log("Criando Order para cliente:", body.client_name);
-
             // 1. Inserir a Order
             const orderResp = await fetch(`${supabaseUrl}/dashboard_orders`, {
                 method: "POST",
@@ -50,12 +48,10 @@ export default async function dashboardCore(request, env) {
 
             if (!orderResp.ok) throw new Error("Falha ao criar Order");
             const order = (await orderResp.json())[0];
-            console.log(`Order criada com ID ${order.id_num} e UID ${order.uid}`);
 
             // 2. Inserir Jobs vinculados
             let jobUids = [];
             if (body.jobs && body.jobs.length > 0) {
-                console.log(`Criando ${body.jobs.length} jobs para a Order ID ${order.id_num}`);
 
 
                 const jobsToInsert = body.jobs.map(job => ({
@@ -212,7 +208,6 @@ export default async function dashboardCore(request, env) {
                 headers: { "apikey": env.SUPABASE_KEY, "Authorization": `Bearer ${env.SUPABASE_KEY}`, "Content-Type": "application/json" }
             });
             const jobsFromDb = await response.json();
-            console.log("Jobs recebidos do banco de dados:", jobsFromDb);
 
             const htmlCardsArray = jobsFromDb.map(row => {
                 return create_job_card(
@@ -277,31 +272,30 @@ export default async function dashboardCore(request, env) {
 
     // POST: Criar Produto
     if (subPath.startsWith("/products/create") && method === "POST") {
+        // Variáveis para rastrear os nomes gerados
+        let imageSalePath = null;
+        let imageCreatorPath = null;
+
         try {
-            const body = await request.json();
+            const formData = await request.formData();
             const supabaseUrl = `${env.SUPABASE_URL}/rest/v1`;
 
-            // Lógica de Status (Otimizada)
+            const stockNow = parseInt(formData.get('amount')) || 0;
+            const stockMin = parseInt(formData.get('amount_min')) || 0;
+            const priceBuy = parseFloat(formData.get('price_buy')) || 0;
+            const priceSell = parseFloat(formData.get('price_sell')) || 0;
+
             let status = 0;
-            if (body.stock_now <= 0) {
-                status = 2; // Sem estoque
-            } else if (body.stock_now < body.stock_min) {
-                status = 1; // Estoque baixo
-            }
+            if (stockNow <= 0) status = 2;
+            else if (stockNow < stockMin) status = 1;
 
-            // Upload de Imagens
-            let imageSalePath = null;
-            let imageCreatorPath = null;
+            // 1. Processamento de Imagens (Mantendo sua chamada original)
+            imageSalePath = await uploadImage(formData.get('image_sale'), "sale", env);
+            imageCreatorPath = await uploadImage(formData.get('image_creator'), "creator", env);
 
-            if (body.image_sale) {
-                // Passamos o arquivo e o nome do bucket
-                imageSalePath = await uploadImage(body.image_sale, "sale", env);
-            }
-            if (body.image_creator) {
-                imageCreatorPath = await uploadImage(body.image_creator, "creator", env);
-            }
+            if (!imageSalePath || !imageCreatorPath) throw new Error("Erro ao processar imagens.");
 
-            // 1. Inserir o produto
+            // 2. Envio para o Supabase
             const productResp = await fetch(`${supabaseUrl}/dashboard_products`, {
                 method: "POST",
                 headers: {
@@ -311,105 +305,125 @@ export default async function dashboardCore(request, env) {
                     "Prefer": "return=representation"
                 },
                 body: JSON.stringify({
-                    product_title: body.title,
-                    product_type: body.type,
-                    product_color: body.color,
-                    product_desc: body.desc,
-                    product_stock_now: body.stock_now,
-                    product_stock_min: body.stock_min,
-                    product_price_buy: body.price_buy,
-                    product_price_sell: body.price_sell,
-                    product_image_sale: imageSalePath, // Usando a URL retornada
-                    product_image_creator: imageCreatorPath, // Usando a URL retornada
+                    product_title: formData.get('name'),
+                    product_type: formData.get('type'),
+                    product_color: formData.get('color'),
+                    product_desc: formData.get('description'),
+                    product_stock_now: stockNow,
+                    product_stock_min: stockMin,
+                    product_price_buy: priceBuy,
+                    product_price_sell: priceSell,
+                    product_image_sale: imageSalePath,
+                    product_image_creator: imageCreatorPath,
                     product_status: status
                 })
             });
 
+            // 3. Verificação do Retorno
             if (!productResp.ok) {
-                const errorData = await productResp.json();
-                throw new Error(`Erro no banco: ${errorData.message}`);
+                // Se o banco falhou, lançamos o erro para cair no catch e limpar as imagens
+                throw new Error("Erro ao salvar produto no banco.");
             }
 
             const productData = await productResp.json();
-
-            return new Response(JSON.stringify({
-                success: true,
-                data: productData[0]
-            }), { status: 201 });
+            return new Response(JSON.stringify({ success: true, data: productData[0] }), { status: 201 });
 
         } catch (error) {
+            // --- LOGICA DE LIMPEZA (ROLLBACK) ---
+            // Se as imagens foram geradas mas o processo parou depois disso, deletamos
+            const cleanup = async () => {
+                if (imageSalePath) await env.sale.delete(imageSalePath).catch(e => console.error("Erro cleanup sale:", e));
+                if (imageCreatorPath) await env.creator.delete(imageCreatorPath).catch(e => console.error("Erro cleanup creator:", e));
+            };
+
+            // Executa a limpeza em background sem travar a resposta de erro para o cliente
+            if (ctx && typeof ctx.waitUntil === 'function') {
+                ctx.waitUntil(cleanup());
+            } else {
+                cleanup(); // Fallback se ctx não estiver disponível
+            }
+
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
 
     // PATCH: Atualizar Produto
     if (subPath.startsWith("/products/update") && method === "PATCH") {
+        let newImageSale = null;
+        let newImageCreator = null;
+        let oldImageSale = null;
+        let oldImageCreator = null;
+
         try {
-            const body = await request.json(); // Precisa conter o ID e os campos alterados
-            const productId = body.id;
+            const formData = await request.formData();
+            const productId = formData.get('id');
             if (!productId) throw new Error("ID do produto é obrigatório.");
 
             const supabaseUrl = `${env.SUPABASE_URL}/rest/v1`;
 
-            // 1. Buscar dados atuais do produto para pegar as chaves das imagens antigas
+            // 1. Buscar dados atuais
             const currentResp = await fetch(`${supabaseUrl}/dashboard_products?id=eq.${productId}`, {
-                headers: {
-                    "apikey": env.SUPABASE_KEY,
-                    "Authorization": `Bearer ${env.SUPABASE_KEY}`
-                }
+                headers: { "apikey": env.SUPABASE_KEY, "Authorization": `Bearer ${env.SUPABASE_KEY}` }
             });
             const currentData = await currentResp.json();
             if (!currentData.length) throw new Error("Produto não encontrado.");
 
-            const oldProduct = currentData[0];
+            oldImageSale = currentData[0].product_image_sale;
+            oldImageCreator = currentData[0].product_image_creator;
 
-            // 2. Lógica de Status (Mantendo sua regra de negócio)
-            let status = body.product_status;
-            if (body.stock_now !== undefined) {
-                if (body.stock_now >= body.stock_min) status = 0;
-                else if (body.stock_now > 0) status = 1;
-                else status = 2;
-            }
+            // 2. Lógica de Status e Conversões
+            const stockNow = parseInt(formData.get('amount')) || 0;
+            const stockMin = parseInt(formData.get('amount_min')) || 0;
+            let status = 0;
+            if (stockNow <= 0) status = 2;
+            else if (stockNow < stockMin) status = 1;
 
-            // 3. Processar Imagens (Aqui a mágica acontece)
-            // Se body.image_sale for igual a oldProduct.product_image_sale, a função não faz nada.
-            const newImageSale = body.image_sale
-                ? await uploadImage(body.image_sale, "sale", env, oldProduct.product_image_sale)
-                : oldProduct.product_image_sale;
+            // 3. Upload das novas imagens (Retornam NULL se não houver arquivo no FormData)
+            newImageSale = await uploadImage(formData.get('image_sale'), "sale", env);
+            newImageCreator = await uploadImage(formData.get('image_creator'), "creator", env);
 
-            const newImageCreator = body.image_creator
-                ? await uploadImage(body.image_creator, "creator", env, oldProduct.product_image_creator)
-                : oldProduct.product_image_creator;
-
-            // 4. Atualizar no Supabase
             const updateResp = await fetch(`${supabaseUrl}/dashboard_products?id=eq.${productId}`, {
                 method: "PATCH",
                 headers: {
                     "apikey": env.SUPABASE_KEY,
                     "Authorization": `Bearer ${env.SUPABASE_KEY}`,
-                    "Content-Type": "application/json",
-                    "Prefer": "return=representation"
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    product_title: body.title,
-                    product_type: body.type,
-                    product_color: body.color,
-                    product_desc: body.desc,
-                    product_stock_now: body.stock_now,
-                    product_stock_min: body.stock_min,
-                    product_price_buy: body.price_buy,
-                    product_price_sell: body.price_sell,
-                    product_image_sale: newImageSale,
-                    product_image_creator: newImageCreator,
+                    product_title: formData.get('name'),
+                    product_type: formData.get('type'),
+                    product_color: formData.get('color'),
+                    product_desc: formData.get('description'),
+                    product_stock_now: stockNow,
+                    product_stock_min: stockMin,
+                    product_price_buy: parseFloat(formData.get('price_buy')) || 0,
+                    product_price_sell: parseFloat(formData.get('price_sell')) || 0,
+                    // AJUSTE AQUI: Se for null, usa a antiga.
+                    product_image_sale: newImageSale || oldImageSale,
+                    product_image_creator: newImageCreator || oldImageCreator,
                     product_status: status
                 })
             });
 
-            if (!updateResp.ok) throw new Error("Erro ao atualizar no banco de dados.");
+            if (!updateResp.ok) throw new Error("Erro ao atualizar banco.");
+
+            // --- SUCESSO: Limpar as imagens antigas apenas se foram trocadas ---
+            const successCleanup = async () => {
+                if (newImageSale && newImageSale !== oldImageSale) await env.sale.delete(oldImageSale).catch(() => { });
+                if (newImageCreator && newImageCreator !== oldImageCreator) await env.creator.delete(oldImageCreator).catch(() => { });
+            };
+            if (ctx?.waitUntil) ctx.waitUntil(successCleanup());
 
             return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
+            // --- ERRO: Rollback apenas se uma nova imagem chegou a ser criada ---
+            const errorRollback = async () => {
+                if (newImageSale) await env.sale.delete(newImageSale).catch(() => { });
+                if (newImageCreator) await env.creator.delete(newImageCreator).catch(() => { });
+            };
+            if (ctx?.waitUntil) ctx.waitUntil(errorRollback());
+
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
@@ -484,12 +498,7 @@ export default async function dashboardCore(request, env) {
 
             // Gerar as linhas da tabela com URLs assinadas para o preview do estoque
             const productsRows = await Promise.all(productsFromDb.map(async (product) => {
-                // Geramos uma URL temporária rápida para o ícone na tabela, se necessário
-                const tempUrl = product.product_image_sale
-                    ? await generateSignedUrl(product.product_image_sale, "sale", env)
-                    : null;
-
-                return create_product_row({ ...product, temp_url: tempUrl });
+                return create_product_row({ ...product });
             }));
 
             return new Response(JSON.stringify(productsRows), {
@@ -502,38 +511,38 @@ export default async function dashboardCore(request, env) {
         }
     }
 
-    // GET: Buscar produto específico para o Modal
+    // GET: Buscar detalhes de um produto para edição
     if (subPath.startsWith("/products/get") && method === "GET") {
         try {
             const url = new URL(request.url);
-            const productId = url.searchParams.get("id");
+            const productUid = url.searchParams.get("uid");
+            if (!productUid) throw new Error("ID não fornecido.");
+
             const supabaseUrl = `${env.SUPABASE_URL}/rest/v1`;
 
-            // 1. Busca no Supabase
-            const resp = await fetch(`${supabaseUrl}/dashboard_products?id=eq.${productId}`, {
+            const resp = await fetch(`${supabaseUrl}/dashboard_products?uid=eq.${productUid}`, {
                 headers: {
                     "apikey": env.SUPABASE_KEY,
                     "Authorization": `Bearer ${env.SUPABASE_KEY}`
                 }
             });
+
             const data = await resp.json();
             if (!data.length) throw new Error("Produto não encontrado.");
 
             const product = data[0];
+            // Gerar URLs assinadas para o Staff visualizar no modal
+            const [urlSale, urlCreator] = await Promise.all([
+                product.product_image_sale ? generateSignedUrl(product.product_image_sale, "sale", env) : null,
+                product.product_image_creator ? generateSignedUrl(product.product_image_creator, "creator", env) : null
+            ]);
 
-            // 2. Gerar URLs Temporárias de visualização (R2 Presigned URLs)
-            // Nota: Se você não tiver um domínio customizado no R2,
-            // você pode retornar o binário ou usar uma rota de proxy.
-            // Aqui simulamos a geração de um link de acesso:
-            product.image_sale_url = product.product_image_sale
-                ? await generateSignedUrl(product.product_image_sale, "sale", env)
-                : null;
+            return new Response(JSON.stringify({
+                ...product,
+                url_sale_preview: urlSale,
+                url_creator_preview: urlCreator
+            }), { status: 200 });
 
-            product.image_creator_url = product.product_image_creator
-                ? await generateSignedUrl(product.product_image_creator, "creator", env)
-                : null;
-
-            return new Response(JSON.stringify(product), { status: 200 });
         } catch (error) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }

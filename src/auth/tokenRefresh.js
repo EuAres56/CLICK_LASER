@@ -31,7 +31,6 @@ export default async function tokenRefresh(uid, env) {
 
     return {
         ok: response.ok,
-        status: response.status,
-        expires_at: newExpiration
+        status: response.status
     };
 }

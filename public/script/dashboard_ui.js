@@ -70,7 +70,7 @@ function previewFont(fontName, element) {
 }
 
 // Troca o preview da imagem
-function previewImage(src, element) {
+function previewImageVector(src, element) {
     // Remove active das outras linhas da lista de vetores
     document.querySelectorAll('#vector-list .asset-row').forEach(row => row.classList.remove('active'));
     element.classList.add('active');
@@ -79,22 +79,15 @@ function previewImage(src, element) {
     img.src = src;
 }
 
-function openModalNovoAtivo() {
-    alert("Aqui abriria o upload de arquivo ou input de nova fonte.");
-}
-
-
 function handleFileImport(input, type) {
     const file = input.files[0];
     if (!file) return;
 
     if (type === 'font') {
-        console.log("Importando fonte:", file.name);
         // Aqui você dispararia o upload para o servidor ou
         // a lógica para ler a fonte e aplicar no preview localmente
         alert(`Fonte "${file.name}" selecionada para importação.`);
     } else {
-        console.log("Importando vetor/imagem:", file.name);
         // Lógica de leitura de imagem (FileReader) para preview imediato
         const reader = new FileReader();
         reader.onload = function (e) {
@@ -138,16 +131,16 @@ function filterAssets(type) {
 }
 
 function filterStock() {
-    const nameSearch = document.getElementById('filter-stock-name').value.toLowerCase();
-    const typeFilter = document.getElementById('filter-stock-type').value;
-    const colorFilter = document.getElementById('filter-stock-color').value;
+    const nameSearch = document.getElementById('filter-stock-title').value.toLowerCase();
+    const typeFilter = document.getElementById('filter-stock-type').value.toLowerCase();
+    const colorFilter = document.getElementById('filter-stock-color').value.toLowerCase();
 
     const rows = document.querySelectorAll('#stock-table-body tr');
 
     rows.forEach(row => {
-        const productName = row.getAttribute('data-name').toLowerCase();
-        const productType = row.getAttribute('data-type');
-        const productColor = row.getAttribute('data-color');
+        const productName = row.getAttribute('data-search').toLowerCase();
+        const productType = row.getAttribute('data-type').toLowerCase();
+        const productColor = row.getAttribute('data-color').toLowerCase();
 
         const matchesName = productName.includes(nameSearch);
         const matchesType = typeFilter === 'all' || productType === typeFilter;
@@ -204,23 +197,58 @@ function filterSales() {
 function changeStatus(pedidoId, novoStatus) {
     const confirmacao = confirm(`Mudar pedido ${pedidoId} para status: ${novoStatus}?`);
     if (confirmacao) {
-        console.log(`API: Atualizando pedido ${pedidoId} para ${novoStatus}`);
         // Aqui, ao mudar para "Produção", o backend faria ele aparecer na aba "Gravações"
         alert(`Pedido ${pedidoId} agora está ${novoStatus}!`);
     }
 }
-function openModal(modalId, orderId = null) {
+
+
+// Delegue o evento para o document ou use um loop corrigido
+document.addEventListener('click', async e => {
+    const btn = e.target.closest('.btn-for-modal');
+    if (!btn) return;
+
+    const uid = btn.dataset.uid;
+    const modalId = btn.dataset.modal;
+    const callbackStr = btn.dataset.callback;
+
+    if (uid && callbackStr) {
+        const parts = callbackStr.split('.'); // ['actions', 'getProductDetails']
+        const funcName = parts.pop(); // Remove e guarda o último (a função)
+        const parent = parts.reduce((obj, prop) => obj[prop], window); // O que sobrou é o pai
+        const fillCallback = parent[funcName];
+
+        if (typeof fillCallback === 'function') {
+            // .call(parent, ...) força o 'this' a ser o objeto 'actions'
+            await fillCallback.call(parent, uid, { currentTarget: btn });
+            openModal(modalId, 'update', uid);
+        }
+    } else if (modalId) {
+        openModal(modalId, 'create');
+    }
+});
+
+function openModal(modalId, mode = 'create', uid = "") {
     const modal = document.getElementById(modalId);
+    if (!modal) return;
+
     const footer_modal = modal.querySelector('.modal-footer');
-    if (!orderId) {
-        // Abre o modal de criação
-        modal.classList.add('active');
+
+    // Limpeza de estado
+    modal.dataset.uid = uid;
+    footer_modal.classList.remove('create', 'update');
+
+    if (mode === 'create') {
+        modal.dataset.originalData = "";
+        modal.querySelectorAll('input').forEach(i => i.value = "");
+        modal.querySelectorAll('textarea').forEach(i => i.value = "");
+        modal.querySelectorAll('.img-preview').forEach(img => img.style.display = 'none');
         footer_modal.classList.add('create');
     } else {
-        // Abre o modal de edição
-        modal.classList.add('active');
         footer_modal.classList.add('update');
     }
+
+    modal.classList.add('active');
 }
 
 function closeModal() {
@@ -232,6 +260,34 @@ document.addEventListener('keydown', function (event) {
         closeModal();
     }
 });
+
+
+function previewImage(source, targetId) {
+    const preview = document.getElementById(targetId);
+
+    if (typeof source === 'string') {
+        if (source && source.trim() !== "") {
+            preview.src = source;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+        return;
+    }
+
+    const file = source.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// ESTA LINHA É A CHAVE: Torna a função visível para o HTML
+window.previewImage = previewImage;
 
 document.addEventListener('DOMContentLoaded', () => {
     // ABRE E FECHA O MENU
@@ -282,3 +338,30 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.theme-toggle').forEach(btn => btn.innerHTML = localStorage.getItem('click-laser-theme') === 'dark' ? "<i class='bi bi-moon'></i>" : "<i class='bi bi-sun'></i>");
 
 });
+
+
+
+const ui = {
+    toggleLoader: (btn, state = 'start') => {
+        if (!btn) return;
+
+        if (state === 'start') {
+            btn.dataset.oldHtml = btn.innerHTML; // Salva o ícone original (o pincel)
+            btn.classList.add("active");
+            btn.disabled = true; // Evita múltiplos cliques
+        }
+        else if (state === 'success' || state === 'fail') {
+            btn.classList.add(state);
+            btn.innerHTML = state === 'success'
+                ? `<i class="text_success bi bi-check"></i>`
+                : `<i class="text_fail bi bi-exclamation-circle"></i>`;
+
+            // Retorna ao normal após um tempo
+            setTimeout(() => {
+                btn.classList.remove("active", "success", "fail");
+                btn.innerHTML = btn.dataset.oldHtml;
+                btn.disabled = false;
+            }, 1500);
+        }
+    }
+};

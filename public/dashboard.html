@@ -456,7 +456,7 @@
                     <button class="btn-import btn-blue" onclick="exportarRelatorio()">
                         <i class="bi bi-download"></i> Exportar Planilha
                     </button>
-                    <button class="btn-import" onclick="openModal('modal-product')">
+                    <button class="btn-import btn-for-modal" data-modal="modal-product">
                         <i class="bi bi-plus-circle"></i> Novo Produto
                     </button>
                 </div>
@@ -465,7 +465,7 @@
             <div class="filter-bar-inventory">
                 <div class="search-box">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="filter-stock-name" placeholder="Buscar por produto..."
+                    <input type="text" id="filter-stock-title" placeholder="Buscar por produto..."
                         onkeyup="filterStock()">
                 </div>
 
@@ -723,7 +723,7 @@
                 <div class="form-line">
                     <div class="form-group">
                         <label for="stock-color">Cor:</label>
-                        <input type="text" id="stock-name">
+                        <input type="text" id="stock-color">
                     </div>
                     <div class="form-group">
                         <label for="stock-description">Descrição:</label>
@@ -753,27 +753,30 @@
 
                 <div class="form-line">
                     <div class="form-group">
-                        <label for="stock-image-sale">Imagem de venda:</label>
-                        <input type="image" id="stock-image">
+                        <label for="stock-image">Imagem de venda:</label>
+                        <input type="file" id="stock-image" onchange="previewImage(this, 'preview-sale')">
+                        <img id="preview-sale" class="img-preview" src=""
+                            style="display:none; width: 80px; margin-top: 5px;">
                     </div>
                     <div class="form-group">
                         <label for="stock-image-creator">Imagem do criador:</label>
-                        <input type="image" id="stock-image-creator">
+                        <input type="file" id="stock-image-creator" onchange="previewImage(this, 'preview-creator')">
+                        <img id="preview-creator" class="img-preview" src=""
+                            style="display:none; width: 80px; margin-top: 5px;">
                     </div>
                 </div>
 
             </div>
             <div class="modal-footer">
-                <button class="btn_modal create" onclick="saveProduct()">Salvar</button>
-                <button class="btn_modal update" onclick="deleteProduct()">Deletar</button>
-                <button class="btn_modal update" onclick="updateProduct()">Salvar</button>
+                <button type="button" class="btn_modal create" onclick="actions.saveProduct()">Salvar</button>
+                <button type="button" class="btn_modal update" onclick="deleteProduct()">Deletar</button>
+                <button type="button" class="btn_modal update" onclick="updateProduct()">Salvar</button>
             </div>
         </div>
     </div>
 
+    <script src="./script/dashboard_main.js"></script>
+    <script src="./script/dashboard_ui.js"></script>
 </body>
-
-<script src="./script/dashboard_main.js"></script>
-<script src="./script/dashboard_ui.js"></script>
 
 </html>

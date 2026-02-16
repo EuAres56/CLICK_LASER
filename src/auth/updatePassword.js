@@ -1,12 +1,11 @@
-import verifyAuth from "./verifyAuth";
+import verifyAuth from "./verifyAuth.js";
 export default async function updatePassword(request, env) {
     try {
         const url = new URL(request.url);
         const url_pathname = url.pathname;
 
         if (url_pathname.startsWith("/api/private")) {
-            const clonedRequest = request.clone();
-            const { newPassword } = await clonedRequest.json();
+            const { newPassword } = await request.json();
 
             if (!newPassword) {
                 return new Response(JSON.stringify({ error: "Nova senha inválida" }), {
@@ -50,16 +49,14 @@ export default async function updatePassword(request, env) {
                 })
             });
 
-            const data = response.json();
+            const data = await response.json();
             if (!response.ok) {
-                console.log("Falha da atualização de senha:", data);
                 return new Response(
                     JSON.stringify({ error: data?.error || "Erro ao atualizar senha" }),
                     { status: response.status, headers: { "Content-Type": "application/json" } }
                 );
             }
 
-            console.log("Senha atualizada com sucesso:", data);
             return new Response(
                 JSON.stringify({ success: true, message: "Senha atualizada com sucesso" }),
                 { status: 200, headers: { "Content-Type": "application/json" } }
