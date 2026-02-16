@@ -14,6 +14,7 @@ wrangler-debug.log
 # --- DEPENDÊNCIAS (NODE.JS) ---
 # Mesmo que você use poucos pacotes, o Node cria essas pastas
 node_modules/
+node_modules/.mf/cf.json
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
