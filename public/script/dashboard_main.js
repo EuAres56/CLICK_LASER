@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     const actions = {
+        // Fetch wrapper
         async apiFetch(endpoint, method, body = null) {
             const headers = {
                 'Authorization': `Bearer ${auth_token}`,
@@ -93,6 +94,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             return response;
         },
+
+        // =========================================================
+        // Jobs
         async searchJobs(date_filter = null) {
             if (!date_filter) {
                 const today = new Date();
@@ -113,6 +117,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             renders.reder_grid_jobs(data);
         },
 
+        // =========================================================
+        // Sales
         async loadSales(start, end) {
 
             // Chama o endpoint através do apiFetch para manter o padrão de segurança
@@ -127,6 +133,71 @@ document.addEventListener('DOMContentLoaded', async () => {
             renders.render_sales_table(data);
         },
 
+        async saveSale() {
+            // 1. Coleta os dados (incluindo imagens processadas como Blobs)
+            const rawData = await utils.dataColectorSale();
+
+            // Interrompe se a validação do coletor retornar null
+            if (!rawData) return;
+
+            const formData = new FormData();
+
+            // 2. Mapeia os itens (jobs) para separar arquivos do objeto JSON
+            const sanitizedJobs = rawData.jobs.map((job, index) => {
+                // Se houver uma imagem de referência em formato Blob
+                if (job.reference_image instanceof Blob) {
+                    // Anexa o binário ao FormData com uma chave única
+                    // O servidor buscará por 'file_job_0', 'file_job_1', etc.
+                    formData.append(`file_job_${index}`, job.reference_image, `reference_${index}.webp`);
+                }
+
+                // Removemos o campo 'reference_image' do objeto que irá para o JSON
+                // para evitar erros de serialização de objetos binários
+                const { reference_image, ...textData } = job;
+                return textData;
+            });
+
+            // 3. Estrutura o payload textual final
+            const payload = {
+                client_uid: rawData.client_uid,
+                client_name: rawData.client_name,
+                client_address: rawData.client_address,
+                client_phone: rawData.client_phone,
+                order_origin: rawData.order_origin,
+                order_status: rawData.order_status,
+                order_priority: rawData.order_priority,
+                order_delivery_date: rawData.order_delivery_date,
+                jobs: sanitizedJobs
+            };
+
+            // 4. Adiciona o payload JSON ao FormData
+            formData.append('payload', JSON.stringify(payload));
+
+            try {
+                // 5. Envia os dados através do fetch global preparado para FormData
+                const response = await this.apiFetch('orders/create', 'POST', formData);
+
+                if (response && response.ok) {
+                    const result = await response.json();
+                    console.log("Success:", result);
+                    alert(`Pedido #${result.order_id} registrado com sucesso!`);
+
+                    // Sugestão: Recarregar página ou fechar modal aqui
+                    // window.location.reload();
+                } else {
+                    const errorResponse = await response?.json();
+                    console.error("Save Error:", errorResponse);
+                    alert(`Erro ao salvar: ${errorResponse?.error || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                console.error("Network/Runtime Error:", error);
+                alert("Falha crítica ao tentar salvar o pedido.");
+            }
+        },
+
+
+        // =========================================================
+        // Products
         async loadProducts() {
             const response = await this.apiFetch(`dashboard/products/load`, 'GET');
             if (!response || !response.ok) {
@@ -210,15 +281,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         async updateProduct(formData) {
             try {
-                const response = await fetch(`/dashboard/products/update`, {
-                    method: 'PATCH',
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                    body: formData // Envia o FormData diretamente
-                });
+                const response = await this.apiFetch(`dashboard/products/update`, 'PATCH', formData);
                 return await response.json();
             } catch (err) {
                 return { error: err.message };
             }
+        },
+
+        async updateUnitStock(productUid, action) {
+            try {
+                if (!productUid || !action) throw new Error('Erro ao atualizar estoque');
+
+                const response = await this.apiFetch(`dashboard/products/stock-adjust`, 'POST', { uid: productUid, action });
+
+                const btn = document.getElementById(`productRow_${productUid}`).querySelector(`.${action}`)
+
+                if (!response || !response.ok) throw new Error('Erro ao atualizar estoque');
+                const data = await response.json();
+                renders.render_update_row_product(data.new_row_html, `productRow_${productUid}`, btn, response.ok);
+            } catch (err) {
+                console.error(err);
+            }
+
         }
 
     }
@@ -313,6 +397,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 pCreator.style.display = 'none';
             }
+        },
+
+        async render_update_row_product(data, row_id, btn, result = false) {
+            const row = document.getElementById(row_id);
+            if (!row) return;
+
+            window.resLoading(btn, result, function () { row.outerHTML = data });
         }
     }
 
@@ -367,6 +458,120 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
                 reader.onerror = (err) => reject(err);
             });
+        },
+
+        async dataColectorSale() { // Certifique-se de que é async
+            const modal = document.getElementById('modal-sale');
+
+            // 1. Dados Globais do Pedido
+            const clientNameInput = modal.querySelector('#sale-client-name');
+            const client_uid = clientNameInput.dataset.uid || "";
+            const client_name = clientNameInput.value;
+            const order_origin = modal.querySelector('#sale-origin').value;
+            const client_phone = modal.querySelector('#sale-client-phone').value;
+            const client_address = modal.querySelector('#sale-client-address').value;
+            const order_status = modal.querySelector('#sale-status').value || "0";
+            const order_priority = modal.querySelector('#sale-priority').value || "1";
+            const order_delivery_date = modal.querySelector('#sale-delivery-date').value;
+
+            // Validações Globais
+            if (!client_name || !order_origin || !order_delivery_date) {
+                alert("Preencha os campos obrigatórios: Nome, Origem e Data de Entrega!");
+                return null;
+            }
+
+            let items = [];
+            const cards = modal.querySelectorAll('.form-card');
+
+            // 2. Leitura Síncrona/Sequencial de cada Card
+            // Usamos for...of para que o await processImage funcione corretamente
+            for (const [index, card] of cards.entries()) {
+
+                const itemNumber = card.querySelector('.item-number strong')?.innerText || (index + 1);
+
+                // Dados do Produto
+                const product = card.querySelector('.sale-list-products input:checked');
+                if (!product) {
+                    alert(`Selecione um produto para o Item ${itemNumber}`);
+                    return null; // Interrompe tudo e retorna null
+                }
+
+                const product_uid = product.getAttribute('data-productUid') || "";
+                const product_title = product.getAttribute('data-productTitle') || "";
+                const product_color = product.getAttribute('data-productColor') || "";
+
+                // Inicializa variáveis
+                let text_title = "";
+                let text_font = "";
+                let figure_name = "";
+                let figure_url = "";
+                let reference_image = null; // Iniciamos como null
+                let art_json = "";
+                let observation = "";
+
+                const isCreatorMode = card.querySelector('.toggle-creator-mode').checked;
+
+                if (isCreatorMode) {
+                    art_json = card.querySelector('.json-end-art')?.value;
+                    if (!art_json) {
+                        alert(`A arte customizada do item ${itemNumber} não foi finalizada!`);
+                        return null;
+                    }
+                } else {
+                    text_title = card.querySelector('.sale-text-input').value;
+                    text_font = card.querySelector('.sale-font-select').value;
+
+                    const figureInput = card.querySelector('.sale-list-figures input:checked');
+                    if (figureInput) {
+                        figure_name = figureInput.getAttribute('data-figureName') || figureInput.value;
+                        figure_url = figureInput.getAttribute('data-figureUrl') || "";
+                    }
+
+                    if (!text_title && !figure_url) {
+                        alert(`O item ${itemNumber} precisa de um texto ou figura definida!`);
+                        return null;
+                    }
+
+                    // PROCESSAMENTO DE IMAGEM (Aqui o await é vital)
+                    const fileField = card.querySelector('.sale-image-reference');
+                    if (fileField && fileField.files[0]) {
+                        try {
+                            // Espera converter a imagem para WebP antes de prosseguir para o próximo card
+                            reference_image = await utils.processImage(fileField.files[0], 2);
+                        } catch (err) {
+                            alert(`Erro na imagem do item ${itemNumber}: ${err}`);
+                            return null;
+                        }
+                    }
+                    observation = card.querySelector('.sale-observation')?.value || "";
+                }
+
+                items.push({
+                    product_uid,
+                    product_title,
+                    product_color,
+                    text_title,
+                    text_font,
+                    figure_name,
+                    figure_url,
+                    reference_image, // Agora é um Blob ou null
+                    art_json,
+                    observation
+                });
+            }
+
+            // 3. Retorno do objeto completo
+            return {
+                client_uid,
+                client_name,
+                client_address,
+                client_phone,
+                order_origin,
+                order_status,
+                order_priority,
+                order_delivery_date,
+                jobs: items
+            };
         }
     }
     window.renders = renders; // Expondo os renders para o escopo global

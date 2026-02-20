@@ -10,8 +10,15 @@ export default async function tokenRefresh(uid, env) {
         };
     }
 
-    const newExpiration =
-        new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const timeStampNow = new Date();
+    // agora + 10 minutos
+    const dateExpires = new Date(timeStampNow.getTime() + 10 * 60 * 1000);
+
+    const newExpiration = dateExpires.toLocaleString("sv-SE", {
+        timeZone: "America/Sao_Paulo"
+    }).replace(" ", "T") + ".000Z";
+
+
 
     const supabaseUrl =
         `${env.SUPABASE_URL}/rest/v1/auth_staff?uid=eq.${encodeURIComponent(uid)}`;

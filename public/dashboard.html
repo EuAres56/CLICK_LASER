@@ -85,11 +85,12 @@
 
             </div>
             <div class="header-user">
-                <div class="user-notifications btn-dialog-show"
+                <div class="btn-local circle user-notifications btn-dialog-show"
                     onclick="alternateDialogsBox('box-dialog-notifications')">
                     <i class="bi bi-bell"></i>
                 </div>
-                <div class="user-avatar btn-dialog-show" onclick="alternateDialogsBox('box-dialog-user')">
+                <div class="btn-local circle user-avatar btn-dialog-show"
+                    onclick="alternateDialogsBox('box-dialog-user')">
                     <span>A</span>
                 </div>
             </div>
@@ -98,11 +99,11 @@
     </header>
     <aside class="main-sidebar">
         <ul class="nav-menu">
-            <li class="btn-nav nav-item" onclick="tab(this, 's-gravacoes')">Gravações</li>
-            <li class="btn-nav nav-item" onclick="tab(this, 's-vendas')">Vendas</li>
-            <li class="btn-nav nav-item" onclick="tab(this, 's-criador')">Criador</li>
-            <li class="btn-nav nav-item" onclick="tab(this, 's-estoque')">Estoque</li>
-            <li class="btn-nav nav-item" onclick="tab(this, 's-equipe')">Equipe</li>
+            <li class="btn-local retangle btn-nav nav-item" onclick="tab(this, 's-gravacoes')">Gravações</li>
+            <li class="btn-local retangle btn-nav nav-item" onclick="tab(this, 's-vendas')">Vendas</li>
+            <li class="btn-local retangle btn-nav nav-item" onclick="tab(this, 's-criador')">Criador</li>
+            <li class="btn-local retangle btn-nav nav-item" onclick="tab(this, 's-estoque')">Estoque</li>
+            <li class="btn-local retangle btn-nav nav-item" onclick="tab(this, 's-equipe')">Equipe</li>
         </ul>
     </aside>
     <div class="dialog-box" id="box-dialog-notifications">
@@ -120,7 +121,7 @@
     <div class="dialog-box" id="box-dialog-user">
         <div class="dialog-box-header">
             <span>Perfil:</span>
-            <button class="btn-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+            <button class="btn-close""><i class=" bi bi-x-lg"></i></button>
         </div>
         <div class="user-info">
             <div class="user-avatar">
@@ -131,8 +132,8 @@
                 <small title="Cargo">Admin</small>
             </div>
             <div class="user-actions">
-                <button class="btn-dash-h" id="btn-user-settings">Editar Perfil</button>
-                <button class="btn-dash-h" id="btn-user-logout">Sair</button>
+                <button class="btn-local retangle" id="btn-user-settings">Editar Perfil</button>
+                <button class="btn-local retangle" id="btn-user-logout">Fazer Logout</button>
             </div>
         </div>
     </div>
@@ -177,22 +178,7 @@
 
             <div class="dashboard-lower-grid" style="grid-template-columns: 1fr;">
                 <div class="dash-card">
-                    <div class="card-header">
-                        <h3>Últimas Movimentações</h3>
-                        <button class="btn-text" onclick="showSection('s-vendas')">Ver histórico completo</button>
-                    </div>
-                    <div class="recent-list">
-                        <div class="recent-item">
-                            <div class="recent-info">
-                                <strong>#1025</strong>
-                                <span>Maria Oliveira — 2x Copos Stanley</span>
-                            </div>
-                            <div class="recent-meta">
-                                <span class="status-pill bg-warning">Aguardando</span>
-                                <small class="text-muted">Há 5 min</small>
-                            </div>
-                        </div>
-                    </div>
+                    <p>Sem gravações pendentes</p>
                 </div>
             </div>
         </section>
@@ -253,7 +239,7 @@
                     <p class="text-muted">Controle o fluxo desde o contato inicial até o envio</p>
                 </div>
                 <div class="import-buttons">
-                    <button class="btn-import" onclick="openModalNovaVenda()">
+                    <button class="btn-local retangle btn-import btn-for-modal" data-modal="modal-sale">
                         <i class="bi bi-cart-plus"></i> Novo Pedido
                     </button>
                 </div>
@@ -277,7 +263,8 @@
                         <input type="date" id="date-start">
                         <span>até</span>
                         <input type="date" id="date-end">
-                        <button class="btn-import btn-blue" style="padding: 5px 10px;" onclick="applyCustomDates()">
+                        <button class="btn-local retangle btn-import btn-blue" style="padding: 5px 10px;"
+                            onclick="applyCustomDates()">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
@@ -327,13 +314,15 @@
                     <p class="text-muted">Gerencie suas fontes e vetores para gravação</p>
                 </div>
                 <div class="import-buttons">
-                    <button class="btn-import" onclick="document.getElementById('input-font').click()">
+                    <button class="btn-local retangle btn-import"
+                        onclick="document.getElementById('input-font').click()">
                         <i class="bi bi-file-earmark-font"></i> Importar Fonte
                     </button>
                     <input type="file" id="input-font" accept=".ttf,.otf" hidden
                         onchange="handleFileImport(this, 'font')">
 
-                    <button class="btn-import btn-blue" onclick="document.getElementById('input-vector').click()">
+                    <button class="btn-local retangle btn-import btn-blue"
+                        onclick="document.getElementById('input-vector').click()">
                         <i class="bi bi-vector-pen"></i> Importar Vetor/Imagem
                     </button>
                     <input type="file" id="input-vector" accept=".svg,.png,.webp" hidden
@@ -362,8 +351,8 @@
                                     <span>Poppins</span>
                                 </div>
                                 <div class="actions">
-                                    <button class="btn-icon" title="Editar"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn-icon text-danger" title="Deletar"><i
+                                    <button class="btn-req square" title="Editar"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-req square text-danger" title="Deletar"><i
                                             class="bi bi-trash"></i></button>
                                 </div>
                             </div>
@@ -372,8 +361,8 @@
                                     <span>Roboto</span>
                                 </div>
                                 <div class="actions">
-                                    <button class="btn-icon"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn-icon text-danger"><i class="bi bi-trash"></i></button>
+                                    <button class="btn-req square"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-req square text-danger"><i class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -419,8 +408,8 @@
                                     <small class="badge-category">Logos</small>
                                 </div>
                                 <div class="actions">
-                                    <button class="btn-icon"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn-icon text-danger"><i class="bi bi-trash"></i></button>
+                                    <button class="btn-req square"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-req square text-danger"><i class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                             <div class="asset-row" data-name="Brasão Real" data-category="Brasões"
@@ -430,15 +419,15 @@
                                     <small class="badge-category">Brasões</small>
                                 </div>
                                 <div class="actions">
-                                    <button class="btn-icon"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn-icon text-danger"><i class="bi bi-trash"></i></button>
+                                    <button class="btn-req square"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn-req square text-danger"><i class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="asset-viewer image-checkered">
                             <div class="viewer-label">Visualização do Vetor</div>
-                            <img id="image-preview-display" src="./assets/logo.svg" alt="Preview">
+                            <img id="image-preview-display" src="" alt="Preview">
                         </div>
                     </div>
                 </div>
@@ -453,10 +442,10 @@
                     <p class="text-muted">Gestão de insumos e produtos para gravação</p>
                 </div>
                 <div class="import-buttons box-h">
-                    <button class="btn-import btn-blue" onclick="exportarRelatorio()">
+                    <button class="btn-local retangle btn-import btn-blue" onclick="exportarRelatorio()">
                         <i class="bi bi-download"></i> Exportar Planilha
                     </button>
-                    <button class="btn-import btn-for-modal" data-modal="modal-product">
+                    <button class="btn-local retangle btn-import btn-for-modal" data-modal="modal-product">
                         <i class="bi bi-plus-circle"></i> Novo Produto
                     </button>
                 </div>
@@ -504,62 +493,7 @@
                         </tr>
                     </thead>
                     <tbody id="stock-table-body">
-                        <tr data-name="Copo Stanley 473ml" data-type="Copo" data-color="Preto">
-                            <td>#001</td>
-                            <td><strong>Copo Stanley 473ml</strong></td>
-                            <td>Copo</td>
-                            <td><span class="dot-color" style="background-color: #000;"></span> Preto</td>
-                            <td><span class="stock-badge">42 un</span></td>
-                            <td>10 un</td>
-                            <td><span class="status-pill bg-success">Em Dia</span></td>
-                            <td>
-                                <div class="actions-cell">
-                                    <button class="btn-table" title="Entrada" onclick="updateStock(1, 'in')"><i
-                                            class="bi bi-plus-lg"></i></button>
-                                    <button class="btn-table" title="Saída" onclick="updateStock(1, 'out')"><i
-                                            class="bi bi-dash-lg"></i></button>
-                                    <button class="btn-table" title="Editar"><i class="bi bi-pencil"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr data-name="Garrafa Térmica 500ml" data-type="Garrafa" data-color="Rosa">
-                            <td>#002</td>
-                            <td><strong>Garrafa Térmica 500ml</strong></td>
-                            <td>Garrafa</td>
-                            <td><span class="dot-color" style="background-color: #ff69b4;"></span> Rosa</td>
-                            <td><span class="stock-badge warning">04 un</span></td>
-                            <td>05 un</td>
-                            <td><span class="status-pill bg-warning">Baixo</span></td>
-                            <td>
-                                <div class="actions-cell">
-                                    <button class="btn-table" onclick="updateStock(2, 'in')"><i
-                                            class="bi bi-plus-lg"></i></button>
-                                    <button class="btn-table" onclick="updateStock(2, 'out')"><i
-                                            class="bi bi-dash-lg"></i></button>
-                                    <button class="btn-table"><i class="bi bi-pencil"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr data-name="Caneca Inox" data-type="Caneca" data-color="Azul">
-                            <td>#003</td>
-                            <td><strong>Caneca Inox</strong></td>
-                            <td>Caneca</td>
-                            <td><span class="dot-color" style="background-color: #007bff;"></span> Azul</td>
-                            <td><span class="stock-badge danger">00 un</span></td>
-                            <td>03 un</td>
-                            <td><span class="status-pill bg-danger">Esgotado</span></td>
-                            <td>
-                                <div class="actions-cell">
-                                    <button class="btn-table" onclick="updateStock(3, 'in')"><i
-                                            class="bi bi-plus-lg"></i></button>
-                                    <button class="btn-table" onclick="updateStock(3, 'out')"><i
-                                            class="bi bi-dash-lg"></i></button>
-                                    <button class="btn-table"><i class="bi bi-pencil"></i></button>
-                                </div>
-                            </td>
-                        </tr>
+                        <tr>Sem produtos cadastrados</tr>
                     </tbody>
                 </table>
             </div>
@@ -572,7 +506,7 @@
                     <p class="text-muted">Controle de acessos e operadores de produção</p>
                 </div>
                 <div class="import-buttons">
-                    <button class="btn-import" onclick="openModalNovoFuncionario()">
+                    <button class="btn-local retangle btn-import" onclick="openModalNovoFuncionario()">
                         <i class="bi bi-person-plus"></i> Adicionar Membro
                     </button>
                 </div>
@@ -707,7 +641,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2>Produto</h2>
-                <button class="close-modal" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+                <button class="btn-local square close-modal" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-line">
@@ -771,6 +705,206 @@
                 <button type="button" class="btn_modal create" onclick="actions.saveProduct()">Salvar</button>
                 <button type="button" class="btn_modal update" onclick="deleteProduct()">Deletar</button>
                 <button type="button" class="btn_modal update" onclick="updateProduct()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-sale" data-uid="">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Pedido</h2>
+                <button class="btn-local square close-modal" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="sale-client-name">Nome do cliente:</label>
+                        <input type="text" id="sale-client-name" required placeholder="Digite o nome do cliente">
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-name">Origem do pedido:</label>
+                        <select name="origin" id="sale-origin" required>
+                            <option value="">Selecione uma opção</option>
+                            <option value="0">Presencial</option>
+                            <option value="1">Anuncio</option>
+                            <option value="2">Instagram</option>
+                            <option value="3">Indicação</option>
+                            <option value="4">Redirecionado de outro pedido</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="sale-client-phone">Telefone do cliente:</label>
+                        <input type="text" id="sale-client-phone" required placeholder="Digite o telefone do cliente">
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-name">Endereço do cliente:</label>
+                        <input type="text" id="sale-client-address" required placeholder="Digite o endereço do cliente">
+                    </div>
+                </div>
+                <div class="form-line">
+                    <div class="form-group">
+                        <label for="sale-status">Situação do pedido:</label>
+                        <select name="status" id="sale-status">
+                            <option value="">Selecione uma opção</option>
+                            <option value="0">Aguardando Confirmação</option>
+                            <option value="1">Aprovado</option>
+                            <option value="2">Em Produção</option>
+                            <option value="3">Concluido</option>
+                            <option value="99">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-priority">Prioridade do pedido:</label>
+                        <select name="priority" id="sale-priority">
+                            <option value="">Selecione uma opção</option>
+                            <option value="0">Baixa</option>
+                            <option value="1">Normal</option>
+                            <option value="2">Alta</option>
+                            <option value="3">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-delivery-date">Data de entrega:</label>
+                        <input type="date" id="sale-delivery-date">
+                    </div>
+                </div>
+                <h3>Monte os itens do pedido:</h3>
+                <div class="form-box-list">
+
+                    <div class="form-card">
+                        <div class="card-header">
+                            <div class="cad-header-left">
+                                <span><strong>Item_</strong></span>
+                                <span class="item-number"><strong>01</strong></span>
+                            </div>
+                            <div class="card-header-actions">
+                                <button class="btn-local square"><i class="bi bi-dash"></i></button>
+                                <button class="btn-local square"><i class="bi bi-copy"></i></button>
+                                <button class="btn-local square"><i class="bi bi-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-line">
+                                <div class="form-group form-group-border">
+                                    <div class="form-line space-between">
+                                        <label>Item:</label>
+                                        <input class="search-box form-control sale-item-search" type="text"
+                                            placeholder="Buscar item...">
+                                    </div>
+                                    <div class="custom-select-list sale-list-products">
+                                        <label class="select-item">
+                                            <input type="radio" name="item_selection_01" value="garrafa_500_preta"
+                                                data-productTitle="GARRAFA 500ML PRETA">
+                                            <span class="item-content">GARRAFA 500ML PRETA</span>
+                                        </label>
+                                        <label class="select-item">
+                                            <input type="radio" name="item_selection_02" value="garrafa_500_azul"
+                                                data-productTitle="GARRAFA 500ML AZUL">
+                                            <span class="item-content">GARRAFA 500ML AZUL</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group-border container-criador-mix">
+                                <div class="form-line">
+                                    <div class="section-header-toggle">
+                                        <label class="switch-label">Modo Criador Profissional</label>
+                                        <label class="switch">
+                                            <input type="checkbox" class="toggle-creator-mode"
+                                                onchange="alternarModoCriador(this)">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-line">
+                                    <div class="mode-default-fields">
+                                        <div class="form-group">
+                                            <div class="form-line">
+                                                <div class="form-group">
+                                                    <label>Texto:</label>
+                                                    <input type="text" class="sale-text-input">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Fonte:</label>
+                                                    <select class="sale-font-select">
+                                                        <option value="">Selecione uma fonte</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Exemplo:</label>
+                                                <div class="font-example sale-font-example">
+                                                    <span>Sem texto aplicado</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group form-group-border">
+                                            <div class="form-line space-between">
+                                                <label>Figura:</label>
+                                                <input class="search-box form-control sale-fig-search" type="text"
+                                                    placeholder="Buscar figura...">
+                                            </div>
+                                            <div class="custom-select-list sale-list-figures">
+                                                <label class="select-item">
+                                                    <input type="radio" name="fig_selection_01" value="cachorrinho_01">
+                                                    <span class="item-content">CACHORRINHO 01</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-line form-group-border">
+                                            <div class="form-group">
+                                                <label>Imagem de referência:</label>
+                                                <img class="img-preview preview-img-reference" src="">
+                                                <input type="file" class="sale-image-reference"
+                                                    onchange="previewImage(this, 'preview-img-reference')">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Observação:</label>
+                                                <input type="text" class="sale-observation">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mode-creator-fields d-none">
+                                        <div class="art-status-container form-group">
+                                            <input type="hidden" class="json-end-art">
+
+                                            <div class="art-empty-state">
+                                                <p>Nenhuma arte customizada criada.</p>
+                                                <button type="button" class="btn-create-art"
+                                                    onclick="abrirCriadorStaff(this)">
+                                                    <i class="bi bi-palette"></i> Abrir Criador de Arte
+                                                </button>
+                                            </div>
+
+                                            <div class="art-active-state d-none">
+                                                <div class="art-badge"><i class="bi bi-check-seal-fill"></i> Arte Pronta
+                                                </div>
+                                                <div class="art-actions-row">
+                                                    <button type="button" class="btn-edit-art"
+                                                        onclick="abrirCriadorStaff(this)">Editar</button>
+                                                    <button type="button" class="btn-delete-art"
+                                                        onclick="excluirArteCustom(this)">Excluir</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn_modal create" onclick="actions.saveSale()">Salvar</button>
+                <button type="button" class="btn_modal update" onclick="deleteSale()">Deletar</button>
+                <button type="button" class="btn_modal update" onclick="updateSale()">Salvar</button>
             </div>
         </div>
     </div>

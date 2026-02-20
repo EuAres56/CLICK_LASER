@@ -203,10 +203,43 @@ function changeStatus(pedidoId, novoStatus) {
 }
 
 
+document.addEventListener('click', async e => {
+    const btn = e.target;
+    if (!btn) return;
+    if (!btn.classList.contains('btn-req')) return;
+    console.log(btn);
+    btn.classList.add('loading');
+    document.querySelectorAll(['button', 'a', 'input', 'select', '.btn-local', '.btn-req']).forEach(bt => bt.classList.add('disabled'));
+
+});
+
+
+function resLoading(btn = null, result = false, callback = null) {
+    if (!btn) return;
+
+    const last_html = btn.innerHTML; // Nota: Veja a observação abaixo sobre o escopo
+    btn.classList.add(result ? 'success' : 'fail');
+    btn.innerHTML = result ? `<i class="bi bi-check"></i>` : `<i class="bi bi-x"></i>`;
+
+    document.querySelectorAll(['button', 'a', 'input', 'select', '.btn-local', '.btn-req']).forEach(bt => bt.classList.remove('disabled'));
+
+    setTimeout(() => {
+        btn.classList.remove('loading', 'success', 'fail'); // Adicionei 'fail' para limpar tudo
+        btn.innerHTML = last_html;
+
+        setTimeout(() => {
+            // Executa o callback se ele existir e for uma função
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+        }, 300);
+    }, 1200);
+}
+
 // Delegue o evento para o document ou use um loop corrigido
 document.addEventListener('click', async e => {
-    const btn = e.target.closest('.btn-for-modal');
-    if (!btn) return;
+    const btn = e.target;
+    if (!btn || !btn.classList.contains('btn-for-modal')) return;
 
     const uid = btn.dataset.uid;
     const modalId = btn.dataset.modal;
@@ -221,10 +254,14 @@ document.addEventListener('click', async e => {
         if (typeof fillCallback === 'function') {
             // .call(parent, ...) força o 'this' a ser o objeto 'actions'
             await fillCallback.call(parent, uid, { currentTarget: btn });
+            resLoading(btn, true);
             openModal(modalId, 'update', uid);
         }
     } else if (modalId) {
+        resLoading(btn, true);
         openModal(modalId, 'create');
+    } else {
+        resLoading(btn, false);
     }
 });
 
@@ -365,3 +402,151 @@ const ui = {
         }
     }
 };
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.form-box-list');
+
+    container.addEventListener('click', (e) => {
+        const btn = e.target;
+
+        // Filtra apenas cliques nos botões de ação
+        if (!btn.classList.contains('btn-local')) return;
+
+        const cardAtual = btn.closest('.form-card');
+        const icone = btn.querySelector('i');
+
+        if (icone.classList.contains('bi-plus')) {
+            const novo = criarCardLimpo(container);
+            inserirEPresentar(cardAtual, novo);
+        }
+        else if (icone.classList.contains('bi-copy')) {
+            const copia = cardAtual.cloneNode(true);
+            inserirEPresentar(cardAtual, copia);
+        }
+        else if (icone.classList.contains('bi-dash')) {
+            removerComAnimacao(cardAtual, container);
+        }
+    });
+
+    // Função para clonar o primeiro card e limpar seus valores
+    function criarCardLimpo(pai) {
+        const modelo = pai.querySelector('.form-card');
+        const novo = modelo.cloneNode(true);
+
+        novo.querySelectorAll('input, select').forEach(el => el.value = '');
+        novo.querySelectorAll('.img-preview').forEach(img => img.src = '');
+
+        const exampleText = novo.querySelector('.font-example span');
+        if (exampleText) exampleText.innerText = 'Sem texto aplicado';
+
+        return novo;
+    }
+
+    // Gerencia a inserção, animação, scroll e foco
+    function inserirEPresentar(referencia, novo) {
+        novo.classList.add('card-anim-in');
+        referencia.after(novo);
+
+        atualizarIndices(container);
+
+        // O segredo está aqui: request + timeout para forçar a troca de foco
+        requestAnimationFrame(() => {
+            novo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            setTimeout(() => {
+                const primeiroInput = novo.querySelector('input, select, textarea');
+                if (primeiroInput) {
+                    primeiroInput.focus({ preventScroll: true });
+                    // preventScroll evita que o focus dê um "salto" conflitando com o scroll suave
+                }
+            }, 50); // Pequeno delay para garantir que o navegador soltou o foco anterior
+        });
+
+        setTimeout(() => novo.classList.remove('card-anim-in'), 400);
+    }
+
+    function removerComAnimacao(card, pai) {
+        const totalCards = pai.querySelectorAll('.form-card').length;
+        if (totalCards <= 1) return;
+
+        const cardAcima = card.previousElementSibling;
+        card.classList.add('card-anim-out');
+
+        card.addEventListener('animationend', () => {
+            card.remove();
+            atualizarIndices(pai);
+
+            if (cardAcima) {
+                cardAcima.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const inputAcima = cardAcima.querySelector('input');
+                if (inputAcima) inputAcima.focus();
+            }
+        }, { once: true });
+    }
+
+    function atualizarIndices(pai) {
+        const cards = pai.querySelectorAll('.form-card');
+        cards.forEach((card, index) => {
+            const spanNumero = card.querySelector('.cad-header-left span:nth-child(2) strong');
+            if (spanNumero) {
+                const num = (index + 1).toString().padStart(2, '0');
+                spanNumero.innerText = num;
+            }
+        });
+    }
+});
+
+
+function alternarModoCriador(toggle) {
+    const card = toggle.closest('.form-card');
+    const modoPadrao = card.querySelector('.mode-default-fields');
+    const modoCriador = card.querySelector('.mode-creator-fields');
+
+    if (toggle.checked) {
+        modoPadrao.classList.add('d-none');
+        modoCriador.classList.remove('d-none');
+    } else {
+        // Se o usuário desativar o modo criador, limpamos a arte customizada por segurança
+        excluirArteCustom(card.querySelector('.btn-delete-art'));
+        modoPadrao.classList.remove('d-none');
+        modoCriador.classList.add('d-none');
+    }
+}
+
+function abrirCriadorStaff(btn) {
+    const card = btn.closest('.form-card');
+    const inputJson = card.querySelector('.json-arte-final');
+    const jsonExistente = inputJson.value;
+
+    // Aqui você chama a função do seu criador passando o JSON existente (se houver)
+    // Exemplo: CriadorProfissional.abrir({
+    //    data: jsonExistente,
+    //    onSave: (novoJson) => salvarRetornoCriador(card, novoJson)
+    // });
+
+    // Simulação de retorno de arte:
+    const mockJson = '{"layers": [...]}';
+    salvarRetornoCriador(card, mockJson);
+}
+
+function salvarRetornoCriador(card, json) {
+    const inputJson = card.querySelector('.json-end-art');
+    const emptyState = card.querySelector('.art-empty-state');
+    const activeState = card.querySelector('.art-active-state');
+
+    inputJson.value = json;
+    emptyState.classList.add('d-none');
+    activeState.classList.remove('d-none');
+}
+
+function excluirArteCustom(btn) {
+    const card = btn.closest('.form-card');
+    const inputJson = card.querySelector('.json-end-art');
+    const emptyState = card.querySelector('.art-empty-state');
+    const activeState = card.querySelector('.art-active-state');
+
+    inputJson.value = "";
+    emptyState.classList.remove('d-none');
+    activeState.classList.add('d-none');
+}

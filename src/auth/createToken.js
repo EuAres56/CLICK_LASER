@@ -29,9 +29,16 @@ export default async function createToken(uid, env) {
     const token = generateToken();
     const tokenHash = await hashToken(token);
 
+    const timeStampNow = new Date();
     // agora + 10 minutos
-    const expiresAt =
-        new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const dateExpires = new Date(timeStampNow.getTime() + 10 * 60 * 1000);
+
+    const expiresAt = dateExpires.toLocaleString("sv-SE", {
+        timeZone: "America/Sao_Paulo"
+    }).replace(" ", "T") + ".000Z";
+    // Usamos 'sv-SE' pois ele retorna o formato YYYY-MM-DD nativamente
+
+    console.log(expiresAt);
 
     const supabaseUrl =
         `${env.SUPABASE_URL}/rest/v1/auth_staff?uid=eq.${encodeURIComponent(uid)}`;

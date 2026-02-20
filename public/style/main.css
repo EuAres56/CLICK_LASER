@@ -13,12 +13,56 @@
      padding: 0;
      box-sizing: border-box;
      font-family: 'Poppins', sans-serif;
+     /* Suaviza o comportamento do scroll ao navegar por âncoras ou JS */
+     scroll-behavior: smooth;
+     scrollbar-width: thin;
+     /* Deixa a barra fina */
+     scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+     /* Indicador e Fundo */
+ }
+
+ /* 1. Define a largura da barra (fina para ser discreta) */
+ ::-webkit-scrollbar {
+     width: 6px;
+     /* Largura vertical */
+     height: 6px;
+     /* Altura horizontal */
+ }
+
+ /* 2. O "Track" é o fundo da barra. Deixamos transparente para esconder */
+ ::-webkit-scrollbar-track {
+     background: transparent;
+ }
+
+ /* 3. O "Thumb" é o indicador de posição que você quer mostrar */
+ ::-webkit-scrollbar-thumb {
+     background-color: rgba(0, 0, 0, 0.2);
+     /* Cor suave (ajuste conforme seu tema) */
+     border-radius: 10px;
+     /* Deixa arredondado */
+     border: 2px solid transparent;
+     /* Cria um espaçamento visual se necessário */
+ }
+
+ /* 4. Efeito de hover: o indicador ganha destaque ao passar o mouse */
+ ::-webkit-scrollbar-thumb:hover {
+     background-color: rgba(0, 0, 0, 0.4);
  }
 
  body {
      background-color: var(--bg-light);
      color: var(--text-dark);
      overflow-x: hidden;
+ }
+
+ .space-between {
+     display: flex;
+     justify-content: space-between;
+ }
+
+ .create-disabled {
+     pointer-events: none;
+     cursor: not-allowed;
  }
 
  /* --- Header --- */

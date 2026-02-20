@@ -61,7 +61,13 @@ export default async function verifyAuth(request, env) {
     }
 
     const expiresAt = new Date(token_time).getTime();
-    const now = Date.now();
+
+    const timeStampNow = new Date();
+    const now = timeStampNow.toLocaleString("sv-SE", {
+        timeZone: "America/Sao_Paulo"
+    }).replace(" ", "T") + ".000Z";
+    // Usamos 'sv-SE' pois ele retorna o formato YYYY-MM-DD nativamente
+
 
     if (isNaN(expiresAt)) {
         return { ok: false, status: 401, error: 'Sessão corrompida' };
