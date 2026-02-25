@@ -1,70 +1,3 @@
-// Gerencia a troca do select de período
-function handlePeriodChange() {
-    const period = document.getElementById('filter-sale-period').value;
-    const customContainer = document.getElementById('custom-date-container');
-    const now = new Date();
-
-    if (period === 'custom') {
-        customContainer.style.display = 'flex';
-        return; // Espera o usuário clicar no botão de busca
-    } else {
-        customContainer.style.display = 'none';
-    }
-
-    let start, end;
-
-    if (period === 'this-month') {
-        // Primeiro dia do mês atual
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        // Ultimo dia do mês atual
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    } else if (period === 'last-month') {
-        // Primeiro dia do mês passado
-        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        // Último dia do mês passado
-        end = new Date(now.getFullYear(), now.getMonth(), 0);
-    }
-
-    // Chama a função da API que você já tem, formatando para YYYY-MM-DD
-    window.actions.loadSales(formatDate(start), formatDate(end));
-}
-
-// Valida e aplica datas manuais
-function applyCustomDates() {
-    const startVal = document.getElementById('date-start').value;
-    const endVal = document.getElementById('date-end').value;
-
-    if (!startVal || !endVal) {
-        alert("Por favor, selecione ambas as datas.");
-        return;
-    }
-
-    const dStart = new Date(startVal);
-    const dEnd = new Date(endVal);
-
-    if (dEnd < dStart) {
-        alert("A data final não pode ser menor que a data inicial.");
-        return;
-    }
-
-    // Validação de 6 meses (Regra da sua API)
-    const diffTime = Math.abs(dEnd - dStart);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 180) {
-        alert("O intervalo máximo permitido é de 6 meses.");
-        return;
-    }
-
-    window.actions.loadSales(startVal, endVal);
-}
-
-
-//  Auxiliar para formatar data em YYYY-MM-DD
-function formatDate(date) {
-    return date.toISOString().split('T')[0];
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     const auth_token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
     const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
@@ -87,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (body) config.body = (body instanceof FormData) ? body : JSON.stringify(body);
 
-            const response = await fetch(`/api/private/${endpoint}`, config);
+            const response = await fetch(`/api/private/dashboard/${endpoint}`, config);
             if (response.status === 401) {
                 window.location.href = '/dashLogin';
                 return null;
@@ -106,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 date_filter = `${yyyy}-${mm}-${dd}`;
             }
 
-            const response = await this.apiFetch(`dashboard/jobs/search?date=${date_filter}`, 'GET');
+            const response = await this.apiFetch(`jobs/search?date=${date_filter}`, 'GET');
 
             if (!response || !response.ok) {
                 console.error("Erro ao buscar jobs:", response ? await response.text() : "Sem resposta");
@@ -122,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         async loadSales(start, end) {
 
             // Chama o endpoint através do apiFetch para manter o padrão de segurança
-            const response = await this.apiFetch(`dashboard/orders/search?start=${start}&end=${end}`, 'GET');
+            const response = await this.apiFetch(`orders/search?start=${start}&end=${end}`, 'GET');
 
             if (!response || !response.ok) {
                 console.error("Erro ao buscar vendas");
@@ -179,7 +112,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response && response.ok) {
                     const result = await response.json();
-                    console.log("Success:", result);
                     alert(`Pedido #${result.order_id} registrado com sucesso!`);
 
                     // Sugestão: Recarregar página ou fechar modal aqui
@@ -195,11 +127,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
 
+        async searchSale(oder_uid) {
+            const response = await this.apiFetch(`orders/search-sale?uid=${oder_uid}`, 'GET');
+
+            if (!response || !response.ok) {
+                console.error("Erro ao buscar jobs:", response ? await response.text() : "Sem resposta");
+                return [];
+            };
+            await utils.loadCardSales();
+            const data = await response.json();
+            renders.render_modal_order_edit(data);
+        },
 
         // =========================================================
         // Products
         async loadProducts() {
-            const response = await this.apiFetch(`dashboard/products/load`, 'GET');
+            const response = await this.apiFetch(`products/load`, 'GET');
             if (!response || !response.ok) {
                 console.error("Erro ao buscar produtos");
                 return;
@@ -207,12 +150,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
             renders.render_products_table(data);
         },
+        async loadProductsOptions() {
+            const response = await this.apiFetch(`products/selection-list`, 'GET');
+            if (!response || !response.ok) {
+                console.error("Erro ao buscar produtos");
+                return;
+            }
+            const data = await response.json();
+            renders.render_products_selection_list(data);
+        },
+
+        async deleteProduct() {
+            const modal = document.getElementById('modal-product');
+            const uid = modal.getAttribute('data-uid');
+
+            if (!uid) return;
+            if (!confirm("Tem certeza que deseja excluir este produto permanentemente?")) return;
+
+            try {
+                const response = await this.apiFetch(`products/delete?uid=${uid}`, 'DELETE');
+
+                if (response && response.ok) {
+                    alert('Produto excluído com sucesso!');
+                    if (typeof closeModal === 'function') ui.closeModal();
+                    this.loadProducts();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao excluir: ' + (err.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error("Erro ao deletar produto:", error);
+            }
+        },
 
         async saveProduct() {
             try {
                 const formData = new FormData();
+                const modal = document.getElementById('modal-product');
+                const uid = modal.getAttribute('data-uid');
 
-                // Captura campos de texto
+                // 1. Captura campos de texto
                 const fields = {
                     name: 'stock-name',
                     type: 'stock-type',
@@ -225,51 +202,53 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 for (const [key, id] of Object.entries(fields)) {
-                    const value = document.getElementById(id).value;
-                    formData.append(key, value);
+                    const input = document.getElementById(id);
+                    formData.append(key, input ? input.value : "");
                 }
+                if (uid) formData.append('uid', uid);
 
-                // Processamento das Imagens usando seu utils
-                const fileSale = document.getElementById('stock-image').files[0];
-                const fileCreator = document.getElementById('stock-image-creator').files[0];
+                // 2. Processamento das Imagens
+                const inputSale = document.getElementById('stock-image');
+                const inputCreator = document.getElementById('stock-image-creator');
 
-                if (fileSale && fileSale.size > 0) {
-                    const processedSale = await utils.processImage(fileSale, 1); // Max 1MB
+                if (inputSale?.files?.[0]) {
+                    const processedSale = await utils.processImage(inputSale.files[0], 1);
                     formData.append('image_sale', processedSale, 'product_sale.webp');
                 }
 
-                if (fileCreator && fileCreator.size > 0) {
-                    const processedCreator = await utils.processImage(fileCreator, 2); // Max 2MB
+                if (inputCreator?.files?.[0]) {
+                    const processedCreator = await utils.processImage(inputCreator.files[0], 2);
                     formData.append('image_creator', processedCreator, 'product_creator.webp');
                 }
 
-                // Envio usando o padrão do seu objeto actions
-                // Se houver um data-uid no modal, usamos PUT para update, senão POST para create
-                const modal = document.getElementById('modal-product');
-                const uid = modal.getAttribute('data-uid');
-                const method = uid ? 'PUT' : 'POST';
-                const endpoint = uid ? `dashboard/products/${uid}` : `dashboard/products/create`;
+                // 3. Definição Dinâmica de Método e Endpoint
+                // Se tem UID, é UPDATE (PATCH), se não, é CREATE (POST)
+                const method = uid ? 'PATCH' : 'POST';
+                const endpoint = uid ? `products/update` : `products/create`;
 
+
+                // 4. Envio
                 const response = await this.apiFetch(endpoint, method, formData);
 
                 if (response && response.ok) {
-                    alert('Produto salvo com sucesso!');
-                    closeModal(); // Certifique-se que esta função está no escopo global
-                    this.loadProducts(); // Recarrega a lista
+                    alert(uid ? 'Produto atualizado!' : 'Produto criado!');
+                    if (typeof closeModal === 'function') ui.closeModal();
+                    this.loadProducts();
+                    this.loadProductsOptions();
                 } else {
-                    const err = await response.json();
-                    alert('Erro ao salvar: ' + (err.error || 'Erro desconhecido'));
+                    const err = await response.json().catch(() => ({ error: 'Erro na resposta da API' }));
+                    alert('Erro: ' + (err.error || 'Não foi possível salvar'));
                 }
 
             } catch (error) {
-                console.error("Erro no fluxo de salvamento:", error);
-                alert(error);
+                console.error("Erro no salvamento:", error);
+                alert("Falha técnica ao processar o produto.");
             }
         },
 
         async getProductDetails(productUid) {
             // Usando seu apiFetch para manter o padrão de headers e auth
-            const response = await this.apiFetch(`dashboard/products/get?uid=${productUid}`, 'GET');
+            const response = await this.apiFetch(`products/get?uid=${productUid}`, 'GET');
 
             if (!response || !response.ok) {
                 console.error("Erro ao buscar detalhes");
@@ -279,20 +258,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             renders.render_modal_product_edit(data);
         },
 
-        async updateProduct(formData) {
-            try {
-                const response = await this.apiFetch(`dashboard/products/update`, 'PATCH', formData);
-                return await response.json();
-            } catch (err) {
-                return { error: err.message };
-            }
-        },
-
         async updateUnitStock(productUid, action) {
             try {
                 if (!productUid || !action) throw new Error('Erro ao atualizar estoque');
 
-                const response = await this.apiFetch(`dashboard/products/stock-adjust`, 'POST', { uid: productUid, action });
+                const response = await this.apiFetch(`products/stock-adjust`, 'POST', { uid: productUid, action });
 
                 const btn = document.getElementById(`productRow_${productUid}`).querySelector(`.${action}`)
 
@@ -303,10 +273,232 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error(err);
             }
 
+        },
+
+        // =========================================================
+        // =========================================================
+        // Assets
+        async assetsSaveFont() {
+            try {
+                const formData = new FormData();
+                const modal = document.getElementById('modal-font');
+                const uid = modal.getAttribute('data-uid');
+
+                const fileInput = document.getElementById('asset-font-file');
+                const nameInput = document.getElementById('asset-font-name');
+                const typeSelect = document.getElementById('asset-font-type');
+                const typeInput = typeSelect ? typeSelect.options[typeSelect.selectedIndex] : null;
+
+                // VALIDAÇÃO: Arquivo é obrigatório apenas no CREATE (POST)
+                if (!uid && (!fileInput || !fileInput.files[0])) {
+                    alert("Selecione um arquivo de fonte para criar o novo registro.");
+                    return;
+                }
+
+                if (uid) formData.append('uid', uid);
+
+                // Só adiciona o arquivo se o usuário selecionou um novo
+                if (fileInput.files[0]) {
+                    formData.append('file', fileInput.files[0]);
+                }
+
+                formData.append('name', nameInput ? nameInput.value : '');
+                // Ajustado para 'classification' para bater com o que a rota PATCH espera
+                formData.append('classification', typeInput ? typeInput.value : '');
+
+                const method = uid ? 'PATCH' : 'POST';
+                const endpoint = uid ? `assets/fonts/update` : `assets/fonts/create`;
+
+                const response = await this.apiFetch(endpoint, method, formData);
+
+                if (response && response.ok) {
+                    await this.assetsLoadFonts();
+                    if (typeof ui.closeModal === 'function') ui.closeModal();
+                    alert(uid ? 'Fonte atualizada!' : 'Fonte criada com sucesso!');
+                } else {
+                    const err = await response.json().catch(() => ({ error: 'Erro ao processar fonte' }));
+                    alert('Erro: ' + (err.error || 'Falha no servidor'));
+                }
+            } catch (error) {
+                console.error("Erro ao salvar fonte:", error);
+                alert("Falha crítica ao subir fonte.");
+            }
+        },
+
+        async assetsDeleteFont() {
+            const modal = document.getElementById('modal-font');
+            const uid = modal.getAttribute('data-uid');
+
+            if (!uid) return;
+            if (!confirm("Excluir esta fonte removerá o acesso a ela em artes futuras. Confirmar?")) return;
+
+            try {
+                // Passando o UID via Query String conforme a rota da API espera
+                const response = await this.apiFetch(`assets/fonts/delete?uid=${uid}`, 'DELETE');
+
+                if (response && response.ok) {
+                    alert('Fonte removida com sucesso!');
+                    this.assetsLoadFonts();
+                    ui.closeModal(); // Limpa o data-uid e os campos
+                } else {
+                    const err = await response.json().catch(() => ({ error: 'Erro ao deletar fonte' }));
+                    alert('Erro: ' + (err.error || 'Não foi possível excluir'));
+                }
+            } catch (error) {
+                console.error("Erro no delete de fonte:", error);
+            }
+        },
+
+        async assetsLoadFonts() {
+            try {
+                // Chama o endpoint de listagem de fontes
+                const response = await this.apiFetch('assets/fonts/load', 'GET');
+
+                if (!response || !response.ok) {
+                    console.error("Erro ao carregar fontes");
+                    return;
+                }
+
+                const data = await response.json();
+                // data deve ser o array de objetos vindo do banco (com a URL pública montada no Worker)
+
+                // 1. Injeção Dinâmica de CSS (para que o navegador renderize as fontes)
+                utils._injectFontsToDocument(data);
+
+                // 2. Chama o render (passando os dados para construir o HTML dos seletores)
+                if (typeof renders.render_creator_fonts === 'function') {
+                    renders.render_creator_fonts(data);
+                }
+
+            } catch (error) {
+                console.error("Erro no load de fontes:", error);
+            }
+        },
+
+        async getFontDetails(fontUid) {
+            const response = await this.apiFetch(`assets/fonts/get?uid=${fontUid}`, 'GET');
+
+            if (!response || !response.ok) {
+                console.error("Erro ao buscar detalhes da fonte");
+                return;
+            }
+            const data = await response.json();
+            renders.render_modal_font_edit(data);
+        },
+
+        async loadFontsOptions() {
+            const response = await this.apiFetch(`assets/fonts/selection-list`, 'GET');
+            if (!response || !response.ok) {
+                console.error("Erro ao buscar lista de fontes");
+                return;
+            }
+            const data = await response.json();
+            // Certifique-se de que este renderizador existe para injetar o HTML no local correto
+            renders.render_fonts_selection_list(data);
+        },
+
+        async assetsSaveVector() {
+            try {
+                const formData = new FormData();
+                const modal = document.getElementById('modal-vector');
+                const uid = modal.getAttribute('data-uid');
+
+                const fileInput = document.getElementById('asset-vector-file');
+                const nameInput = document.getElementById('asset-vector-name');
+                const catInput = document.getElementById('asset-vector-category');
+
+                // VALIDAÇÃO: Arquivo obrigatório apenas no CREATE
+                if (!uid && (!fileInput || !fileInput.files[0])) {
+                    alert("Selecione um arquivo de imagem (PNG/SVG)");
+                    return;
+                }
+
+                if (uid) formData.append('uid', uid);
+
+                if (fileInput.files[0]) {
+                    formData.append('file', fileInput.files[0]);
+                }
+
+                formData.append('name', nameInput ? nameInput.value : 'Sem nome');
+                formData.append('classification', catInput ? catInput.value : 'geral');
+
+                const method = uid ? 'PATCH' : 'POST';
+                // Corrigido erro de sintaxe na URL (faltava uma barra e tinha chaves sobrando)
+                const endpoint = uid ? `assets/vectors/update` : `assets/vectors/create`;
+
+                const response = await this.apiFetch(endpoint, method, formData);
+
+                if (response && response.ok) {
+                    await this.assetsLoadVectors();
+                    alert(uid ? 'Vetor atualizado!' : 'Ativo salvo na biblioteca!');
+                    if (typeof closeModal === 'function') ui.closeModal();
+                } else {
+                    const err = await response.json().catch(() => ({ error: 'Erro ao processar ativo' }));
+                    alert('Erro: ' + (err.error || 'Falha no upload'));
+                }
+            } catch (error) {
+                console.error("Erro ao salvar vetor/figura:", error);
+                alert("Falha crítica ao subir ativo.");
+            }
+        },
+
+        async assetsDeleteVector() {
+            const modal = document.getElementById('modal-vector');
+            const uid = modal.getAttribute('data-uid');
+
+            if (!uid) return;
+            if (!confirm("Deseja remover esta figura da biblioteca permanentemente?")) return;
+
+            try {
+                const response = await this.apiFetch(`assets/vectors/delete?uid=${uid}`, 'DELETE');
+
+                if (response && response.ok) {
+                    alert('Figura removida!');
+                    this.assetsLoadVectors();
+                    ui.closeModal();
+                } else {
+                    const err = await response.json().catch(() => ({ error: 'Erro ao deletar ativo' }));
+                    alert('Erro: ' + (err.error || 'Falha na exclusão'));
+                }
+            } catch (error) {
+                console.error("Erro no delete de vetor:", error);
+            }
+        },
+
+        async assetsLoadVectors() {
+            try {
+                const response = await this.apiFetch('assets/vectors/load', 'GET');
+
+                if (!response || !response.ok) {
+                    console.error("Erro ao carregar vetores");
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Chama o render para exibir a galeria de figuras/PNGs
+                if (typeof renders.render_creator_vectors === 'function') {
+                    renders.render_creator_vectors(data);
+                }
+
+            } catch (error) {
+                console.error("Erro no load de vetores:", error);
+            }
+        },
+
+        async loadVectorsOptions() {
+            const response = await this.apiFetch(`assets/vectors/selection-list`, 'GET');
+            if (!response || !response.ok) {
+                console.error("Erro ao buscar lista de figuras");
+                return;
+            }
+            const data = await response.json();
+            // Injeta a lista de figuras no seletor do editor/pedido
+            renders.render_vectors_selection_list(data);
         }
 
+
     }
-    window.actions = actions; // Expondo as ações para o escopo global, permitindo chamadas de outros scripts
 
     const renders = {
         reder_grid_jobs(data) {
@@ -343,7 +535,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum produto encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhum produto encontrado.</td></tr>';
                 return;
             }
 
@@ -351,6 +543,117 @@ document.addEventListener('DOMContentLoaded', async () => {
             data.forEach(row => {
                 tbody.insertAdjacentHTML('beforeend', row);
             })
+        },
+
+        render_products_selection_list(htmlItems) {
+            // 1. Localiza o modal de vendas
+            const modal = document.getElementById('modal-sale');
+            if (!modal) return;
+
+            // 2. Localiza o contêiner de produtos APENAS do primeiro card
+            const container = modal.querySelector('.form-card .sale-list-products');
+
+            if (container) {
+                // 3. Insere os itens e limpa qualquer conteúdo pré-existente
+                container.innerHTML = htmlItems.join('');
+            } else {
+                console.error("Contêiner .sale-list-products não encontrado no primeiro card.");
+            }
+        },
+
+        render_fonts_selection_list(htmlItems) {
+            const modal = document.getElementById('modal-sale');
+            if (!modal) return;
+
+            // Seleciona o contêiner no primeiro card (ou no contexto de clonagem)
+            const container = modal.querySelector('.form-card .sale-list-fonts');
+            if (container) {
+                container.innerHTML = htmlItems.join('');
+            }
+        },
+
+        async render_modal_font_edit(data) {
+            const modal = document.getElementById('modal-font');
+            modal.setAttribute('data-uid', data.font_uid);
+
+            document.getElementById('asset-font-name').value = data.font_name;
+            document.getElementById('asset-font-type').value = data.font_type;
+
+            // Resetamos o input de arquivo (sempre limpo ao abrir)
+            const fileInput = document.getElementById('asset-font-file');
+            fileInput.value = '';
+
+            // Mostramos o caminho atual da fonte para o usuário saber que já existe um arquivo
+            const currentPathContainer = document.getElementById('current-font-path');
+            const filenameSpan = document.getElementById('font-filename');
+
+            if (data.font_url) {
+                currentPathContainer.classList.remove('d-none');
+                // Extrai apenas o nome do arquivo se for um path completo
+                const filename = data.font_url.split('/').pop();
+                filenameSpan.textContent = (filename).split('?')[0];
+            } else {
+                currentPathContainer.classList.add('d-none');
+            }
+
+            // Altera o texto do botão para indicar edição
+            modal.querySelector('.btn_modal.create').textContent = "Atualizar Fonte";
+        },
+
+        render_modal_order_edit(data) {
+
+            const { order, jobs } = data;
+            const modal = document.getElementById('modal-sale');
+            const container = modal.querySelector('.form-box-list');
+            console.log("order:", order);
+            console.log("jobs:", jobs);
+            // 1. Preenche o cabeçalho da Ordem (Igual ao anterior)
+            modal.setAttribute('data-uid', order.uid);
+            document.getElementById('sale-client-name').value = order.client_name || '';
+            document.getElementById('sale-origin').value = `${order.order_origin}` || '';
+            document.getElementById('sale-client-phone').value = order.client_phone || '';
+            document.getElementById('sale-client-address').value = order.client_address || '';
+            document.getElementById('sale-status').value = `${order.order_status}` || '';
+            document.getElementById('sale-priority').value = `${order.order_priority}` || '';
+            document.getElementById('sale-delivery-date').value = order.order_delivery_date ? order.order_delivery_date.split('T')[0] : '';
+
+            // Agora temos exatamente 1 card (o original). Vamos limpá-lo.
+            const firstCard = container.querySelector('.form-card');
+            // 3. Loop de Jobs
+            let index = 0;
+            jobs.forEach((job, index) => {
+                let currentCard;
+
+                if (index + 1 === 1) {
+                    // No primeiro Job, usamos o card que já está lá
+                    currentCard = firstCard;
+                } else {
+                    // Nos demais, clonamos a partir do primeiro
+                    currentCard = uiCards.createCleanCard(container);
+                    container.appendChild(currentCard);
+                }
+
+                // Atualiza os índices (importante para IDs e Names não colidirem)
+                uiCards.updateIndices(container);
+
+                // Preenche os dados
+                utils.fillJobData(currentCard, job);
+                index++;
+            });
+
+            // 4. Interface
+            modal.querySelectorAll('.btn_modal.create').forEach(b => b.classList.add('d-none'));
+            modal.querySelectorAll('.btn_modal.update').forEach(b => b.classList.remove('d-none'));
+        },
+
+        render_vectors_selection_list(htmlItems) {
+            const modal = document.getElementById('modal-sale');
+            if (!modal) return;
+
+            const container = modal.querySelector('.form-card .sale-list-figures');
+            if (container) {
+                container.innerHTML = htmlItems.join('');
+            }
         },
 
         render_modal_product_edit(data) {
@@ -404,6 +707,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!row) return;
 
             window.resLoading(btn, result, function () { row.outerHTML = data });
+        },
+        // Injeta as rows de fontes na lista da biblioteca (Gestão)
+        render_creator_fonts(htmlRows) {
+            const container = document.getElementById('font-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+            htmlRows.forEach(row => container.insertAdjacentHTML('beforeend', row));
+
+            // Preview automático do primeiro item da lista de gestão
+            const firstRow = container.querySelector('.asset-row');
+            if (firstRow) {
+                const fontName = firstRow.getAttribute('data-name');
+                previewFont(fontName, firstRow);
+            }
+        },
+
+        // Injeta as rows de figuras na lista da biblioteca (Gestão)
+        render_creator_vectors(htmlRows) {
+            const container = document.getElementById('vector-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+            htmlRows.forEach(row => container.insertAdjacentHTML('beforeend', row));
+
+            // Preview automático do primeiro vetor da lista de gestão
+            const firstRow = container.querySelector('.asset-row');
+            if (firstRow) {
+                // O Worker já envia o onclick="previewImage('url', this)" pronto
+                firstRow.click();
+            }
         }
     }
 
@@ -489,22 +823,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const itemNumber = card.querySelector('.item-number strong')?.innerText || (index + 1);
 
-                // Dados do Produto
+                // Dados dos seletores costumizados
                 const product = card.querySelector('.sale-list-products input:checked');
+                const font = card.querySelector('.sale-list-fonts input:checked');
+                const figure = card.querySelector('.sale-list-figures input:checked');
+
+                console.log(figure);
+
                 if (!product) {
                     alert(`Selecione um produto para o Item ${itemNumber}`);
                     return null; // Interrompe tudo e retorna null
                 }
 
-                const product_uid = product.getAttribute('data-productUid') || "";
-                const product_title = product.getAttribute('data-productTitle') || "";
-                const product_color = product.getAttribute('data-productColor') || "";
+                const product_uid = product.getAttribute('data-product_uid') || "";
+                const product_title = product.getAttribute('data-product_title') || "";
+                const product_color = product.getAttribute('data-product_color') || "";
 
                 // Inicializa variáveis
-                let text_title = "";
-                let text_font = "";
-                let figure_name = "";
-                let figure_url = "";
+                let text_title = card.querySelector('.sale-text-input')?.value || "";
+                let text_font = font ? font.getAttribute('data-font_name') : "";
+                let figure_name = figure ? figure.getAttribute('data-figure_name') : "";
+                let figure_url = figure ? figure.getAttribute('data-figure_url') : "";
                 let reference_image = null; // Iniciamos como null
                 let art_json = "";
                 let observation = "";
@@ -517,16 +856,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         alert(`A arte customizada do item ${itemNumber} não foi finalizada!`);
                         return null;
                     }
+                    figure_name = "";
+                    figure_url = "";
                 } else {
-                    text_title = card.querySelector('.sale-text-input').value;
-                    text_font = card.querySelector('.sale-font-select').value;
-
-                    const figureInput = card.querySelector('.sale-list-figures input:checked');
-                    if (figureInput) {
-                        figure_name = figureInput.getAttribute('data-figureName') || figureInput.value;
-                        figure_url = figureInput.getAttribute('data-figureUrl') || "";
-                    }
-
                     if (!text_title && !figure_url) {
                         alert(`O item ${itemNumber} precisa de um texto ou figura definida!`);
                         return null;
@@ -558,6 +890,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     art_json,
                     observation
                 });
+                console.log(items);
             }
 
             // 3. Retorno do objeto completo
@@ -572,15 +905,235 @@ document.addEventListener('DOMContentLoaded', async () => {
                 order_delivery_date,
                 jobs: items
             };
+        },
+
+        async loadCardSales() {
+            // Chamadas para carregamento da pagina em paralelo
+            try {
+                await Promise.all([
+                    window.actions.loadProductsOptions(),
+                    window.actions.loadFontsOptions(),
+                    window.actions.loadVectorsOptions()
+                ]);
+
+
+            } catch (error) {
+                console.error("Erro no carregamento do formulário de venda:", error);
+            }
+        },
+
+        fillJobData(card, job) {
+            if (!job) return;
+
+            // 1. Inserções diretas
+            const textInput = card.querySelector('.sale-text-input');
+            const preview = card.querySelector('.font-preview-display');
+
+            if (textInput) {
+                textInput.value = job.job_text_title || '';
+            }
+            if (preview) {
+                preview.innerText = job.job_text_title || '';
+            }
+
+
+            // 2. Seletores costumizados
+            if (job.job_font_uid) {
+                card.querySelectorAll(`.sale-list-fonts input`).forEach(radio => {
+                    if (radio.getAttribute('data-font_uid') === job.job_font_uid) {
+                        radio.checked = true;
+
+                        ui.previewFont(radio.getAttribute('data-font_name'), radio, preview);
+                    }
+                })
+            }
+            card.querySelectorAll(`.sale-list-products input`).forEach(radio => {
+                if (radio.getAttribute('data-product_uid') === job.product_uid) {
+                    radio.checked = true;
+                }
+            })
+            if (job.job_figure_url) {
+                card.querySelectorAll(`.sale-list-figures input`).forEach(radio => {
+                    if (radio.getAttribute('data-figure_url') === job.job_figure_url) {
+                        radio.checked = true;
+                    }
+                })
+            }
+
+            // 3. Imagem de Referência (Upload antigo)
+            const imgRefPreview = card.querySelector('.preview-img-reference');
+            if (imgRefPreview) {
+                if (job.job_image_reference) {
+                    // Caminho para sua rota de proxy que busca no bucket 'jobs'
+                    imgRefPreview.src = `${job.job_image_reference}`;
+                    imgRefPreview.style.display = 'block';
+                }
+            }
+
+            // 6. Observação
+            const obsInput = card.querySelector('.sale-observation');
+            if (obsInput) obsInput.value = job.job_observation || '';
+            // // 7. Modo Criador Profissional (Logica de Alternância e JSON)
+            // const creatorToggle = card.querySelector('.toggle-creator-mode');
+            // const jsonInput = card.querySelector('.json-end-art');
+
+            // if (job.job_art_json && job.job_art_json !== "null") {
+            //     // Ativa o switch
+            //     if (creatorToggle) {
+            //         creatorToggle.checked = true;
+            //         // Chama sua função global para trocar a visibilidade das divs (mode-default vs mode-creator)
+            //         alternarModoCriador(creatorToggle);
+            //     }
+            // } else {
+            //     // Se não houver arte JSON, garante que o modo criador esteja desligado
+            //     if (creatorToggle) {
+            //         creatorToggle.checked = false;
+            //         // Força a volta para os campos padrão (texto, fonte, figura)
+            //         alternarModoCriador(creatorToggle);
+            //     }
+            // }
+        },
+
+        applyFontPreview(input) {
+            const card = input.closest('.form-card');
+            const fontName = input.getAttribute('data-font_name');
+            const previewSpan = card.querySelector('.sale-font-example span');
+            const textInput = card.querySelector('.sale-text-input');
+
+            if (previewSpan) {
+                // Aplica a fonte visualmente
+                previewSpan.style.fontFamily = fontName;
+                // previewSpan.textContent = textInput.value || "Exemplo da Fonte";
+            }
+        },
+
+        applyVectorPreview(input) {
+            const card = input.closest('.form-card');
+            const url = input.getAttribute('data-figure_url');
+            const previewImg = card.querySelector('.preview-img-reference');
+
+            if (previewImg && url) {
+                previewImg.src = url;
+            }
+        },
+
+        // Gerencia a troca do select de período
+        handlePeriodChange() {
+            const period = document.getElementById('filter-sale-period').value;
+            const customContainer = document.getElementById('custom-date-container');
+            const now = new Date();
+
+            if (period === 'custom') {
+                customContainer.style.display = 'flex';
+                return; // Espera o usuário clicar no botão de busca
+            } else {
+                customContainer.style.display = 'none';
+            }
+
+            let start, end;
+
+            if (period === 'this-month') {
+                // Primeiro dia do mês atual
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                // Ultimo dia do mês atual
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            } else if (period === 'last-month') {
+                // Primeiro dia do mês passado
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                // Último dia do mês passado
+                end = new Date(now.getFullYear(), now.getMonth(), 0);
+            }
+
+            // Chama a função da API que você já tem, formatando para YYYY-MM-DD
+            actions.loadSales(utils.formatDate(start), utils.formatDate(end));
+        },
+
+        // Valida e aplica datas manuais
+        applyCustomDates() {
+            const startVal = document.getElementById('date-start').value;
+            const endVal = document.getElementById('date-end').value;
+
+            if (!startVal || !endVal) {
+                alert("Por favor, selecione ambas as datas.");
+                return;
+            }
+
+            const dStart = new Date(startVal);
+            const dEnd = new Date(endVal);
+
+            if (dEnd < dStart) {
+                alert("A data final não pode ser menor que a data inicial.");
+                return;
+            }
+
+            // Validação de 6 meses (Regra da sua API)
+            const diffTime = Math.abs(dEnd - dStart);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 180) {
+                alert("O intervalo máximo permitido é de 6 meses.");
+                return;
+            }
+
+            actions.loadSales(startVal, endVal);
+        },
+
+        //  Auxiliar para formatar data em YYYY-MM-DD
+        formatDate(date) {
+            return date.toISOString().split('T')[0];
+        },
+
+        async loder_modal_font_edit() {
+            const uid = document.getElementById('asset-font-action-edit').getAttribute('data-uid');
+            await actions.getFontDetails(uid);
+        },
+
+        _injectFontsToDocument(fontsArray) {
+            const styleId = "dynamic-library-fonts";
+            let styleTag = document.getElementById(styleId);
+
+            if (!styleTag) {
+                styleTag = document.createElement("style");
+                styleTag.id = styleId;
+                document.head.appendChild(styleTag);
+            }
+
+            // Criamos as regras @font-face para cada fonte na biblioteca
+            let css = "";
+            fontsArray.forEach(f => {
+                // Assume que f.font_url já é a URL pública absoluta vinda do Worker
+                if (f.font_url && f.font_name) {
+                    css += `
+                        @font-face {
+                            font-family: '${f.font_name}';
+                            src: url('${f.font_url}');
+                            font-display: swap;
+                        }
+                    `;
+                }
+            });
+            styleTag.innerHTML = css;
         }
     }
-    window.renders = renders; // Expondo os renders para o escopo global
 
+    // Expondo as funções para o escopo global, permitindo chamadas de outros scripts
+    window.actions = actions;
+    window.renders = renders;
+    window.utils = utils;
 
-    // Busca os jobs e as vendas no carregamento da página
-    await window.actions.searchJobs();
-    await window.actions.loadProducts();
-    handlePeriodChange();
+    // Chamadas para carregamento da pagina em paralelo
+    try {
+        await Promise.all([
+            window.actions.searchJobs(),
+            window.actions.loadProducts(),
+            window.actions.assetsLoadFonts(),
+            window.actions.assetsLoadVectors(),
+            window.utils.handlePeriodChange()
+        ]);
+
+    } catch (error) {
+        console.error("Erro no carregamento inicial:", error);
+    }
 });
 
 

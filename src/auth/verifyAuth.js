@@ -61,19 +61,14 @@ export default async function verifyAuth(request, env) {
     }
 
     const expiresAt = new Date(token_time).getTime();
-
-    const timeStampNow = new Date();
-    const now = timeStampNow.toLocaleString("sv-SE", {
-        timeZone: "America/Sao_Paulo"
-    }).replace(" ", "T") + ".000Z";
-    // Usamos 'sv-SE' pois ele retorna o formato YYYY-MM-DD nativamente
-
+    // 1. Pega o timestamp UTC atual
+    const now = Date.now();
 
     if (isNaN(expiresAt)) {
         return { ok: false, status: 401, error: 'Sessão corrompida' };
     }
-
     if (expiresAt < now) {
+        console.log('Sessão expirada');
         return { ok: false, status: 401, error: 'Sessão expirada' };
     }
 

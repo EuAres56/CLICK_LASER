@@ -1,7 +1,8 @@
+// Função base para a estrutura do CARD
 function card(uid_pack, uid_item, card_header, card_body, card_footer, priority) {
 
     const card_html = `
-                <div class="card ${priority}" data-uid="${uid_item}" data-packId="${uid_pack}">
+                <div class="card-item card ${priority}" data-uid="${uid_item}" data-packId="${uid_pack}">
                     <div class="card-header">
                         ${card_header}
                     </div>
@@ -18,7 +19,16 @@ function card(uid_pack, uid_item, card_header, card_body, card_footer, priority)
     return card_html
 }
 
+// Função base para a estrutura da linha (TR)
+function row(content, dataSets) {
+    return `
+        <tr class="row-item" ${dataSets}>
+            ${content}
+        </tr>
+    `;
+}
 
+// Função base para a estrutura do CARD de uma gravação
 function create_job_card(json_order, json_job) {
     // 1. Dicionários de prioridades
     const priority_class = { 0: "priority-high", 1: "priority-medium", 2: "priority-low" };
@@ -32,9 +42,11 @@ function create_job_card(json_order, json_job) {
 
     // 3. Construção do Header
     const card_header = `
-        <div class="ids-group">
-            <span class="order-id" title="ID do Pedido">Pedido: #${order_id}</span>
-            <span class="job-id" title="ID Único da Gravação">Job: #${json_job.job_id}</span>
+        <div class="ids-group"
+        data-search="${order_id} ${json_job.uid} ${json_order.client_name} ${json_job.product_title} ${json_job.product_color}"
+        >
+            <span class="order-id" title="ID do Pedido" data-uid="${order_uid}">Pedido: #${order_id}</span>
+            <span class="job-id" title="ID Único da Gravação" data-uid="${json_job.uid}">Job: #${(json_job.uid).split('-')[0]}</span>
         </div>
         <span class="job-priority ${priority_class_value}" title="Prioridade">${priority_text_value}</span>
     `;
@@ -56,24 +68,24 @@ function create_job_card(json_order, json_job) {
 
     if (json_job.json_image) {
         view_actions_html += `
-            <button class="btn-req btn-job-action" data-art='${json_job.json_image}' onclick="openArtPreview(this)">
+            <button class="btn-local btn-art btn-job-action" data-art='${json_job.json_image}'">
                 <i class="bi bi-eye"></i> Ver Arte
             </button>`;
     } else {
         view_actions_html += `
-            <button class="btn-req btn-job-action create-disabled">
+            <button class="btn-local btn-job-action create-disabled">
                 <i class="bi bi-eye"></i> Sem Arte
             </button>`;
     }
 
     if (json_job.url_ref) {
         view_actions_html += `
-            <button class="btn-req btn-job-action" data-ref="${json_job.url_ref}" onclick="openReference(this)">
+            <button class="btn-local btn-ref  btn-job-action" data-ref="${json_job.url_ref}">
                 <i class="bi bi-image"></i> Ver Ref.
             </button>`;
     } else {
         view_actions_html += `
-            <button class="btn-req btn-job-action create-disabled">
+            <button class="btn-local btn-job-action create-disabled">
                 <i class="bi bi-image"></i> Sem Ref.
             </button>`;
     }
@@ -107,23 +119,7 @@ function create_job_card(json_order, json_job) {
     return card(order_uid, json_job.uid, card_header, card_body, card_footer, priority_class_value);
 }
 
-
-/**
- * Função base para a estrutura da linha (TR)
- */
-function row(content, dataSets) {
-    return `
-        <tr ${dataSets}>
-            ${content}
-        </tr>
-    `;
-}
-
-/**
- * Função principal para criar a linha da tabela de pedidos
- * @param {Object} json_order - Dados da tabela dashboard_orders
- * @param {String} job_summary - Resumo dos itens (ex: "2x Copo 473ml")
- */
+// Função para construção da linha da tabela de pedidos
 function create_order_row(json_order, job_summary) {
     // Dicionários de Status para mapear o valor do banco para o visual da tabela
     const status_config = {
@@ -134,15 +130,18 @@ function create_order_row(json_order, job_summary) {
     };
 
     // Dicionário de Origens para as badges
-    const origin_class = {
-        "Instagram": "ig",
-        "WhatsApp": "wa",
-        "Site": "web",
-        "Loja": "store"
+    const origin_config = {
+        0: { text: "Presencial", class: "bg-primary" },
+        1: { text: "Anuncio", class: "bg-danger" },
+        2: { text: "Instagram", class: "bg-info" },
+        3: { text: "WhatsApp", class: "bg-success" },
+        4: { text: "Site", class: "bg-warning" },
+        5: { text: "Indicado", class: "bg-secondary" },
+        6: { text: "Redirecionado", class: "bg-danger" },
     };
 
     const current_status = status_config[json_order.order_status] || { text: "Pendente", class: "bg-secondary" };
-    const badge_class = origin_class[json_order.order_origin] || "default";
+    const current_origin = origin_config[json_order.order_origin] || { text: "Presencial", class: "bg-primary" };
 
     // Formatação da data vinda do banco
     const formatted_date = json_order.order_created_at
@@ -154,7 +153,7 @@ function create_order_row(json_order, job_summary) {
         <td>#${json_order.id_num}</td>
         <td><strong>${json_order.client_name}</strong></td>
         <td>${job_summary || 'Sem itens'}</td>
-        <td><span class="badge-origin ${badge_class}">${json_order.order_origin || 'Direto'}</span></td>
+        <td><span class="badge-origin ${current_origin.class}">${current_origin.text || 'Direto'}</span></td>
         <td>${formatted_date}</td>
         <td><span class="status-pill ${current_status.class}">${current_status.text}</span></td>
         <td>
@@ -167,7 +166,8 @@ function create_order_row(json_order, job_summary) {
                     <i class="bi bi-printer"></i>
                 </button>
 
-                <button class="btn-req square btn-for-modal" data-modal="modal-sale" data-uid="${json_order.uid}" title="Gerenciar Pedido">
+                <button class="btn-req square btn-for-modal" data-modal="modal-sale"
+                data-uid="${json_order.uid}" data-callback="actions.searchSale" title="Gerenciar Pedido">
                     <i class="bi bi-pencil-square"></i>
                 </button>
             </div>
@@ -184,6 +184,7 @@ function create_order_row(json_order, job_summary) {
     return row(row_content, html_dataSets);
 }
 
+// Cria uma linha da tabela de produtos
 function create_product_row(json_product) {
     // Dicionários de Status para mapear o valor do banco para o visual da tabela
     const status_config = {
@@ -216,7 +217,7 @@ function create_product_row(json_product) {
     `;
 
     // Dados para os atributos de busca e filtro da TR
-    const search_string = `${json_product.id} ${json_product.product_title}`.toLowerCase();
+    const search_string = `${json_product.id} ${json_product.product_title} ${json_product.product_type} ${json_product.product_color}`.toLowerCase();
 
     const html_dataSets = `
     id="productRow_${json_product.uid}" data-search="${search_string}" data-type="${json_product.product_type}" data-color="${json_product.product_color}"
@@ -225,6 +226,28 @@ function create_product_row(json_product) {
     return row(row_content, html_dataSets);
 }
 
+// Cria um item de seleção
+function create_selection_item(data, groupName, aditionalClass = null, dataAtb = {}, atributes = null, inputClass = null) {
+    const inputId = `sel_${groupName}_${data.id}_01`;
+    const nameAttribute = `${groupName}_selection_01`;
 
+    // Converte o objeto dataAtb em uma string de atributos HTML (data-key="value")
+    const dataAttributes = Object.entries(dataAtb)
+        .map(([key, value]) => `data-${key}="${value}"`)
+        .join(' ');
+    const addClass = aditionalClass ? ` ${aditionalClass}` : '';
+    const atribs = atributes ? ` ${atributes}` : '';
+    const inpClass = inputClass ? `class="${inputClass}"` : '';
 
-export { create_job_card, create_order_row, create_product_row };
+    return `
+        <label class="select-item sel_${groupName}${addClass}" for="${inputId}"${atribs}>
+            <input ${inpClass} type="radio"
+                   id="${inputId}"
+                   name="${nameAttribute}"
+                   ${dataAttributes}>
+            <span class="item-content">${data.label.toUpperCase()}</span>
+        </label>
+    `;
+}
+
+export { create_job_card, create_order_row, create_product_row, create_selection_item };

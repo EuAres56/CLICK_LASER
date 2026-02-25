@@ -9,9 +9,6 @@ import dashboardCore from "../cores/dashboardCore.js";
 export default async function apiPrivateRouter(request, env) {
     const url = new URL(request.url);
     const method = request.method;
-
-    console.log(`Rota Acessada: ${url.pathname} | Método: ${method}`);
-
     //  ======================================================================
     //  Area de Autenticação
     //  ======================================================================

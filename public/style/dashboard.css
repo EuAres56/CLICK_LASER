@@ -578,15 +578,15 @@ main {
 }
 
 /* --- 5. COMPONENTES REUTILIZÁVEIS (BOTÕES E INPUTS) --- */
-.btn-req {
-    * {
-        pointer-events: none;
-    }
+.font-preview-display {
+    font-size: 3rem;
 }
 
+button,
+.btn-req,
 .btn-local {
     * {
-        pointer-events: none;
+        pointer-events: none !important;
     }
 }
 
@@ -876,19 +876,28 @@ select {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     height: 400px;
+
+    .asset-container {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 100%;
+
+        .asset-controls {
+            display: flex;
+            flex-direction: column;
+            justify-content: start;
+            align-items: center;
+            padding: 3px;
+            background-color: var(--primary-shadow);
+            border: 1px solid var(--border-color);
+        }
+    }
 }
 
 .asset-list {
     border-right: 1px solid var(--border-color);
     overflow-y: auto;
-}
-
-.asset-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
 }
 
 .asset-row:hover {
@@ -906,6 +915,7 @@ select {
     justify-content: center;
     align-items: center;
     background: white;
+    font-size: xx-large;
 }
 
 .image-checkered {
@@ -1267,6 +1277,10 @@ input:checked+.slider:before {
         }
 
     }
+
+    .custom-select-list {
+        max-height: 130px;
+    }
 }
 
 
@@ -1523,4 +1537,20 @@ input:checked+.slider:before {
 /* Efeito de hover */
 .select-item:hover .item-content {
     background-color: #f8f9fa;
+}
+
+
+.container-image-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 350px;
+}
+
+.image-preview {
+    height: 100%;
+    width: auto;
+    object-fit: cover;
+    border-radius: 4px;
 }

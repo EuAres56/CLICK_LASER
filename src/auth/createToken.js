@@ -30,18 +30,10 @@ export default async function createToken(uid, env) {
     const tokenHash = await hashToken(token);
 
     const timeStampNow = new Date();
-    // agora + 10 minutos
-    const dateExpires = new Date(timeStampNow.getTime() + 10 * 60 * 1000);
+    // Definimos a expiração para agora + 10 minutos
+    const expiresAt = new Date(timeStampNow.getTime() + 10 * 60 * 1000);
 
-    const expiresAt = dateExpires.toLocaleString("sv-SE", {
-        timeZone: "America/Sao_Paulo"
-    }).replace(" ", "T") + ".000Z";
-    // Usamos 'sv-SE' pois ele retorna o formato YYYY-MM-DD nativamente
-
-    console.log(expiresAt);
-
-    const supabaseUrl =
-        `${env.SUPABASE_URL}/rest/v1/auth_staff?uid=eq.${encodeURIComponent(uid)}`;
+    const supabaseUrl = `${env.SUPABASE_URL}/rest/v1/auth_staff?uid=eq.${encodeURIComponent(uid)}`;
 
     const response = await fetch(supabaseUrl, {
         method: "PATCH",
@@ -53,16 +45,15 @@ export default async function createToken(uid, env) {
         },
         body: JSON.stringify({
             token_key: tokenHash,
-            token_time: expiresAt
+            token_time: expiresAt // Agora salva corretamente "2026-02-19T22:10:00"
         })
     });
-
 
     if (!response.ok) {
         const err = await response.text();
         throw new Error("Erro ao salvar token: " + err);
     }
 
-    // 🔑 retorna APENAS o token puro
+    // 🔑 Retorna o token puro para ser enviado ao cliente (Cookie/LocalStorage)
     return token;
 }
