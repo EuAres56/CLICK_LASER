@@ -3,14 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('page_register');
     const loader = document.getElementById('page_loader');
 
-    // 1. Verificar "Manter Conectado" ao carregar a página
-    const savedToken = localStorage.getItem('auth_token');
-    if (savedToken) {
-        // Opcional: Validar token com a API aqui
-        console.log("Usuário já autenticado via localStorage");
-        // window.location.href = "dashboard.html";
-    }
-
     // 2. Lógica de Login
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -33,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // FUNÇÃO MANTER CONECTADO
                 if (remember) {
                     localStorage.setItem('auth_token', token || 'dummy_token');
-                    localStorage.setItem('user_id', result.user_id || 'dummy_id');
+                    localStorage.setItem('user_id', result.user_info.uid || 'dummy_id');
+
                 } else {
                     sessionStorage.setItem('auth_token', token || 'dummy_token');
                     sessionStorage.setItem('user_id', result.user_id || 'dummy_id');

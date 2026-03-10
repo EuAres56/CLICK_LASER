@@ -1,7 +1,8 @@
 import verifyAuth from '../auth/verifyAuth.js';
 import { create_job_card, create_order_row, create_product_row, create_selection_item } from "../renders/dashboard.js";
-import { uploadFont, uploadLibraryAsset, uploadImage } from "../utils/connectBuckets.js";
+import { uploadFont, uploadLibraryAsset, uploadImage, deleteFromBucket } from "../utils/connectBuckets.js";
 import { dataBaseRequest } from '../utils/connectDataBase.js';
+import { buildDashboardPayloadSections } from '../auth/permissions.js';
 
 
 export default async function dashboardCore(request, env) {
@@ -20,14 +21,54 @@ export default async function dashboardCore(request, env) {
             headers: { "Content-Type": "application/json" }
         });
     }
+    const permissions_map = auth.permissions_map || {};
+    const permissions_level = auth.permissions_level || 0;
+
+
+    // GET /dashboard/start
+    if (subPath.startsWith("/start") && method === "GET") {
+        try {
+            const sections_html = await buildDashboardPayloadSections(permissions_map, env)
+
+            return new Response(JSON.stringify(sections_html), { status: 200 });
+        } catch {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+
+    // GET /dashboard/stats
+    if (subPath.startsWith("/stats") && method === "GET") {
+        try {
+            // Buscamos contagens específicas de Ordens e Jobs
+            const [pendentes, emGravacao, concluidos] = await Promise.all([
+                dataBaseRequest("dashboard_orders?order_status=eq.0&select=count", "GET", null, env),
+                dataBaseRequest("dashboard_jobs?job_status=eq.2&select=count", "GET", null, env),
+                dataBaseRequest("dashboard_orders?order_status=eq.2&select=count", "GET", null, env) // Assumindo 2 como concluído
+            ]);
+
+            return new Response(JSON.stringify({
+                pending: pendentes[0]?.count || 0,
+                activeJobs: emGravacao[0]?.count || 0,
+                completedToday: concluidos[0]?.count || 0
+            }), { status: 200 });
+        } catch (error) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
 
     // --- ROTAS DE ORDERS (PEDIDOS) ---
 
     // POST: Criar Ordem e Jobs simultaneamente
     if (subPath.startsWith("/orders/create") && method === "POST") {
+        const uploadedImages = [];
+
         try {
             const formData = await request.formData();
-            const body = JSON.parse(formData.get('payload'));
+            const payloadStr = formData.get('payload');
+            if (!payloadStr) throw new Error("Payload não encontrado.");
+
+            const body = JSON.parse(payloadStr);
 
             // 1. Criar a Ordem Principal
             const orderData = await dataBaseRequest("dashboard_orders", "POST", {
@@ -36,9 +77,9 @@ export default async function dashboardCore(request, env) {
                 client_address: body.client_address,
                 client_phone: body.client_phone,
                 order_origin: body.order_origin || '',
-                order_status: body.order_status || 0,
+                order_status: parseInt(body.order_status) || 0,
                 order_priority: body.order_priority || 1,
-                order_delivery_date: body.order_delivery_date || null, // Cuidado com o typo 'orrder' no seu banco
+                order_delivery_date: body.order_delivery_date || null,
             }, env);
 
             if (orderData instanceof Response) return orderData;
@@ -46,17 +87,23 @@ export default async function dashboardCore(request, env) {
 
             // 2. Processar os Jobs
             const jobsToInsert = [];
+            const orderStatus = parseInt(body.order_status) || 0;
 
             if (body.jobs && body.jobs.length > 0) {
-                let i = 0;
-                for (const job of body.jobs) {
-                    // Tenta pegar o arquivo do FormData usando o índice
-                    const file = formData.get(`file_job_${i}`);
+                for (const [index, job] of body.jobs.entries()) {
+
+                    const file = formData.get(`file_job_${index}`);
                     let finalImageUrl = null;
 
-                    if (file && file.size > 0) {
-                        // Chama sua função pronta!
+                    if (file && file instanceof File && file.size > 0) {
                         finalImageUrl = await uploadImage(file, "sale", env);
+
+                        // REVISÃO: Valida se o upload realmente funcionou
+                        if (finalImageUrl) {
+                            uploadedImages.push(finalImageUrl);
+                        } else {
+                            throw new Error(`Falha ao realizar upload da imagem para o job ${index}`);
+                        }
                     }
 
                     jobsToInsert.push({
@@ -65,41 +112,227 @@ export default async function dashboardCore(request, env) {
                         product_uid: job.product_uid,
                         product_title: job.product_title,
                         product_color: job.product_color,
-                        job_text_title: job.text_title,
-                        job_text_font: job.text_font,
-                        job_font_uid: job.uid_font,
+
+                        job_text_title: job.text_title || null,
+                        job_text_font: job.text_font || null,
+                        job_font_uid: job.font_uid || null,
+
+                        job_figure_uid: job.uid_figure || null,
                         job_figure_name: job.figure_name || null,
                         job_figure_url: job.figure_url || null,
-                        job_figure_uid: job.figure_url || null,
-                        job_image_url_reference: finalImageUrl, // URL do R2
+
+                        job_image_url_reference: finalImageUrl,
                         job_observ: job.observation || null,
-                        job_status: 0
+                        job_status: 0,
+                        // REVISÃO: Lógica idêntica ao Update para consistência de data
+                        job_start_date: (orderStatus !== 99 && orderStatus !== 0) ? new Date().toISOString() : null
                     });
-                    console.log(jobsToInsert);
-                    i++;
                 }
 
-                // Inserção em lote no banco
+                // 3. Inserção em lote no banco
                 const insertedJobs = await dataBaseRequest("dashboard_jobs", "POST", jobsToInsert, env);
 
                 if (insertedJobs instanceof Response) {
-                    // Rollback básico se os jobs falharem
+                    // ROLLBACK: Limpeza total em caso de falha na inserção
                     await dataBaseRequest(`dashboard_orders?uid=eq.${order.uid}`, "DELETE", null, env);
+
+                    if (uploadedImages.length > 0) {
+                        const imgRollback = uploadedImages.map(url => deleteFromBucket(url, 'sale', env));
+                        await Promise.allSettled(imgRollback);
+                    }
                     return insertedJobs;
                 }
 
-                // Atualizar a Ordem com os UIDs dos Jobs criados
+                // 4. Atualizar a Ordem com os UIDs reais retornados pelo banco
                 const jobUids = insertedJobs.map(j => j.uid);
                 await dataBaseRequest(`dashboard_orders?uid=eq.${order.uid}`, "PATCH", {
                     order_list_jobs: jobUids
                 }, env);
             }
 
-            return new Response(JSON.stringify({ success: true, order_id: order.id_num }), { status: 201 });
+            return new Response(JSON.stringify({ success: true, order_id: order.id_num }), {
+                status: 201,
+                headers: { "Content-Type": "application/json" }
+            });
 
         } catch (error) {
-            console.error("Erro na criação:", error.message);
-            return new Response(JSON.stringify({ error: "Erro interno ao processar pedido" }), { status: 500 });
+            console.error("[CREATE ERROR]:", error.message);
+
+            // Rollback de segurança para evitar arquivos órfãos no R2
+            if (uploadedImages.length > 0) {
+                const imgRollback = uploadedImages.map(url => deleteFromBucket(url, 'sale', env));
+                // Usamos allSettled para garantir que tente deletar todos mesmo que um falhe
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) {
+                    ctx.waitUntil(Promise.allSettled(imgRollback));
+                } else {
+                    await Promise.allSettled(imgRollback);
+                }
+            }
+
+            return new Response(JSON.stringify({ error: "Erro interno: " + error.message }), { status: 500 });
+        }
+    }
+
+    // PATCH: Atualizar Ordem e Jobs (Com Sincronização, Cancelamento e Reativação)
+    if (subPath.startsWith("/orders/update") && method === "PATCH") {
+        try {
+            const formData = await request.formData();
+            const payloadStr = formData.get('payload');
+            if (!payloadStr) throw new Error("Payload não encontrado.");
+
+            const body = JSON.parse(payloadStr);
+            const order_uid = formData.get('uid');
+
+            if (!order_uid) throw new Error("UID da ordem não fornecido.");
+
+            // 1. BUSCA ESTADO ATUAL
+            const currentOrderRes = await dataBaseRequest(`dashboard_orders?uid=eq.${order_uid}`, "GET", null, env);
+            if (currentOrderRes instanceof Response || !currentOrderRes.length) throw new Error("Ordem não encontrada.");
+            const dbOrder = currentOrderRes[0];
+
+            // REVISÃO: Busca jobs usando order_uid para garantir que pegamos todos, mesmo os que não estão na lista da ordem por erro prévio
+            const dbJobs = await dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}`, "GET", null, env);
+            if (dbJobs instanceof Response) throw new Error("Erro ao buscar jobs atuais.");
+
+            const imagesToDelete = [];
+            const newImagesUploaded = [];
+
+            // 2. IDENTIFICAR JOBS PARA EXCLUSÃO
+            const frontJobUids = body.jobs.filter(j => j.uid).map(j => j.uid);
+            const jobsToDeleteFromDb = dbJobs.filter(dj => !frontJobUids.includes(dj.uid));
+
+            // 3. PROCESSAR CADA JOB DO PAYLOAD (UPDATE OU INSERT)
+            const processJobsPromises = body.jobs.map(async (frontJob, index) => {
+                const dbJob = frontJob.uid ? dbJobs.find(j => j.uid === frontJob.uid) : null;
+
+                const file = formData.get(`file_job_${index}`);
+                let finalImageUrl = frontJob.job_image_url_reference || (dbJob ? dbJob.job_image_url_reference : null);
+
+                if (file && file instanceof File && file.size > 0) {
+                    const uploadedUrl = await uploadImage(file, "sale", env);
+                    if (!uploadedUrl) throw new Error(`Falha no upload da imagem do job ${index}`);
+
+                    newImagesUploaded.push(uploadedUrl);
+                    if (dbJob?.job_image_url_reference) imagesToDelete.push(dbJob.job_image_url_reference);
+                    finalImageUrl = uploadedUrl;
+                }
+
+                const jobPayload = {
+                    product_uid: frontJob.product_uid,
+                    product_title: frontJob.product_title,
+                    product_color: frontJob.product_color,
+                    job_text_title: frontJob.text_title || null,
+                    job_font_uid: frontJob.font_uid || null,
+                    job_text_font: frontJob.text_font || null,
+                    job_figure_uid: frontJob.figure_uid || null,
+                    job_figure_name: frontJob.figure_name || null,
+                    job_figure_url: frontJob.figure_url || null,
+                    job_observ: frontJob.observation || null,
+                    job_image_url_reference: finalImageUrl
+                };
+
+                if (dbJob) {
+                    return dataBaseRequest(`dashboard_jobs?uid=eq.${dbJob.uid}`, "PATCH", jobPayload, env);
+                } else {
+                    return dataBaseRequest(`dashboard_jobs`, "POST", {
+                        ...jobPayload,
+                        order_uid: dbOrder.uid,
+                        order_num: dbOrder.id_num,
+                        job_status: 0
+                    }, env);
+                }
+            });
+
+            const jobResults = await Promise.all(processJobsPromises);
+            if (jobResults.some(r => r instanceof Response)) throw new Error("Falha na sincronização dos jobs.");
+
+            // 4. EXECUTAR DELEÇÕES
+            if (jobsToDeleteFromDb.length > 0) {
+                const deletePromises = jobsToDeleteFromDb.map(async (jobToDel) => {
+                    await dataBaseRequest(`dashboard_jobs?uid=eq.${jobToDel.uid}`, "DELETE", null, env);
+                    if (jobToDel.job_image_url_reference) imagesToDelete.push(jobToDel.job_image_url_reference);
+                });
+                await Promise.all(deletePromises);
+            }
+
+            // 5. RECONSTRUIR LISTA DE JOBS (Fundamental para manter o array order_list_jobs atualizado)
+            const allCurrentJobs = await dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}&select=uid`, "GET", null, env);
+            const updatedJobUids = Array.isArray(allCurrentJobs) ? allCurrentJobs.map(j => j.uid) : [];
+
+            // 6. PREPARAR PAYLOAD DA ORDEM
+            const orderUpdatePayload = { order_list_jobs: updatedJobUids };
+
+            // Comparações de campos simples
+            const fields = ['client_name', 'client_address', 'client_phone', 'order_origin', 'order_priority', 'order_delivery_date'];
+            fields.forEach(field => {
+                if (body[field] !== undefined && body[field] !== dbOrder[field]) {
+                    orderUpdatePayload[field] = body[field];
+                }
+            });
+
+            // 7. LÓGICA DE STATUS: Cancelamento, Reativação ou Produção
+            const oldStatus = parseInt(dbOrder.order_status);
+            const newStatus = parseInt(body.order_status);
+
+            if (newStatus !== oldStatus) {
+                orderUpdatePayload.order_status = newStatus;
+
+                if (newStatus === 99) {
+                    // Cancelamento: Tudo vira 99
+                    await dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}`, "PATCH", { job_status: 99 }, env);
+                }
+                else if (oldStatus >= 2 && newStatus === 1) {
+                    // REVISÃO: Se estava Concluída/Finalizada (>=2) e voltou para Aprovada (1)
+                    // Resetamos status para 0 e forçamos nova data de início como "hoje"
+                    await dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}`, "PATCH", {
+                        job_status: 1,
+                        job_start_date: new Date().toISOString()
+                    }, env);
+                }
+                else if (oldStatus === 99 && newStatus !== 99) {
+                    // Reativação de cancelada: Reset total
+                    await dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}`, "PATCH", {
+                        job_status: 1,
+                        job_start_date: new Date().toISOString()
+                    }, env);
+                }
+                else if (newStatus !== 0) {
+                    // Fluxo normal: Apenas marca data se ainda estiver nula
+                    await dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}&job_start_date=is.null`, "PATCH", {
+                        job_start_date: new Date().toISOString()
+                    }, env);
+                }
+            }
+
+            // 8. FINALIZAR UPDATE DA ORDEM (Só faz se houver mudanças no payload)
+            if (Object.keys(orderUpdatePayload).length > 0) {
+                const finalUpdate = await dataBaseRequest(`dashboard_orders?uid=eq.${order_uid}`, "PATCH", orderUpdatePayload, env);
+                if (finalUpdate instanceof Response) throw new Error("Erro ao atualizar cabeçalho da ordem.");
+            }
+
+            // 9. CLEANUP BUCKET
+            if (imagesToDelete.length > 0) {
+                const cleanup = imagesToDelete.map(url => deleteFromBucket(url, 'sale', env));
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(Promise.allSettled(cleanup));
+                else await Promise.allSettled(cleanup);
+            }
+
+            // 10. RETORNA SUCESSO E NUMERO DA ORDEM
+            const nowIdNum = dbOrder.id_num;
+            return new Response(JSON.stringify({
+                success: true,
+                id_num: nowIdNum
+            }), { status: 200 });
+
+        } catch (error) {
+            console.error("[CRITICAL UPDATE ERROR]:", error.message);
+            // Rollback de imagens enviadas nesta tentativa
+            if (newImagesUploaded.length > 0) {
+                const rollback = newImagesUploaded.map(url => deleteFromBucket(url, 'sale', env));
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(Promise.allSettled(rollback));
+                else await Promise.allSettled(rollback);
+            }
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
 
@@ -150,102 +383,227 @@ export default async function dashboardCore(request, env) {
         }
     }
 
-
-    // PATCH: Atualizar informações do Cliente/Endereço
-    if (subPath.startsWith("/orders/update-info") && method === "PATCH") {
-        try {
-            const { uid, ...updateData } = await request.json();
-            if (!uid) throw new Error("UID é obrigatório");
-
-            const result = await dataBaseRequest(`dashboard_orders?uid=eq.${uid}`, "PATCH", {
-                ...updateData,
-                order_date_last_modified: new Date().toISOString()
-            }, env);
-
-            return result instanceof Response ? result : new Response(JSON.stringify({ success: true }), { status: 200 });
-        } catch (error) {
-            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-        }
-    }
-
-    // PATCH: Cancelar Order (Status 99)
+    // PATCH: Cancelar Order (Status 99) em cascata
     if (subPath.startsWith("/orders/cancel") && method === "PATCH") {
         try {
-            const { order_uid } = await request.json();
+            const order_uid = url.searchParams.get("uid");
+            if (!order_uid) throw new Error("UID da ordem é obrigatório.");
 
-            const updateResult = await dataBaseRequest(`dashboard_orders?uid=eq.${order_uid}`, "PATCH", {
-                order_status: 99
-            }, env);
+            // 1. Preparamos as promises de atualização
+            // REVISÃO: Usamos parseInt ou garantimos que o status seja enviado como número/string correta conforme o BD
+            const statusCancel = 99;
 
-            return updateResult instanceof Response ? updateResult : new Response(JSON.stringify({ success: true }), { status: 200 });
+            // 2. EXECUTAR EM PARALELO COM TRATAMENTO DE ERRO
+            // Atualiza a Ordem Principal e todos os Jobs que pertencem a ela
+            const [orderRes, jobsRes] = await Promise.all([
+                dataBaseRequest(`dashboard_orders?uid=eq.${order_uid}`, "PATCH", {
+                    order_status: statusCancel
+                }, env),
+                dataBaseRequest(`dashboard_jobs?order_uid=eq.${order_uid}`, "PATCH", {
+                    job_status: statusCancel
+                }, env)
+            ]);
+
+            // REVISÃO: Verificação rigorosa de erro
+            // No PostgREST, uma resposta de sucesso geralmente é um array ou vazio,
+            // mas se retornar uma Response com status >= 400, houve erro.
+            if (orderRes instanceof Response && orderRes.status >= 400) {
+                const errorData = await orderRes.json();
+                throw new Error(`Erro ao cancelar Ordem: ${errorData.message || orderRes.statusText}`);
+            }
+
+            if (jobsRes instanceof Response && jobsRes.status >= 400) {
+                const errorData = await jobsRes.json();
+                throw new Error(`Erro ao cancelar Jobs: ${errorData.message || jobsRes.statusText}`);
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: "Ordem e Jobs cancelados com sucesso."
+            }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+
         } catch (error) {
-            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+            console.error(`[CRITICAL CANCEL ERROR]: ${error.message}`);
+            return new Response(JSON.stringify({
+                error: error.message
+            }), {
+                status: 500,
+                headers: { "Content-Type": "application/json" }
+            });
         }
     }
 
-    // GET: Buscar Orders por intervalo de data
+    // GET: Buscar Orders por intervalo de data (Mês atual ou filtro customizado)
     if (subPath.startsWith("/orders/search") && method === "GET") {
         try {
-            const startDate = url.searchParams.get("start");
-            const endDate = url.searchParams.get("end");
+            let startDate = url.searchParams.get("start");
+            let endDate = url.searchParams.get("end");
 
-            if (!startDate || !endDate) return new Response(JSON.stringify({ error: "Datas obrigatórias" }), { status: 400 });
+            // 1. LÓGICA DE DATA PADRÃO (Mês Atual: do dia 01 até o último dia)
+            if (!startDate || !endDate) {
+                const now = new Date();
 
+                // Primeiro dia do mês atual (ex: 2024-05-01)
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+
+                // Último dia do mês atual (O dia 0 do mês seguinte é o último dia do mês atual)
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+                // Formata para YYYY-MM-DD considerando o fuso local para evitar saltos de data
+                const offset = now.getTimezoneOffset() * 60000;
+                startDate = new Date(firstDay - offset).toISOString().split('T')[0];
+                endDate = new Date(lastDay - offset).toISOString().split('T')[0];
+
+            }
+
+            // 2. BUSCA NO BANCO DE DADOS
+            // Filtro: Desde 00:00:00 do primeiro dia até 23:59:59 do último
             const endpoint = `dashboard_orders?order_created_at=gte.${startDate}T00:00:00&order_created_at=lte.${endDate}T23:59:59&order=order_created_at.desc`;
+
             const orders = await dataBaseRequest(endpoint, "GET", null, env);
+
             if (orders instanceof Response) return orders;
 
+            // 3. CONSTRUÇÃO DAS LINHAS DA TABELA
             const htmlRows = orders.map(order => {
                 const jobsCount = Array.isArray(order.order_list_jobs) ? order.order_list_jobs.length : 0;
                 const summary = jobsCount > 0 ? `${jobsCount} itens` : "Sem itens";
+
+                // Retorna o componente pronto (HTML string) para o seu front-end
                 return create_order_row(order, summary);
             });
 
-            return new Response(JSON.stringify(htmlRows), { status: 200 });
+            return new Response(JSON.stringify(htmlRows), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+
+        } catch (error) {
+            console.error(`[Search Error]: ${error.message}`);
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    // PATCH: Finalizar Order e Job em cascata
+    if (subPath.startsWith("/orders/finalize-with-job") && method === "PATCH") {
+        try {
+            const body = await request.json();
+            const { job_uid } = body;
+            if (!job_uid) throw new Error('Necessário informar o UID do Job para finalizar a Ordem');
+
+            // 1. Busca o JOB para descobrir a qual ORDER ele pertence
+            // Supondo que a coluna no banco se chame 'job_order_uid' ou similar
+            const jobData = await dataBaseRequest(`dashboard_jobs?uid=eq.${job_uid}&select=order_uid`, "GET", null, env);
+
+            if (jobData instanceof Response || !jobData || jobData.length === 0) {
+                return new Response(JSON.stringify({ error: "Job não localizado para identificar a Ordem" }), { status: 404 });
+            }
+
+            const orderUid = jobData[0].order_uid;
+
+            if (!orderUid) {
+                return new Response(JSON.stringify({ error: "Este Job não possui uma Ordem vinculada" }), { status: 400 });
+            }
+
+            const now = new Date().toISOString();
+
+            // 2. Finaliza a Order (Status 3 = Finalizado)
+            const orderResponse = await dataBaseRequest(`dashboard_orders?uid=eq.${orderUid}`, "PATCH", {
+                order_status: 3,
+                order_updated_at: now
+            }, env);
+
+            // 3. Finaliza o Job (Status 3 = Finalizado)
+            const jobResponse = await dataBaseRequest(`dashboard_jobs?uid=eq.${job_uid}`, "PATCH", {
+                job_status: 3,
+                job_updated_at: now
+            }, env);
+
+            // Verifica se ambas as operações foram bem sucedidas (opcional, dependendo do seu dataBaseRequest)
+            return new Response(JSON.stringify({
+                success: true,
+                order_uid: orderUid,
+                job_uid: job_uid
+            }), { status: 200 });
+
         } catch (error) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
+
     // --- ROTAS DE JOBS (TRABALHOS) ---
 
-    // GET: Buscar Jobs para o Dashboard (Renderiza Cards)
+    // GET: Buscar Jobs para o Dashboard de Produção
     if (subPath.startsWith("/jobs/search") && method === "GET") {
-        const dateFilter = url.searchParams.get("date");
         try {
-            // 1. Busca os Jobs filtrados pela data
-            const jobsFromDb = await dataBaseRequest(`dashboard_jobs?job_start_date=eq.${dateFilter}&select=*`, "GET", null, env);
+            let startDate = url.searchParams.get("start");
+            let endDate = url.searchParams.get("end");
+
+            // 1. LÓGICA DE DATA PADRÃO (Semana Atual: Domingo a Sábado)
+            if (!startDate || !endDate) {
+                const today = new Date();
+
+                // Retrocede até o Domingo (dia 0)
+                const sunday = new Date(today);
+                sunday.setDate(today.getDate() - today.getDay());
+
+                // Avança até o Sábado (dia 6)
+                const saturday = new Date(sunday);
+                saturday.setDate(sunday.getDate() + 6);
+
+                // Formatação YYYY-MM-DD
+                const offset = today.getTimezoneOffset() * 60000;
+                startDate = new Date(sunday - offset).toISOString().split('T')[0];
+                endDate = new Date(saturday - offset).toISOString().split('T')[0];
+            }
+
+            // 2. BUSCA OS JOBS NO INTERVALO
+            // Usamos gte (maior ou igual) e lte (menor ou igual) no campo job_start_date
+            const endpointJobs = `dashboard_jobs?job_start_date=gte.${startDate}T00:00:00&job_start_date=lte.${endDate}T23:59:59&select=*`;
+            const jobsFromDb = await dataBaseRequest(endpointJobs, "GET", null, env);
+
             if (jobsFromDb instanceof Response) return jobsFromDb;
-            if (jobsFromDb.length === 0) return new Response(JSON.stringify([]), { status: 200 });
 
-            // 2. Extrai UIDs únicos das Orders para buscar os detalhes
+            // Se não houver jobs, retornamos array vazio (melhor que erro 500 para o front)
+            if (!jobsFromDb || jobsFromDb.length === 0) {
+                return new Response(JSON.stringify([]), { status: 200 });
+            }
+
+            // 3. BUSCAR DETALHES DAS ORDERS CORRESPONDENTES
             const orderUids = [...new Set(jobsFromDb.map(j => j.order_uid))];
-
-            // 3. Busca as Orders correspondentes (Trazemos status e prioridade/dados do pedido)
-            // Usamos o filtro .in.(id1,id2,...)
             const ordersFromDb = await dataBaseRequest(`dashboard_orders?uid=in.(${orderUids.join(',')})&select=*`, "GET", null, env);
             if (ordersFromDb instanceof Response) return ordersFromDb;
 
-            // Criamos um mapa para acesso rápido: { "uid-123": { order_data } }
             const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
 
-            const publicServePrefix = "/api/public/assets/serve/";
+            // 4. FILTRAGEM E MAPEAMENTO PARA CARDS
+            // Blacklist: 0 (pendente/aguardando), 3 (concluido), 99 (cancelado/aprovado)
+            // Nota: Ajuste os números conforme sua regra de negócio exata
+            const blackListView = [0, 3, 99];
 
-            // 4. Mapeia os Jobs cruzando com os dados da Order
             const htmlCardsArray = jobsFromDb
                 .filter(row => {
                     const order = ordersMap.get(row.order_uid);
-                    // FILTRO: Só exibe o Job se a ordem existir e NÃO estiver finalizada
-                    // Ajuste 'Finalizado' para o nome exato do seu status de conclusão
-                    return order && order.order_status !== 1;
+                    // Só exibe se a ordem existir e não estiver no status de exclusão da visualização
+                    return order && !blackListView.includes(parseInt(order.order_status));
+                })
+                .sort((a, b) => {
+                    // Ordenação por prioridade da Ordem (descendente: 3 alta, 1 baixa)
+                    const orderA = ordersMap.get(a.order_uid);
+                    const orderB = ordersMap.get(b.order_uid);
+                    return (orderB?.order_priority || 0) - (orderA?.order_priority || 0);
                 })
                 .map(row => {
                     const order = ordersMap.get(row.order_uid);
-                    const url_reference = row.job_image_url_reference ? publicServePrefix + row.job_image_url_reference : "";
+                    const url_reference = row.job_image_url_reference ? `${publicServePrefix}${row.job_image_url_reference}?b=temp` : "";
+
                     return create_job_card(
                         {
                             order_uid: row.order_uid,
                             order_id: order.id_num,
-                            // Prioridade agora vem da Order, não do Job
                             priority: order.order_priority
                         },
                         {
@@ -257,8 +615,10 @@ export default async function dashboardCore(request, env) {
                             art_json: row.job_art_json || "",
                             url_ref: url_reference,
                             name_image: row.job_figure_name || "",
+                            url_image: row.job_figure_url || "",
                             json_image: row.job_image_json || "",
-                            observ: row.job_observ || ""
+                            observ: row.job_observ || "",
+                            status: row.job_status
                         }
                     );
                 });
@@ -270,7 +630,7 @@ export default async function dashboardCore(request, env) {
 
         } catch (error) {
             console.error(`[Jobs Search Error]: ${error.message}`);
-            return new Response(JSON.stringify({ error: "Erro ao carregar lista de trabalhos" }), { status: 500 });
+            return new Response(JSON.stringify({ error: "Erro ao carregar lista de produção" }), { status: 500 });
         }
     }
 
@@ -295,24 +655,56 @@ export default async function dashboardCore(request, env) {
         }
     }
 
-    // PATCH: Alterar Status do Job (Iniciar/Finalizar)
-    if (subPath.startsWith("/jobs/status") && method === "PATCH") {
+    // PATCH: Atualizar status do Job e verificar conclusão da Ordem
+    if (subPath.startsWith("/jobs/update-status") && method === "PATCH") {
         try {
-            const body = await request.json(); // Espera { uid: "...", status: 1 }
+            const body = await request.json();
+            const { uid, status } = body;
+            const targetStatus = parseInt(status);
 
-            if (!body.uid) throw new Error("UID é obrigatório.");
+            if (!uid) throw new Error("UID do Job não fornecido.");
 
-            const result = await dataBaseRequest(`dashboard_jobs?uid=eq.${body.uid}`, "PATCH", {
-                job_status: body.status
-            }, env);
+            // 1. BUSCAR OS DADOS DO JOB ATUAL (Para saber a qual Ordem ele pertence)
+            const currentJob = await dataBaseRequest(`dashboard_jobs?uid=eq.${uid}&select=order_uid,job_status`, "GET", null, env);
 
-            if (result instanceof Response) return result;
+            if (!currentJob || currentJob.length === 0 || currentJob instanceof Response) {
+                throw new Error("Job não encontrado.");
+            }
 
-            return new Response(JSON.stringify({ success: true }), { status: 200 });
+            const parentOrderUid = currentJob[0].order_uid;
+
+            // 2. SE NÃO FOR PARA CONCLUIR (status != 3) OU SE NÃO TIVER ORDEM PAI
+            // Atualiza e encerra a requisição aqui.
+            if (targetStatus !== 3 || !parentOrderUid) {
+                const updated = await dataBaseRequest(`dashboard_jobs?uid=eq.${uid}`, "PATCH", { job_status: targetStatus }, env);
+                return new Response(JSON.stringify({ code: (updated instanceof Response || !updated) ? 99 : 0 }), { status: 200 });
+            }
+
+            // 3. SE FOR PARA CONCLUIR (status = 3), VERIFICAR IRMÃOS NA MESMA ORDEM
+            // Buscamos jobs da mesma ordem que NÃO sejam o atual e que NÃO estejam concluídos (status != 3)
+            const pendingJobs = await dataBaseRequest(
+                `dashboard_jobs?order_uid=eq.${parentOrderUid}&uid=neq.${uid}&job_status=neq.3&select=uid`,
+                "GET",
+                null,
+                env
+            );
+
+            if (pendingJobs instanceof Response) return new Response(JSON.stringify({ code: 99 }), { status: 200 });
+
+            if (pendingJobs.length === 0) {
+                // Todos os outros jobs desta ordem já estão em status 3.
+                // Retorna 1 para o Front perguntar se deseja fechar a Ordem.
+                return new Response(JSON.stringify({ code: 1 }), { status: 200 });
+            } else {
+                // Ainda existem jobs pendentes na mesma ordem.
+                // Apenas atualiza o status deste job para 3.
+                const updated = await dataBaseRequest(`dashboard_jobs?uid=eq.${uid}`, "PATCH", { job_status: 3 }, env);
+                return new Response(JSON.stringify({ code: updated instanceof Response ? 99 : 0 }), { status: 200 });
+            }
 
         } catch (error) {
-            console.error(`[Jobs Status Update Error]: ${error.message}`);
-            return new Response(JSON.stringify({ error: "Erro ao alterar status do trabalho" }), { status: 500 });
+            console.error("[JOB UPDATE ERROR]:", error.message);
+            return new Response(JSON.stringify({ code: 99 }), { status: 200 });
         }
     }
 
@@ -393,7 +785,7 @@ export default async function dashboardCore(request, env) {
 
         try {
             const formData = await request.formData();
-            const productUid = formData.get('uid'); // Pegando do formData conforme seu front
+            const productUid = formData.get('uid');
 
             if (!productUid) throw new Error("UID do produto é obrigatório.");
 
@@ -408,14 +800,13 @@ export default async function dashboardCore(request, env) {
             const stockMin = parseInt(formData.get('amount_min')) || 0;
             const status = stockNow <= 0 ? 2 : (stockNow < stockMin ? 1 : 0);
 
-            // Lógica de Upload
+            // Uploads
             const imgSale = formData.get('image_sale');
             const imgCreator = formData.get('image_creator');
 
             if (imgSale && typeof imgSale !== 'string' && imgSale.size > 0) {
                 newImageSale = await uploadImage(imgSale, "sale", env);
             }
-
             if (imgCreator && typeof imgCreator !== 'string' && imgCreator.size > 0) {
                 newImageCreator = await uploadImage(imgCreator, "creator", env);
             }
@@ -436,38 +827,34 @@ export default async function dashboardCore(request, env) {
 
             if (updateResult instanceof Response) throw new Error("Erro na atualização do banco");
 
-            // Limpeza (Cleanup)
+            // Cleanup: Deleta as ANTIGAS (Success Path)
             const successCleanup = async () => {
+                const cleanupPromises = [];
                 if (newImageSale && oldImageSale && newImageSale !== oldImageSale) {
-                    await env.sale.delete(oldImageSale).catch(() => { });
+                    cleanupPromises.push(deleteFromBucket(oldImageSale, 'sale', env));
                 }
                 if (newImageCreator && oldImageCreator && newImageCreator !== oldImageCreator) {
-                    await env.creator.delete(oldImageCreator).catch(() => { });
+                    cleanupPromises.push(deleteFromBucket(oldImageCreator, 'creator', env));
                 }
+                await Promise.allSettled(cleanupPromises);
             };
 
-            // Se o ctx existir, usa waitUntil para não segurar a resposta.
-            // Se não, aguarda com await.
-            if (typeof ctx !== 'undefined' && ctx.waitUntil) {
-                ctx.waitUntil(successCleanup());
-            } else {
-                await successCleanup();
-            }
+            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(successCleanup());
+            else await successCleanup();
 
             return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
-            // Rollback: Se deu erro, apaga as imagens novas que acabaram de subir
+            // Rollback: Deleta as NOVAS (Error Path)
             const rollback = async () => {
-                if (newImageSale) await env.sale.delete(newImageSale).catch(() => { });
-                if (newImageCreator) await env.creator.delete(newImageCreator).catch(() => { });
+                const rollbackPromises = [];
+                if (newImageSale) rollbackPromises.push(deleteFromBucket(newImageSale, 'sale', env));
+                if (newImageCreator) rollbackPromises.push(deleteFromBucket(newImageCreator, 'creator', env));
+                await Promise.allSettled(rollbackPromises);
             };
 
-            if (typeof ctx !== 'undefined' && ctx.waitUntil) {
-                ctx.waitUntil(rollback());
-            } else {
-                await rollback();
-            }
+            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(rollback());
+            else await rollback();
 
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
@@ -479,45 +866,33 @@ export default async function dashboardCore(request, env) {
             const productUid = url.searchParams.get("uid");
             if (!productUid) throw new Error("UID obrigatório.");
 
-            // 1. Deletamos e já pedimos os dados das imagens de volta na mesma chamada
-            // O parâmetro 'select=*' no DELETE retorna o objeto que foi removido
+            // O parâmetro 'select=*' no DELETE do PostgREST retorna o que foi apagado
             const deleteData = await dataBaseRequest(`dashboard_products?uid=eq.${productUid}&select=product_image_sale,product_image_creator`, "DELETE", null, env);
 
             if (deleteData instanceof Response) return deleteData;
-
-            // Se o array vier vazio, o produto não existia
             if (!deleteData || deleteData.length === 0) {
-                return new Response(JSON.stringify({ error: "Produto não encontrado ou já excluído." }), { status: 404 });
+                return new Response(JSON.stringify({ error: "Produto não encontrado." }), { status: 404 });
             }
 
             const deletedProduct = deleteData[0];
 
-            // 2. Cleanup das Imagens (Sem ctx.waitUntil, usamos await direto)
+            // Cleanup paralelo de todas as imagens associadas
             const cleanupImages = async () => {
                 const deletePromises = [];
-                // Usamos os nomes de bucket 'sale' e 'creator' conforme seu padrão
                 if (deletedProduct.product_image_sale) {
-                    deletePromises.push(env.sale.delete(deletedProduct.product_image_sale).catch(() => { }));
+                    deletePromises.push(deleteFromBucket(deletedProduct.product_image_sale, 'sale', env));
                 }
                 if (deletedProduct.product_image_creator) {
-                    deletePromises.push(env.creator.delete(deletedProduct.product_image_creator).catch(() => { }));
+                    deletePromises.push(deleteFromBucket(deletedProduct.product_image_creator, 'creator', env));
                 }
-
-                if (deletePromises.length > 0) {
-                    await Promise.allSettled(deletePromises);
-                }
+                await Promise.allSettled(deletePromises);
             };
 
-            // Como não estamos usando ctx, aguardamos a limpeza antes de responder
             await cleanupImages();
 
-            return new Response(JSON.stringify({ success: true }), {
-                status: 200,
-                headers: { "Content-Type": "application/json" }
-            });
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
-            console.error(`[Delete Error]: ${error.message}`);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
@@ -650,8 +1025,6 @@ export default async function dashboardCore(request, env) {
         }
     }
 
-
-
     // --- ROTAS DE ASSETS: FONTS ---
 
     // GET: Carregar lista de fontes para seleção (HTML)
@@ -777,54 +1150,54 @@ export default async function dashboardCore(request, env) {
 
         try {
             const formData = await request.formData();
-            const fontUid = formData.get('uid'); // UID vindo do front-end
+            const fontUid = formData.get('uid');
 
             if (!fontUid) throw new Error("UID da fonte é obrigatório.");
 
-            // 1. Busca os dados atuais para saber qual arquivo deletar depois
+            // 1. Busca os dados atuais
             const current = await dataBaseRequest(`dashboard_fonts?uid=eq.${fontUid}`, "GET", null, env);
             if (current instanceof Response || !current.length) throw new Error("Fonte não encontrada.");
 
-            oldUploadedPath = current[0].font_url;
+            const dbFont = current[0];
+            oldUploadedPath = dbFont.font_url;
 
-            // 2. Verifica se foi enviado um novo arquivo de fonte
+            // 2. Lógica de Upload (Apenas se for um arquivo novo/Blob)
             const file = formData.get('file');
-
-            // Se 'file' for um File/Blob (não uma string) e tiver conteúdo, fazemos o upload
             if (file && typeof file !== 'string' && file.size > 0) {
                 newUploadedPath = await uploadFont(file, env);
                 if (!newUploadedPath) throw new Error("Erro no processamento do novo arquivo de fonte.");
             }
 
-            // 3. Prepara os dados para atualização
-            const updateData = {
-                font_name: formData.get('name'),
-                font_type: formData.get('classification')
-            };
+            // 3. Prepara os dados apenas se houver diferença
+            const updateData = {};
+            const newName = formData.get('name');
+            const newClass = formData.get('classification');
 
-            // Se houve upload de arquivo novo, atualizamos o campo font_url
-            if (newUploadedPath) {
-                updateData.font_url = newUploadedPath;
+            if (newName && newName !== dbFont.font_name) updateData.font_name = newName;
+            if (newClass && newClass !== dbFont.font_type) updateData.font_type = newClass;
+            if (newUploadedPath) updateData.font_url = newUploadedPath;
+
+            // 4. Atualiza se houver o que atualizar
+            if (Object.keys(updateData).length > 0) {
+                const result = await dataBaseRequest(`dashboard_fonts?uid=eq.${fontUid}`, "PATCH", updateData, env);
+                if (result instanceof Response) throw new Error("Erro ao atualizar dados no banco.");
             }
 
-            // 4. Atualiza o banco de dados
-            const result = await dataBaseRequest(`dashboard_fonts?uid=eq.${fontUid}`, "PATCH", updateData, env);
-            if (result instanceof Response) throw new Error("Erro ao atualizar dados no banco.");
-
-            // 5. SUCESSO: Agora sim, deletamos a fonte antiga do bucket (se ela existia e foi trocada)
+            // 5. Cleanup da fonte antiga (Sucesso)
             if (newUploadedPath && oldUploadedPath && newUploadedPath !== oldUploadedPath) {
-                // Usamos o binding correto (ajuste para 'lib' ou o nome do seu bucket de fontes)
-                await env.lib.delete(oldUploadedPath).catch(err => {
-                    console.error(`[Cleanup Error] Não foi possível deletar a fonte antiga: ${oldUploadedPath}`, err);
-                });
+                const cleanup = () => deleteFromBucket(oldUploadedPath, 'lib', env);
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(cleanup());
+                else await cleanup();
             }
 
             return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
-            // ROLLBACK: Se algo deu errado após o upload, apagamos o arquivo novo para não deixar lixo
+            // Rollback: Apaga o arquivo novo se o banco falhar
             if (newUploadedPath) {
-                await env.lib.delete(newUploadedPath).catch(() => { });
+                const rollback = () => deleteFromBucket(newUploadedPath, 'lib', env);
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(rollback());
+                else await rollback();
             }
 
             console.error(`[Font Update Error]: ${error.message}`);
@@ -836,17 +1209,27 @@ export default async function dashboardCore(request, env) {
     if (subPath.startsWith("/assets/fonts/delete") && method === "DELETE") {
         try {
             const uid = url.searchParams.get("uid");
-            const current = await dataBaseRequest(`library_fonts?uid=eq.${uid}`, "GET", null, env);
+            if (!uid) throw new Error("UID obrigatório.");
+
+            // 1. Busca os dados para pegar a URL do arquivo antes de deletar
+            const current = await dataBaseRequest(`dashboard_fonts?uid=eq.${uid}`, "GET", null, env);
             if (current instanceof Response || !current.length) throw new Error("Fonte não encontrada.");
 
-            const deleteResult = await dataBaseRequest(`library_fonts?uid=eq.${uid}`, "DELETE", null, env);
+            const fontToDelete = current[0];
+
+            // 2. Deleta do Banco
+            const deleteResult = await dataBaseRequest(`dashboard_fonts?uid=eq.${uid}`, "DELETE", null, env);
             if (deleteResult instanceof Response) return deleteResult;
 
-            // Cleanup Bucket
+            // 3. Cleanup do Bucket (Usa a URL que estava no banco)
             const cleanup = async () => {
-                if (current[0].font_bucket_key) await env.MY_BUCKET_FONTS.delete(current[0].font_bucket_key).catch(() => { });
+                if (fontToDelete.font_url) {
+                    await deleteFromBucket(fontToDelete.font_url, 'lib', env);
+                }
             };
-            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(cleanup()); else cleanup();
+
+            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(cleanup());
+            else await cleanup();
 
             return new Response(JSON.stringify({ success: true }), { status: 200 });
         } catch (error) {
@@ -867,16 +1250,43 @@ export default async function dashboardCore(request, env) {
                 const figureUrl = `${publicServePrefix}${fig.figure_url}?b=lib`;
 
                 return create_selection_item(
-                    { id: fig.uid, label: `${fig.figure_name}` },
+                    { id: fig.uid, label: `${fig.figure_name.toUpperCase()}` },
                     "figure",
                     null,
-                    { figure_url: figureUrl },
+                    {
+                        figure_uid: fig.uid,
+                        figure_name: fig.figure_name,
+                        figure_class: f.figure_class,
+                        figure_url: figureUrl
+                    },
                     null,
                     "input-creator_assets_figure" // inputClass
                 )
             });
 
             return new Response(JSON.stringify(htmlItems), { status: 200 });
+        } catch (error) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    // GET: carregar dados individuais de uma figura
+    if (subPath.startsWith("/assets/vectors/get") && method === "GET") {
+        try {
+            const figure_uid = url.searchParams.get("uid");
+
+            const font = await dataBaseRequest(`dashboard_figures?uid=eq.${figure_uid}`, "GET", null, env);
+            if (font instanceof Response) return font;
+
+            const data = font[0];
+            const body = {
+                figure_uid: data.uid,
+                figure_name: data.figure_name,
+                figure_url: `${publicServePrefix}${data.figure_url}?b=lib`,
+                figure_class: data.figure_class
+            }
+
+            return new Response(JSON.stringify(body), { status: 200 });
         } catch (error) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
@@ -899,6 +1309,7 @@ export default async function dashboardCore(request, env) {
                     "sale-figure",
                     null,
                     {
+                        figure_uid: fig.uid,
                         figure_url: figureUrl,
                         figure_name: fig.figure_name
                     },
@@ -951,54 +1362,54 @@ export default async function dashboardCore(request, env) {
 
         try {
             const formData = await request.formData();
-            const figureUid = formData.get('uid'); // UID enviado pelo front
+            const figureUid = formData.get('uid');
 
             if (!figureUid) throw new Error("UID da figura é obrigatório.");
 
-            // 1. Busca os dados atuais para identificar o arquivo antigo
+            // 1. Busca os dados atuais para comparação e identificação do arquivo antigo
             const current = await dataBaseRequest(`dashboard_figures?uid=eq.${figureUid}`, "GET", null, env);
             if (current instanceof Response || !current.length) throw new Error("Figura não encontrada.");
 
-            oldUploadedPath = current[0].figure_url;
+            const dbFigure = current[0];
+            oldUploadedPath = dbFigure.figure_url;
 
             // 2. Processamento do novo arquivo (se houver)
             const file = formData.get('file');
-
-            // Verifica se é um arquivo real e não uma string/vazio
             if (file && typeof file !== 'string' && file.size > 0) {
                 newUploadedPath = await uploadLibraryAsset(file, env);
                 if (!newUploadedPath) throw new Error("Erro no upload do novo vetor.");
             }
 
-            // 3. Montagem do objeto de atualização
-            const updateData = {
-                figure_name: formData.get('name'),
-                figure_class: formData.get('classification')
-            };
+            // 3. Montagem do objeto de atualização apenas com o que mudou
+            const updateData = {};
+            const newName = formData.get('name');
+            const newClass = formData.get('classification');
 
-            // Se houve novo upload, incluímos o novo caminho
-            if (newUploadedPath) {
-                updateData.figure_url = newUploadedPath;
+            if (newName && newName !== dbFigure.figure_name) updateData.figure_name = newName;
+            if (newClass && newClass !== dbFigure.figure_class) updateData.figure_class = newClass;
+            if (newUploadedPath) updateData.figure_url = newUploadedPath;
+
+            // 4. Atualização no banco (apenas se houver mudanças)
+            if (Object.keys(updateData).length > 0) {
+                const result = await dataBaseRequest(`dashboard_figures?uid=eq.${figureUid}`, "PATCH", updateData, env);
+                if (result instanceof Response) throw new Error("Erro ao atualizar banco de dados.");
             }
 
-            // 4. Atualização no banco de dados
-            const result = await dataBaseRequest(`dashboard_figures?uid=eq.${figureUid}`, "PATCH", updateData, env);
-            if (result instanceof Response) throw new Error("Erro ao atualizar banco de dados.");
-
-            // 5. Cleanup: Se o arquivo mudou, deletamos o antigo do bucket
+            // 5. Cleanup: Se o arquivo mudou, deletamos o antigo (Sucesso)
             if (newUploadedPath && oldUploadedPath && newUploadedPath !== oldUploadedPath) {
-                // Ajuste 'lib' para o binding correto do seu bucket de vetores
-                await env.lib.delete(oldUploadedPath).catch(err => {
-                    console.error(`[Cleanup Error] Falha ao remover vetor antigo: ${oldUploadedPath}`);
-                });
+                const cleanup = () => deleteFromBucket(oldUploadedPath, 'lib', env);
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(cleanup());
+                else await cleanup();
             }
 
             return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
-            // Rollback: Remove o arquivo novo se o banco falhou
+            // Rollback: Remove o arquivo novo se algo falhou após o upload
             if (newUploadedPath) {
-                await env.lib.delete(newUploadedPath).catch(() => { });
+                const rollback = () => deleteFromBucket(newUploadedPath, 'lib', env);
+                if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(rollback());
+                else await rollback();
             }
 
             console.error(`[Vector Update Error]: ${error.message}`);
@@ -1006,15 +1417,13 @@ export default async function dashboardCore(request, env) {
         }
     }
 
-
     // DELETE: Remover Figura (Vetor)
     if (subPath.startsWith("/assets/vectors/delete") && method === "DELETE") {
         try {
             const uid = url.searchParams.get("uid");
             if (!uid) throw new Error("UID da figura é obrigatório.");
 
-            // 1. Deletamos e já extraímos o caminho do arquivo em uma única transação
-            // O retorno do dataBaseRequest será o objeto que acabou de ser deletado
+            // 1. Deleta do Banco e já retorna o caminho do arquivo para cleanup
             const deleteData = await dataBaseRequest(
                 `dashboard_figures?uid=eq.${uid}&select=figure_url`,
                 "DELETE",
@@ -1031,21 +1440,17 @@ export default async function dashboardCore(request, env) {
 
             const deletedFigure = deleteData[0];
 
-            // 2. Cleanup do Bucket (Síncrono, conforme seu padrão atual sem ctx)
+            // 2. Cleanup do Bucket (Usa a função padronizada)
             const cleanup = async () => {
                 if (deletedFigure.figure_url) {
-                    // Ajuste 'lib' para o nome do binding do seu bucket R2
-                    await env.lib.delete(deletedFigure.figure_url).catch(() => { });
+                    await deleteFromBucket(deletedFigure.figure_url, 'lib', env);
                 }
             };
 
-            // Como optamos por não usar ctx.waitUntil, aguardamos a exclusão do arquivo
-            await cleanup();
+            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(cleanup());
+            else await cleanup();
 
-            return new Response(JSON.stringify({ success: true }), {
-                status: 200,
-                headers: { "Content-Type": "application/json" }
-            });
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
             console.error(`[Vector Delete Error]: ${error.message}`);

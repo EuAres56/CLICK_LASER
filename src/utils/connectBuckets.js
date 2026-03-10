@@ -19,45 +19,12 @@ export async function uploadImage(fileData, bucketType, env) {
 
     if (!blob || blob.size === 0) return null;
 
-    const isWebP = blob.type === "image/webp";
-    const isSmallEnough = blob.size <= (bucketType === 'sale' ? 500 * 1024 : 1024 * 1024);
-
-    let finalBuffer;
-    let contentType = "image/webp";
-
-    if (isWebP && isSmallEnough) {
-        finalBuffer = await blob.arrayBuffer();
-    } else {
-        try {
-            const maxW = bucketType === 'sale' ? 1200 : 1920;
-            const transformUrl = `https://wsrv.nl/?url=placeholder&output=webp&q=80&w=${maxW}&il`;
-
-            const formData = new FormData();
-            formData.append("file", blob);
-
-            const convResponse = await fetch(transformUrl, {
-                method: "POST",
-                body: formData
-            });
-
-            if (convResponse.ok) {
-                finalBuffer = await convResponse.arrayBuffer();
-            } else {
-                if (blob.size > 2 * 1024 * 1024) throw new Error("Imagem original muito pesada.");
-                finalBuffer = await blob.arrayBuffer();
-                contentType = blob.type;
-            }
-        } catch (error) {
-            console.error("Erro no processamento externo:", error.message);
-            if (blob.size > 2 * 1024 * 1024) throw new Error("Falha crítica no processamento.");
-            finalBuffer = await blob.arrayBuffer();
-            contentType = blob.type;
-        }
-    }
+    const finalBuffer = await blob.arrayBuffer();
+    const contentType = blob.type || "image/webp";
 
     const limit = bucketType === 'sale' ? 1.5 * 1024 * 1024 : 3 * 1024 * 1024;
     if (finalBuffer.byteLength > limit) {
-        throw new Error("Arquivo excede o limite de segurança pós-processamento.");
+        throw new Error("Arquivo excede o limite de segurança de tamanho (1.5MB venda / 3MB outras).");
     }
 
     const extension = contentType.split('/')[1] || 'webp';
@@ -170,4 +137,25 @@ export async function uploadFont(fileData, env) {
     });
 
     return newFileName;
+}
+
+
+export async function deleteFromBucket(fileIdentifier, bucketType, env) {
+    const bucket = env[bucketType];
+    if (!fileIdentifier || !bucket) return false;
+
+    try {
+        let key = fileIdentifier;
+        // Extrai a key se for uma URL completa
+        if (fileIdentifier.includes('://')) {
+            const url = new URL(fileIdentifier);
+            key = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+        }
+
+        await bucket.delete(key);
+        return true;
+    } catch (error) {
+        console.error(`[Bucket ${bucketType}] Erro ao deletar ${fileIdentifier}:`, error.message);
+        return false;
+    }
 }

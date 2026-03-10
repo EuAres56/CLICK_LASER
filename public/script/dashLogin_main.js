@@ -13,6 +13,26 @@ function hideLoader() {
     }
 }
 
+function uiAlert(message, title = 'Atenção') {
+    const modal = document.getElementById('modal-custom-alert');
+    const titleEl = document.getElementById('custom-alert-title');
+    const messageEl = document.getElementById('custom-alert-message');
+
+    if (!modal) return alert(message); // Fallback
+
+    titleEl.innerText = title;
+    messageEl.innerText = message;
+
+    modal.classList.add('show');
+}
+
+function closeCustomAlert() {
+    const modal = document.getElementById('modal-custom-alert');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
 
 // =========================
 // LOGIN
@@ -23,7 +43,7 @@ async function login() {
     const password = document.getElementById("user_pass").value;
 
     if (!email || !password) {
-        alert("Preencha email e senha");
+        uiAlert("Preencha email e senha");
         return;
     }
 
@@ -47,16 +67,19 @@ async function login() {
 
         if (!res.ok) {
             console.error("LOGIN ERROR:", data);
-            alert(data?.error || "Erro ao autenticar");
+            uiAlert(data?.error || "Erro ao autenticar", "Erro");
             return;
         }
 
         // 2. Valida e salva no localStorage
-        if (token && data.user_id) {
+        if (token && data.user_info && data.user_info.uid) {
             localStorage.setItem("auth_token", token);
-            localStorage.setItem("user_id", data.user_id); // Salvando o user_id que veio no body
+            localStorage.setItem("user_id", data.user_info.uid); // Salvando o user_id que veio no body
+            localStorage.setItem("user_name", data.user_info.name);
+            localStorage.setItem("user_level", data.user_info.level);
+            localStorage.setItem("map_permissions", JSON.stringify(data.user_info.permissions));
 
-            const user_type = data?.state_account;
+            const user_type = data.user_info?.state_account;
 
             if (!user_type) {
                 switchForm('activate');
@@ -66,13 +89,13 @@ async function login() {
             }
 
         } else {
-            console.error("Erro: Token ou User_ID ausentes.", { token, user_id: data.user_id });
-            alert("Erro ao processar login. Verifique o console.");
+            console.error("Erro: Token ou User_ID ausentes.", { token, user_id: data.user_info.user_id });
+            uiAlert("Erro ao processar login. Verifique o console.", "Aviso");
         }
 
     } catch (err) {
         console.error("LOGIN ERROR:", err);
-        alert("Erro de conexão com o servidor");
+        uiAlert("Erro de conexão com o servidor", "Erro");
     }
 }
 
@@ -81,12 +104,12 @@ async function updatePassword() {
     const newPassConfirm = document.getElementById("act_new_pass_confirm").value;
 
     if (!newPass || !newPassConfirm) {
-        alert("Preencha ambos os campos de senha");
+        uiAlert("Preencha ambos os campos de senha");
         return;
     }
 
     if (newPass !== newPassConfirm) {
-        alert("As senhas não coincidem");
+        uiAlert("As senhas não coincidem");
         return;
     }
 
@@ -105,11 +128,11 @@ async function updatePassword() {
         const data = await res.json();
         if (!res.ok) {
             console.error("UPDATE PASSWORD ERROR:", data);
-            alert(data?.error || "Erro ao atualizar senha");
+            uiAlert(data?.error || "Erro ao atualizar senha", "Erro");
             return;
         }
 
-        alert("Senha atualizada com sucesso! Faça login novamente.");
+        uiAlert("Senha atualizada com sucesso! Faça login novamente.", "Sucesso");
 
         localStorage.clear();
 
@@ -119,7 +142,7 @@ async function updatePassword() {
 
     } catch (err) {
         console.error("UPDATE PASSWORD ERROR:", err);
-        alert("Erro de conexão com o servidor");
+        uiAlert("Erro de conexão com o servidor", "Erro");
     } finally {
 
         hideLoader();

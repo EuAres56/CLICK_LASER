@@ -58,6 +58,19 @@
             <p>Carregando...</p>
         </div>
     </div>
+
+    <!-- Custom Dialogs for Login -->
+    <div class="custom-dialog-overlay" id="modal-custom-alert" style="z-index: 9999; display: none;">
+        <div class="modal-container custom-dialog-box">
+            <div class="modal-body custom-dialog-body">
+                <h3 id="custom-alert-title" class="custom-dialog-title custom-icon-warning">Atenção</h3>
+                <p id="custom-alert-message" class="custom-dialog-message"></p>
+            </div>
+            <div class="modal-footer custom-dialog-actions" style="justify-content: center;">
+                <button type="button" class="btn_main dialog-btn-primary" onclick="closeCustomAlert()">Entendi</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 <script src="./script/dashLogin_main.js"></script>

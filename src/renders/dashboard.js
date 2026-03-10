@@ -55,9 +55,9 @@ function create_job_card(json_order, json_job) {
     const card_body = `
         <h4 class="product-title">${json_job.product_title} - ${json_job.product_color}</h4>
         <div class="job-technical-sheet">
-            <div class="data-row"><span class="label">TEXTO:</span> <span class="value">${json_job.text}</span></div>
+            <div class="data-row"><span class="label">TEXTO:</span> <span class="value copyable-text" title="Clique para copiar">${json_job.text}</span></div>
             <div class="data-row"><span class="label">FONTE:</span> <span class="value">${json_job.font}</span></div>
-            <div class="data-row"><span class="label">IMAGEM:</span> <span class="value">${json_job.name_image}</span></div>
+            <div class="data-row"><span class="label">IMAGEM:</span> <span class="value copyable-image" data-url="${json_job.url_image}" title="Clique para copiar imagem">${json_job.name_image}</span></div>
             <div class="data-row obs-row"><span class="label">OBSERVAÇÃO:</span> <span class="value">${json_job.observ}</span></div>
         </div>
     `;
@@ -94,21 +94,20 @@ function create_job_card(json_order, json_job) {
 
     // 6. Construção do Status Stepper com Long Press (Footer Parte 2)
     // Usamos o status vindo da API para marcar o 'checked' inicial
-    const status = json_job.status; // Assumindo que a API traz: 'approved', 'running', 'done'
-
+    const status = json_job.status;
     const status_stepper_html = `
         <div class="status-stepper" data-job-uid="${json_job.uid}">
             <label class="status-btn approved">
-                <input type="radio" name="status_${json_job.uid}" value="approved" ${status === 'approved' ? 'checked' : ''}>
+                <input type="radio" name="status_${json_job.uid}" value="approved" ${status === 1 ? 'checked' : ''}>
 
                 <span class="status-label">Aprovado</span>
             </label>
             <label class="status-btn producing">
-                <input type="radio" name="status_${json_job.uid}" value="running" ${status === 'running' ? 'checked' : ''}>
+                <input type="radio" name="status_${json_job.uid}" value="running" ${status === 2 ? 'checked' : ''}>
                 <span class="status-label">Iniciado</span>
             </label>
             <label class="status-btn finished">
-                <input type="radio" name="status_${json_job.uid}" value="done" ${status === 'done' ? 'checked' : ''}>
+                <input type="radio" name="status_${json_job.uid}" value="done" ${status === 3 ? 'checked' : ''}>
                 <span class="status-label">Finalizado</span>
             </label>
         </div>
@@ -125,7 +124,7 @@ function create_order_row(json_order, job_summary) {
     const status_config = {
         0: { text: "Aguardando Confirmação", class: "bg-warning" },
         1: { text: "Em Produção", class: "bg-info" },
-        2: { text: "Finalizado", class: "bg-success" },
+        3: { text: "Finalizado", class: "bg-success" },
         99: { text: "Cancelado", class: "bg-danger" }
     };
 
@@ -158,11 +157,12 @@ function create_order_row(json_order, job_summary) {
         <td><span class="status-pill ${current_status.class}">${current_status.text}</span></td>
         <td>
             <div class="actions-cell">
-                <button class="btn-req square" title="Visualizar Pedido"">
+                <button class="btn-req square btn-for-modal" data-modal="modal-view-order"
+                data-uid="${json_order.uid}" data-callback="actions.viewOrder" title="Visualizar Pedido">
                     <i class="bi bi-eye"></i>
                 </button>
 
-                <button class="btn-req square" title="Imprimir Etiqueta">
+                <button class="btn-req square btn-printer" data-uid="${json_order.uid}" data-print="order" title="Imprimir Etiqueta">
                     <i class="bi bi-printer"></i>
                 </button>
 

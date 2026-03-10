@@ -11,6 +11,13 @@ export default async function apiPublicRouter(request, env) {
 
             // 2. Define o bucket alvo via parâmetro ?b= (default: lib)
             const bucketKey = url.searchParams.get("b") || "lib";
+            
+            // Whitelist de buckets permitidos
+            const allowedBuckets = ['lib', 'temp', 'sale', 'creator'];
+            if (!allowedBuckets.includes(bucketKey)) {
+                return new Response("Acesso negado", { status: 403 });
+            }
+
             const bucket = env[bucketKey];
 
             if (!bucket) {

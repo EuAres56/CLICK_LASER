@@ -18,11 +18,11 @@ export default async function verifyAuth(request, env) {
     const authHeader = request.headers.get('Authorization');
     const userId = request.headers.get('X-User-Id');
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader === 'Bearer ' || authHeader === 'Bearer' || authHeader === 'Bearer null' || authHeader === 'Bearer undefined') {
         return { ok: false, status: 401, error: 'Token não informado' };
     }
 
-    if (!userId) {
+    if (!userId || userId === '' || userId === 'undefined' || userId === "null") {
         return { ok: false, status: 401, error: 'ID do usuário não informado' };
     }
 
@@ -34,7 +34,7 @@ export default async function verifyAuth(request, env) {
 
     // 🔎 consulta usuário
     const supabaseUrl =
-        `${env.SUPABASE_URL}/rest/v1/auth_staff?uid=eq.${encodeURIComponent(userId)}&select=uid,token_key,token_time`;
+        `${env.SUPABASE_URL}/rest/v1/auth_staff?uid=eq.${encodeURIComponent(userId)}&select=uid,token_key,token_time,permissions_level,permissions_sections`;
 
     const response = await fetch(supabaseUrl, {
         headers: {
@@ -54,7 +54,7 @@ export default async function verifyAuth(request, env) {
         return { ok: false, status: 401, error: 'Usuário não encontrado' };
     }
 
-    const { token_key, token_time, uid } = data[0];
+    const { token_key, token_time, uid, permissions_level, permissions_sections } = data[0];
 
     if (!token_key || !token_time) {
         return { ok: false, status: 401, error: 'Sessão inválida' };
@@ -68,7 +68,6 @@ export default async function verifyAuth(request, env) {
         return { ok: false, status: 401, error: 'Sessão corrompida' };
     }
     if (expiresAt < now) {
-        console.log('Sessão expirada');
         return { ok: false, status: 401, error: 'Sessão expirada' };
     }
 
@@ -101,6 +100,8 @@ export default async function verifyAuth(request, env) {
         ok: true,
         uid,
         refreshed,
-        expires_at: newExpiration
+        expires_at: newExpiration,
+        permissions_level,
+        permissions_map: JSON.stringify(permissions_sections),
     };
 }

@@ -1,4 +1,13 @@
 const ui = {
+    // Inicia ou finaliza o loader
+    toggleLoader(mode = false, element) {
+        if (element) {
+            element.classList.toggle('hidden', mode);
+        } else {
+            document.getElementById('main_page_loader').classList.toggle('hidden', mode);
+        }
+    },
+
     toggleTheme() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
@@ -35,30 +44,6 @@ const ui = {
         document.getElementById(sectionId).classList.add('active');
     },
 
-    // Inicia ou finaliza o loader
-    toggleLoader: (btn, state = 'start') => {
-        if (!btn) return;
-
-        if (state === 'start') {
-            btn.dataset.oldHtml = btn.innerHTML; // Salva o ícone original (o pincel)
-            btn.classList.add("active");
-            btn.disabled = true; // Evita múltiplos cliques
-        }
-        else if (state === 'success' || state === 'fail') {
-            btn.classList.add(state);
-            btn.innerHTML = state === 'success'
-                ? `<i class="text_success bi bi-check"></i>`
-                : `<i class="text_fail bi bi-exclamation-circle"></i>`;
-
-            // Retorna ao normal após um tempo
-            setTimeout(() => {
-                btn.classList.remove("active", "success", "fail");
-                btn.innerHTML = btn.dataset.oldHtml;
-                btn.disabled = false;
-            }, 1500);
-        }
-    },
-
     // Controle de visualização dos dialogos de notificação e login
     alternateDialogsBox(id_dialog_box = null) {
         const dialogs_box = document.querySelectorAll('.dialog-box');
@@ -88,8 +73,21 @@ const ui = {
     },
 
     // Troca o preview da imagem
-    previewImageVector(src, element, renderElement) {
-        renderElement.src = src;
+    previewImageVector(source, element, renderElement) {
+        // 1. Se for um Objeto do tipo File/Blob (vinda de um input file)
+        if (source instanceof File || source instanceof Blob) {
+            const tempUrl = URL.createObjectURL(source);
+            renderElement.src = tempUrl;
+
+            // Opcional: Liberar memória após carregar (boa prática)
+            renderElement.onload = () => {
+                URL.revokeObjectURL(tempUrl);
+            };
+        }
+        // 2. Se for uma String (URL externa ou Base64)
+        else if (typeof source === 'string') {
+            renderElement.src = source;
+        }
     },
 
     // Abertura de modais
@@ -120,6 +118,98 @@ const ui = {
     closeModal() {
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => modal.classList.remove('active'));
+
+        // Limpeza de estado
+        modals.forEach(modal => {
+            let i = 0;
+            modal.querySelectorAll('.form-card').forEach(card => {
+                card.setAttribute('data-uid', "");
+                if (i > 0) card.remove();
+                i++;
+            })
+
+            modal.dataset.uid = "";
+            modal.dataset.originalData = "";
+            modal.querySelectorAll('input').forEach(i => i.value = "");
+            modal.querySelectorAll('textarea').forEach(i => i.value = "");
+            modal.querySelectorAll('.image-preview').forEach(img => img.src = "");
+            modal.querySelectorAll('.font-preview-display').forEach(font => font.style.fontFamily = "");
+            modal.querySelectorAll('.sale-font-example span').forEach(span => span.innerText = "Sem texto aplicado");
+
+        });
+    },
+
+    // Custom Alert Promise
+    alert(message, type = 'warning') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-custom-alert');
+            const titleEl = document.getElementById('custom-alert-title');
+            const messageEl = document.getElementById('custom-alert-message');
+            const iconEl = document.getElementById('custom-alert-icon');
+            const btnOk = modal.querySelector('.modal-footer button');
+
+            // Setup cores e icones
+            iconEl.className = '';
+            if (type === 'success') {
+                iconEl.classList.add('bi', 'bi-check-circle');
+                iconEl.style.color = 'var(--color-success)';
+                titleEl.innerText = 'Sucesso';
+                btnOk.className = 'btn_local save bg-blue text-white';
+            } else if (type === 'error') {
+                iconEl.classList.add('bi', 'bi-x-circle');
+                iconEl.style.color = 'var(--color-danger)';
+                titleEl.innerText = 'Erro';
+                btnOk.className = 'btn_local save bg-blue text-white';
+            } else {
+                iconEl.classList.add('bi', 'bi-exclamation-triangle');
+                iconEl.style.color = 'var(--color-warning)';
+                titleEl.innerText = 'Aviso';
+                btnOk.className = 'btn_local save bg-blue text-white';
+            }
+
+            messageEl.innerText = message;
+            modal.classList.add('show'); // Novo CSS usa show
+
+            const handleClose = () => {
+                modal.classList.remove('show');
+                btnOk.removeEventListener('click', handleClose);
+                resolve();
+            };
+
+            btnOk.addEventListener('click', handleClose);
+        });
+    },
+
+    // Custom Confirm Promise
+    confirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-custom-confirm');
+            const messageEl = document.getElementById('custom-confirm-message');
+            const btnCancel = document.getElementById('custom-confirm-cancel');
+            const btnOk = document.getElementById('custom-confirm-ok');
+
+            messageEl.innerText = message;
+            modal.classList.add('show');
+
+            const cleanup = () => {
+                modal.classList.remove('show');
+                btnCancel.removeEventListener('click', onCancel);
+                btnOk.removeEventListener('click', onOk);
+            };
+
+            const onCancel = () => {
+                cleanup();
+                resolve(false);
+            };
+
+            const onOk = () => {
+                cleanup();
+                resolve(true);
+            };
+
+            btnCancel.addEventListener('click', onCancel);
+            btnOk.addEventListener('click', onOk);
+        });
     },
 
     // Resposta do loader
@@ -161,7 +251,206 @@ const ui = {
         } else if (emptyMsg) {
             emptyMsg.remove();
         }
-    }
+    },
+
+
+    _activeLabel: null,
+
+    initJobCards() {
+        const grid = document.getElementById('jobs-grid');
+        if (!grid) return;
+
+        // Interceptador de clique/change (Essencial para rádio botões)
+        grid.addEventListener('click', e => {
+            const btn = e.target.closest('.status-btn');
+            if (btn && !btn.dataset.verified) {
+                e.preventDefault();
+                // O rádio botão volta ao que era via CSS ou lógica interna
+                return false;
+            }
+        }, true);
+
+        grid.addEventListener('mousedown', e => {
+            const label = e.target.closest('.status-btn');
+            if (!label) return;
+
+            this.handleScopedLongPress(label);
+        });
+    },
+
+    handleScopedLongPress(label) {
+        let startTime = Date.now();
+        let isCancelled = false;
+
+        // Estado visual imediato
+        label.classList.add('is-pressing');
+        delete label.dataset.verified;
+
+        // Captura o estado anterior para rollback
+        const stepper = label.closest('.status-stepper');
+        const previousInput = stepper.querySelector('input:checked');
+        const targetInput = label.querySelector('input');
+
+        // Função interna de cancelamento
+        const cancel = () => {
+            isCancelled = true;
+            label.classList.remove('is-pressing');
+            window.removeEventListener('mouseup', cancel);
+            window.removeEventListener('mouseleave', cancel);
+        };
+
+        window.addEventListener('mouseup', cancel);
+        window.addEventListener('mouseleave', cancel);
+
+        // O "Loop" de verificação interno (sem variável global)
+        const checkPress = async () => {
+            if (isCancelled) return;
+
+            const elapsed = Date.now() - startTime;
+
+            if (elapsed >= 1000) {
+                // SUCESSO: Bateu 1 segundo
+                label.classList.remove('is-pressing');
+                label.dataset.verified = "true";
+                targetInput.checked = true;
+
+                // Dispara a lógica de Backend
+                const jobUid = stepper.dataset.jobUid;
+                const statusMap = { 'approved': 1, 'running': 2, 'done': 3 };
+                const targetStatus = statusMap[targetInput.value];
+
+                try {
+                    const response = await actions.updateJobStatus(jobUid, targetStatus);
+                    this.handleBackendResponse(response.code, jobUid, label, targetInput, previousInput);
+                } catch (err) {
+                    this.rollbackStatus(targetInput, previousInput);
+                } finally {
+                    delete label.dataset.verified;
+                }
+            } else {
+                // Continua verificando no próximo frame (não trava a tela)
+                requestAnimationFrame(checkPress);
+            }
+        };
+
+        requestAnimationFrame(checkPress);
+    },
+
+    async handleBackendResponse(code, jobUid, label, targetInput, previousInput) {
+        if (code === 0) {
+            this.triggerExplosion(label, 'success');
+        }
+        else if (code === 1) {
+            this.triggerExplosion(label, 'success');
+            const confirmFinalize = await this.confirm("Todos os itens prontos. Finalizar pedido?");
+
+            if (confirmFinalize) {
+                const ok = await actions.confirmFinalizeOrder(jobUid);
+                if (ok) {
+                    actions.searchJobs();
+                    utils.handlePeriodChange();
+                }
+            } else {
+                this.rollbackStatus(targetInput, previousInput);
+            }
+        }
+        else {
+            this.triggerExplosion(label, 'error');
+            this.rollbackStatus(targetInput, previousInput);
+        }
+    },
+
+    rollbackStatus(targetInput, previousInput) {
+        if (previousInput) previousInput.checked = true;
+        else targetInput.checked = false;
+    },
+
+    triggerExplosion(label, type) {
+        const cls = type === 'success' ? 'anim-success' : 'anim-error';
+        label.classList.remove('anim-success', 'anim-error');
+        void label.offsetWidth; // Reflow
+        label.classList.add(cls);
+        setTimeout(() => label.classList.remove(cls), 1000);
+    },
+
+
+    applyFadeEffect(orderUid) {
+        document.querySelectorAll(`.card-item[data-packid="${orderUid}"]`).forEach(card => {
+            card.style.opacity = "0.3";
+            card.style.filter = "grayscale(1)";
+            card.style.pointerEvents = "none";
+        });
+    },
+
+    // Dentro do objeto ui:
+    initCopyHandlers() {
+        const grid = document.getElementById('jobs-grid');
+        if (!grid) return;
+
+        grid.addEventListener('click', async (e) => {
+            // Cópia de Texto
+            if (e.target.classList.contains('copyable-text')) {
+                const text = e.target.innerText;
+                await ui.copyTextToClipboard(text, e.target);
+            }
+
+            // Cópia de Imagem
+            if (e.target.classList.contains('copyable-image')) {
+                const imageUrl = e.target.dataset.url; // Você precisará injetar a URL aqui na renderização
+                if (imageUrl) {
+                    await ui.copyImageToClipboard(imageUrl, e.target);
+                }
+            }
+        });
+    },
+
+    async copyTextToClipboard(text, element) {
+        try {
+            await navigator.clipboard.writeText(text);
+            ui.showCopyFeedback(element, "Copiado!");
+        } catch (err) {
+            console.error('Erro ao copiar texto:', err);
+        }
+    },
+
+    async copyImageToClipboard(url, element) {
+        try {
+            element.style.pointerEvents = "none";
+            // 1. Busca a imagem e converte para Blob
+            const data = await fetch(url);
+            const blob = await data.blob();
+
+            // 2. Cria o item de área de transferência (deve ser PNG para compatibilidade máxima)
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    [blob.type]: blob
+                })
+            ]);
+
+            ui.showCopyFeedback(element, "Imagem Copiada!");
+            element.style.pointerEvents = "";
+        } catch (err) {
+            console.error('Erro ao copiar imagem:', err);
+            ui.showCopyFeedback(element, "Erro ao copiar", true);
+        }
+    },
+
+    showCopyFeedback(element, message, isError = false) {
+        const originalText = element.innerText;
+        setTimeout(() => {
+
+            element.innerText = message;
+            element.style.color = isError ? "#dc3545" : "#28a745";
+            element.style.fontWeight = "bold";
+        }, 100);
+
+        setTimeout(() => {
+            element.innerText = originalText;
+            element.style.color = "";
+            element.style.fontWeight = "";
+        }, 1500);
+    },
+
 };
 
 const uiCards = {
@@ -181,8 +470,8 @@ const uiCards = {
 
         const exampleText = newCard.querySelector('.font-example span');
         if (exampleText) {
+            exampleText.style = '';
             exampleText.innerText = 'Sem texto aplicado';
-            exampleText.style.display = 'none';
         }
 
         return newCard;
@@ -343,6 +632,14 @@ document.addEventListener('click', async e => {
         }
     }
 
+    // Controle de fechamento dos modais
+    if (btn.classList.contains('btn-printer')) {
+        if (btn.getAttribute('data-print') === 'order') {
+            const result = await actions.printOrder(btn.getAttribute('data-uid'));
+            ui.resLoading(btn, result);
+        }
+    }
+
     // Controle de abertura e fechamento de dialogs(notificações e area de usuário)
     if (!btn.classList.contains('btn-dialog-show')) {
         ui.alternateDialogsBox();
@@ -387,6 +684,37 @@ document.addEventListener('click', async e => {
             uiCards.removeWithAnimation(currentCard, container);
         }
     }
+
+    // if (btn.classList.contains('status-btn')) {
+    //     e.preventDefault();
+    // }
+
+    // Ações de exclusão de ativos (Criador)
+    const deleteBtn = btn.closest('#asset-font-action-delete') || (btn.id === 'asset-font-action-delete' ? btn : null);
+    if (deleteBtn) {
+        // Simula click para abrir o modal para termos acesso fácil ao uid, ou apenas chama a api diretamente
+        // No dashboard_main.js a função procura o modal-font. Para facilitar sem alterar a função da main,
+        // garantimos que o data-uid setado pelo change no painel vá para o modal temporariamente ou apenas
+        // abrimos a função se houver um uid selecionado.
+        const uid = deleteBtn.getAttribute('data-uid');
+        if (uid) {
+            document.getElementById('modal-font').setAttribute('data-uid', uid);
+            actions.assetsDeleteFont();
+        } else {
+            ui.alert('Selecione uma fonte primeiro.', 'warning');
+        }
+    }
+
+    const deleteFigureBtn = btn.closest('#asset-figure-action-delete') || (btn.id === 'asset-figure-action-delete' ? btn : null);
+    if (deleteFigureBtn) {
+        const uid = deleteFigureBtn.getAttribute('data-uid');
+        if (uid) {
+            document.getElementById('modal-vector').setAttribute('data-uid', uid);
+            actions.assetsDeleteVector();
+        } else {
+            ui.alert('Selecione uma figura primeiro.', 'warning');
+        }
+    }
 });
 
 document.addEventListener('keydown', function (event) {
@@ -424,6 +752,14 @@ document.addEventListener('change', e => {
         const preview = card.querySelector('.figure-preview-display');
         ui.previewImageVector(e.target.getAttribute('data-figure_url'), e.target, preview);
     }
+
+    if (element.classList.contains('input-img')) {
+        const boxPreview = element.getAttribute('data-preview');
+        const imgPreview = element.files[0];
+
+        ui.previewImageVector(imgPreview, element, document.getElementById(boxPreview));
+    }
+
 })
 
 document.addEventListener('input', e => {
@@ -470,7 +806,11 @@ document.addEventListener('input', e => {
     if (element.classList.contains('sale-text-input')) {
         const card = element.closest('.form-card');
         const preview = card.querySelector('.font-preview-display');
-        preview.innerText = element.value;
+        if (element.value === '') {
+            preview.innerText = 'Sem texto aplicado'
+        } else {
+            preview.innerText = element.value;
+        }
     }
 })
 
