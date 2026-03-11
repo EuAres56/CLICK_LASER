@@ -1,6 +1,6 @@
 import { dataBaseRequest } from '../utils/connectDataBase.js';
 import { create_job_card, create_order_row, create_product_row, create_selection_item } from "../renders/dashboard.js";
-import { constructHome, constuctOrders, constructProduction, constructCreator, constuctStock, constructStaff } from "../static/dashboard.js";
+import * as dashboard from "../static/dashboard.js";
 
 /**
  * FUNÇÃO 1: Apenas para o Login (Rápida)
@@ -31,6 +31,9 @@ export function getUserPermissions(user) {
  */
 export async function buildDashboardPayloadSections(map, env) {
     const dataPromises = {};
+    const authorized_modals = [];
+    const authorized_page_lists = [];
+
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
 
@@ -57,7 +60,6 @@ export async function buildDashboardPayloadSections(map, env) {
         }
     }
 
-    console.log("permissionsMap:", permissionsMap);
     // --- Lote de Promessas ---
     if (permissionsMap.home !== "blocked") {
         dataPromises.home_stats = Promise.all([
@@ -65,16 +67,25 @@ export async function buildDashboardPayloadSections(map, env) {
             dataBaseRequest("dashboard_jobs?job_status=eq.2&select=count", "GET", null, env),
             dataBaseRequest("dashboard_orders?order_status=eq.2&select=count", "GET", null, env)
         ]);
+        if (permissionsMap.home === "edit") {
+            console.log("permissionsMap.home === 'edit'");
+        }
+
     }
 
     if (permissionsMap.orders !== "blocked") {
         const endpoint = `dashboard_orders?order_created_at=gte.${firstDayMonth}T00:00:00&order_created_at=lte.${lastDayMonth}T23:59:59&order=order_created_at.desc`;
         dataPromises.orders_data = dataBaseRequest(endpoint, "GET", null, env);
+        if (permissionsMap.orders === "edit") {
+            authorized_modals.push(dashboard.constructModalSale());
+        }
+        authorized_page_lists.push(dashboard.constructPageNav("sales", "Vendas"));
     }
 
     if (permissionsMap.production !== "blocked") {
         const endpointJobs = `dashboard_jobs?job_start_date=gte.${startWeek}T00:00:00&job_start_date=lte.${endWeek}T23:59:59&select=*`;
         dataPromises.production_jobs = dataBaseRequest(endpointJobs, "GET", null, env);
+        authorized_page_lists.push(dashboard.constructPageNav("jobs", "Produção"));
     }
 
     if (permissionsMap.creator !== "blocked") {
@@ -82,10 +93,27 @@ export async function buildDashboardPayloadSections(map, env) {
             dataBaseRequest("dashboard_fonts?select=*&order=font_name.asc", "GET", null, env),
             dataBaseRequest("dashboard_figures?select=*&order=figure_class.asc,figure_name.asc", "GET", null, env)
         ])
+        if (permissionsMap.creator === "edit") {
+            authorized_modals.push(dashboard.constructModalFont());
+            authorized_modals.push(dashboard.constructModalFigure());
+        }
+        authorized_page_lists.push(dashboard.constructPageNav("creator", "Asservo"));
     }
 
     if (permissionsMap.stock !== "blocked") {
         dataPromises.stock_data = dataBaseRequest("dashboard_products?select=*&order=product_title.asc", "GET", null, env);
+        if (permissionsMap.stock === "edit") {
+            authorized_modals.push(dashboard.constructModalProduct());
+        }
+        authorized_page_lists.push(dashboard.constructPageNav("stock", "Estoque"));
+    }
+
+    if (permissionsMap.staff !== "blocked") {
+        // dataPromises.staff = dataBaseRequest("dashboard_users?select=*&order=name.asc", "GET", null, env);
+        // if (permissionsMap.staff === "edit") {
+        //     authorized_modals.push(dashboard.constructModalUser());
+        // }
+        authorized_page_lists.push(dashboard.constructPageNav("team", "Equipe"));
     }
 
     // Execução em paralelo
@@ -173,12 +201,12 @@ export async function buildDashboardPayloadSections(map, env) {
 
     // --- Construção do HTML Final ---
     const SECTION_TEMPLATES = {
-        home: () => constructHome(templateData.home),
-        orders: () => constuctOrders(templateData.orders),
-        production: () => constructProduction(templateData.production),
-        creator: () => constructCreator(templateData.creator),
-        stock: () => constuctStock(dbData.stock_data ? { html: dbData.stock_data.map(p => create_product_row(p)).join('') } : {}),
-        staff: () => constructStaff()
+        home: () => dashboard.constructHome(templateData.home),
+        orders: () => dashboard.constuctOrders(templateData.orders),
+        production: () => dashboard.constructProduction(templateData.production),
+        creator: () => dashboard.constructCreator(templateData.creator),
+        stock: () => dashboard.constuctStock(dbData.stock_data ? { html: dbData.stock_data.map(p => create_product_row(p)).join('') } : {}),
+        staff: () => dashboard.constructStaff()
     };
 
     const authorizedSectionsHtml = [];
@@ -196,6 +224,8 @@ export async function buildDashboardPayloadSections(map, env) {
     }
 
     return {
-        sections_html: authorizedSectionsHtml.join('\n')
+        sections_html: authorizedSectionsHtml.join('\n'),
+        modals_html: authorized_modals.join('\n'),
+        pages_list_html: authorized_page_lists.join('\n')
     };
 }
