@@ -451,6 +451,15 @@ const ui = {
         }, 1500);
     },
 
+    initAssetsPreview(container) {
+        if (!container) return;
+        // Preview automático do primeiro item da lista de gestão
+        const firstRow = container.querySelector('.select-item input');
+        if (firstRow) {
+            firstRow.click();
+        }
+    }
+
 };
 
 const uiCards = {
@@ -685,6 +694,10 @@ document.addEventListener('click', async e => {
         }
     }
 
+    if (btn.classList.contains('status-btn')) {
+
+    }
+
     // if (btn.classList.contains('status-btn')) {
     //     e.preventDefault();
     // }
@@ -715,6 +728,7 @@ document.addEventListener('click', async e => {
             ui.alert('Selecione uma figura primeiro.', 'warning');
         }
     }
+
 });
 
 document.addEventListener('keydown', function (event) {

@@ -1,6 +1,3 @@
-const auth_token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-const userId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
-
 function logout() {
     sessionStorage.clear();
     localStorage.clear();
@@ -26,14 +23,13 @@ const actions = {
 
         const response = await fetch(`/api/private/dashboard/${endpoint}`, config);
 
-        if (response.status >= 400) {
+        if (response.status >= 400 && response.status < 500) {
             logout();
             return null;
         }
         ui.toggleLoader(true)
         return response;
     },
-
 
     // =========================================================
     // Home
@@ -402,7 +398,6 @@ const actions = {
             }
 
             const data = await response.json();
-            // data deve ser o array de objetos vindo do banco (com a URL pública montada no Worker)
 
             // 1. Injeção Dinâmica de CSS (para que o navegador renderize as fontes)
             utils._injectFontsToDocument(data);
@@ -588,7 +583,72 @@ const actions = {
             console.error("Erro ao imprimir pedido:", error);
             return false
         }
-    }
+    },
+
+    // Ação para Edição de Funcionarios
+    async getStaffDetails(uid) {
+        // O uid vem do botão da tabela (data-callback)
+        const response = await this.apiFetch(`staff/details?uid=${uid}`, 'GET');
+
+        if (!response) return; // apiFetch já cuida do erro/logout
+
+        const data = await response.json();
+        const modal = document.querySelector('#modal-staff');
+
+        // Populando o modal com os dados retornados
+        modal.querySelector('#staff-name').value = data.name || '';
+        modal.querySelector('#staff-email').value = data.email || '';
+        modal.querySelector('#staff-phone').value = data.phone || '';
+        modal.querySelector('#staff-date-of-birth').value = data.date_of_birth || '';
+        modal.querySelector('#staff-level').value = data.permissions_level || '';
+        modal.querySelector('#staff-job-position').value = data.job_position || '';
+        modal.querySelector('#staff-status').value = data.status || 'active';
+
+        modal.querySelector('#staff-password').value = '********';
+        modal.querySelector('#staff-password').setAttribute("data-password", "");
+
+        // Atribuímos o UID ao modal para o saveStaff saber que é edição
+        modal.dataset.currentUid = uid;
+    },
+
+    async saveStaff() {
+        const modal = document.querySelector('#modal-staff');
+        const uid = modal.getAttribute('data-uid');
+        const isUpdate = !!uid;
+
+        const staffData = {
+            email: modal.querySelector('#staff-email').value,
+            name: modal.querySelector('#staff-name').value,
+            phone: modal.querySelector('#staff-phone').value,
+            job_position: modal.querySelector('#staff-job-position').value,
+            permissions_level: parseInt(modal.querySelector('#staff-level').value),
+            date_of_birth: modal.querySelector('#staff-date-of-birth').value,
+            enabled_account: modal.querySelector('#staff-status').value
+        };
+
+        const password = modal.querySelector('.password-generated').getAttribute("data-password");
+        if (!isUpdate) {
+            if (password) {
+                staffData.password = password;
+            } else {
+                ui.alert("A senha do colaborador deve ser informada!", "error");
+                return;
+            }
+        }
+        // Define endpoint e método baseado na existência do UID
+        const endpoint = isUpdate ? `staff/update?uid=${uid}` : `staff/create`;
+        const method = isUpdate ? 'PATCH' : 'POST';
+
+        const response = await this.apiFetch(endpoint, method, staffData);
+
+        if (response && response.ok) {
+            ui.alert(isUpdate ? "Colaborador atualizado!" : "Colaborador criado!", "success");
+            ui.closeModal();
+            // Função que você deve ter para dar refresh na lista da tabela
+            actions.loadStaffTable();
+        }
+    },
+
 }
 
 const renders = {
@@ -845,12 +905,7 @@ const renders = {
 
         container.innerHTML = '';
         htmlRows.forEach(row => container.insertAdjacentHTML('beforeend', row));
-
-        // Preview automático do primeiro item da lista de gestão
-        const firstRow = container.querySelector('.select-item input');
-        if (firstRow) {
-            firstRow.click();
-        }
+        ui.initAssetsPreview(container);
     },
 
     // Injeta as rows de figuras na lista da biblioteca (Gestão)
@@ -861,11 +916,7 @@ const renders = {
         container.innerHTML = '';
         htmlRows.forEach(row => container.insertAdjacentHTML('beforeend', row));
 
-        // Preview automático do primeiro vetor da lista de gestão
-        const firstRow = container.querySelector('.select-item input');
-        if (firstRow) {
-            firstRow.click();
-        }
+        ui.initAssetsPreview(container);
     },
 
     renderOrderStaticView(data) {
@@ -1461,6 +1512,30 @@ const utils = {
         win.document.close();
     },
 
+    // Geração no Front-end com qualidade criptográfica
+    generatePassword() {
+        const modal = document.getElementById('modal-staff');
+        if (modal && modal.getAttribute('data-uid')) {
+            const confirm = ui.confirm('Gerar uma nova senha para este funcionário?');
+            if (!confirm) return;
+        }
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+        // Usamos crypto.getRandomValues para uma entropia de nível militar no navegador
+        const array = new Uint32Array(12);
+        window.crypto.getRandomValues(array);
+
+        const pass = Array.from(array)
+            .map((x) => chars[x % chars.length])
+            .join('');
+
+        const display = document.querySelector('.password-generated');
+        display.innerText = pass;
+        display.setAttribute('data-password', pass);
+
+        // Efeito visual tech: copiar para o clipboard automaticamente
+        navigator.clipboard.writeText(pass);
+        ui.alert("Senha gerada e copiada basta enviar para o colaborador!", "success");
+    },
 
     _injectFontsToDocument(fontsArray) {
         const styleId = "dynamic-library-fonts";

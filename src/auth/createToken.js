@@ -45,7 +45,8 @@ export default async function createToken(uid, env) {
         },
         body: JSON.stringify({
             token_key: tokenHash,
-            token_time: expiresAt // Agora salva corretamente "2026-02-19T22:10:00"
+            last_access: timeStampNow.toISOString().replace('Z', '+03:00'),
+            token_time: expiresAt.toISOString().replace('Z', '+03:00') // Agora salva corretamente "2026-02-19T22:10:00"
         })
     });
 

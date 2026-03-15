@@ -1,4 +1,4 @@
-function constructHome(data) {
+export function constructHome(data) {
     return `
         <section id="s-home" class="content-section active">
             <div class="section-header-actions">
@@ -46,7 +46,7 @@ function constructHome(data) {
         </section>
     `
 }
-function constuctOrders(data) {
+export function constuctOrders(data) {
     return `
         <section id="s-sales" class="content-section">
             <div class="section-header-actions">
@@ -126,7 +126,7 @@ function constuctOrders(data) {
         </section>
     `
 }
-function constructProduction(data) {
+export function constructProduction(data) {
     return `
         <section id="s-jobs" class="content-section">
             <div class="section-header-actions">
@@ -174,7 +174,7 @@ function constructProduction(data) {
         </section>
     `
 }
-function constuctStock(data) {
+export function constuctStock(data) {
     return `
             <section id="s-stock" class="content-section">
             <div class="section-header-actions">
@@ -241,7 +241,7 @@ function constuctStock(data) {
         </section>
     `
 }
-function constructCreator(data) {
+export function constructCreator(data) {
     return `
         <section id="s-creator" class="content-section">
             <div class="section-header-actions">
@@ -346,7 +346,7 @@ function constructCreator(data) {
     `
 }
 
-function constructStaff(data = null) {
+export function constructStaff(data) {
     return `
         <section id="s-team" class="content-section">
             <div class="section-header-actions">
@@ -355,7 +355,7 @@ function constructStaff(data = null) {
                     <p class="text-muted">Controle de acessos e operadores de produção</p>
                 </div>
                 <div class="import-buttons box-h">
-                    <button class="btn-local retangle btn-import" onclick="openModalNovoFuncionario()">
+                    <button class="btn-req retangle btn-for-modal btn-import" data-modal="modal-staff">
                         <i class="bi bi-person-plus"></i> Adicionar Membro
                     </button>
                 </div>
@@ -384,20 +384,25 @@ function constructStaff(data = null) {
                 </div>
             </div>
 
-            <div class="card-inventory-container">
+            <div class="card-staff-container">
                 <table class="table-custom">
                     <thead>
                         <tr>
                             <th>Colaborador</th>
+                            <th>E-mail</th>
                             <th>Cargo</th>
                             <th>Nível de Acesso</th>
-                            <th>Última Atividade</th>
-                            <th>Status</th>
+                            <th>Permissões</th>
+                            <th>Atividade</th>
                             <th class="text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="staff-table-body">
-                        ${data || '<div class="card-empty"><span class="text-muted">Nenhum colaborador cadastrado</span></div>'}
+                        ${data.html || `<tr class="row-item">
+                                <td colspan="7"><div class="card-empty">
+                                    <i class="bi bi-clipboard-x"></i><span class="text-muted"> Nenhum colaborador cadastrado</span>
+                                </div></td>
+                            </tr>`}
                     </tbody>
                 </table>
             </div>
@@ -405,14 +410,14 @@ function constructStaff(data = null) {
     `
 }
 
-function constructPageNav(section, name) {
+export function constructPageNav(section, name) {
     return `
     <li class="btn-local retangle btn-nav nav-item" id="btn-nav-${section}"
     onclick="ui.tab(this, 's-${section}')">${name} </li>
     `
 }
 
-function constructModalBase(modal_name, modal_header, modal_body, modal_footer) {
+export function constructModalBase(modal_name, modal_header, modal_body, modal_footer) {
     return `
 <div class="modal" id="modal-${modal_name}" data-uid="">
     <div class="modal-container">
@@ -431,7 +436,7 @@ function constructModalBase(modal_name, modal_header, modal_body, modal_footer) 
 
 }
 
-function constructModalProduct() {
+export function constructModalProduct() {
     const modal_header = `
 <h2>Produto</h2><button class="btn-local square close-modal" onclick="ui.closeModal()"><iclass="bi bi-x-lg"></i></button>
     `
@@ -499,7 +504,7 @@ function constructModalProduct() {
     return constructModalBase('product', modal_header, modal_body, modal_footer)
 }
 
-function constructModalFont() {
+export function constructModalFont() {
     const modal_header = `
 <h2>Importar Fonte</h2><button class="btn-local square close-modal" onclick="ui.closeModal()"><i class="bi bi-x-lg"></i></button>
     `
@@ -551,7 +556,7 @@ function constructModalFont() {
     return constructModalBase('font', modal_header, modal_body, modal_footer)
 }
 
-function constructModalFigure() {
+export function constructModalFigure() {
     const modal_header = `
 <h2>Importar Vetor ou Imagem</h2>
 <button class="btn-local square close-modal" onclick="ui.closeModal()"><i class="bi bi-x-lg"></i></button>
@@ -606,10 +611,10 @@ function constructModalFigure() {
     return constructModalBase('vector', modal_header, modal_body, modal_footer)
 }
 
-function constructModalViewOrder() {
+export function constructModalViewOrder() {
     const modal_header = `
 <h2>Visualização do Pedido</h2><span class="view-id" style="font-size: 0.9rem; color: var(--text-muted);"></span>
-<button class="btn-local square close-modal" onclick="ui.closeModal()"><iclass="bi bi-x-lg"></i></button>
+<button class="btn-local square close-modal" onclick="ui.closeModal()"><i class="bi bi-x-lg"></i></button>
     `
     const modal_body = `
 <div class="info-grid"
@@ -636,7 +641,7 @@ function constructModalViewOrder() {
     return constructModalBase('view-order', modal_header, modal_body, modal_footer)
 }
 
-function constructModalSale() {
+export function constructModalSale() {
     const modal_header = `
 <h2>Pedido</h2>
 <button class="btn-local square close-modal" onclick="ui.closeModal()"><i class="bi bi-x-lg"></i></button>
@@ -841,9 +846,115 @@ function constructModalSale() {
     return constructModalBase('sale', modal_header, modal_body, modal_footer)
 }
 
-export {
-    constructHome, constuctOrders, constructProduction,
-    constuctStock, constructCreator, constructStaff, constructPageNav,
-    constructModalProduct, constructModalSale, constructModalFont,
-    constructModalFigure, constructModalViewOrder
+export function constructModalStaff() {
+    const modal_header = `
+        <h2>Colaborador</h2>
+        <button class="btn-local square close-modal" onclick="ui.closeModal()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    `;
+
+    const modal_body = `
+        <div class="form-line">
+            <div class="form-group">
+                <label for="staff-name">Nome Completo:</label>
+                <input type="text" id="staff-name" placeholder="Nome do colaborador">
+            </div>
+            <div class="form-group">
+                <label for="staff-email">E-mail (Login):</label>
+                <input type="email" id="staff-email" placeholder="exemplo@clicklaser.com">
+            </div>
+        </div>
+        <div class="form-line">
+            <div class="form-group">
+                <label for="staff-phone">Telefone:</label>
+                <input type="tel" id="staff-phone" placeholder="exemplo: (99) 99999-9999">
+            </div>
+            <div class="form-group">
+                <label for="staff-date-of-birth">Data de Nascimento:</label>
+                <input type="date" id="staff-date-of-birth">
+            </div>
+        </div>
+        <div class="form-line">
+            <div class="form-group">
+                <label for="staff-level">Nível de Autoridade (1-99):</label>
+                <input type="number" id="staff-level" min="1" max="99">
+            </div>
+            <div class="form-group">
+                <label for="staff-job-position">Cargo:</label>
+                <input type="text" id="staff-job-position" placeholder="exemplo: Designer">
+            </div>
+        </div>
+        <div class="form-line">
+            <div class="form-group">
+                <label for="staff-status">Status da Conta:</label>
+                <select id="staff-status">
+                    <option value="active">Ativo</option>
+                    <option value="suspended">Suspenso</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Senha:</label>
+                <div class="password-container">
+                    <span class="password-generated"></span>
+                    <button type="button" class="btn-local square" onclick="utils.generatePassword()">
+                        <i class="bi bi-key-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const modal_footer = `
+        <button type="button" class="btn_modal create" onclick="actions.saveStaff()">Cadastrar</button>
+        <button type="button" class="btn_modal update" onclick="actions.deleteStaff()">Remover</button>
+        <button type="button" class="btn_modal update" onclick="actions.saveStaff()">Salvar Alterações</button>
+    `;
+
+    return constructModalBase('staff', modal_header, modal_body, modal_footer);
 }
+
+export function constructModalPermissions() {
+    const modal_header = `
+        <h2>Permissões de Acesso</h2>
+        <button class="btn-local square close-modal" onclick="ui.closeModal()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    `;
+
+    // Lista de seções para manter o padrão visual
+    const sections = [
+        { id: 'home', label: 'Home / Dashboard' },
+        { id: 'orders', label: 'Vendas' },
+        { id: 'production', label: 'Produção' },
+        { id: 'creator', label: 'Asservo / Criador' },
+        { id: 'stock', label: 'Estoque' },
+        { id: 'staff', label: 'Equipe' }
+    ];
+
+    const modal_body = sections.map(s => `
+        <div class="form-line permission-item">
+            <div class="form-group">
+                <label>${s.label}:</label>
+            </div>
+            <div class="form-group-row">
+                <label class="radio-option">
+                    <input type="radio" name="perm-${s.id}" value="blocked"> Bloqueado
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="perm-${s.id}" value="view"> Ver
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="perm-${s.id}" value="edit"> Editar
+                </label>
+            </div>
+        </div>
+    `).join('');
+
+    const modal_footer = `
+        <button type="button" class="btn_modal update" onclick="actions.updatePermissions()">Atualizar Permissões</button>
+    `;
+
+    return constructModalBase('permissions', modal_header, modal_body, modal_footer);
+}
+

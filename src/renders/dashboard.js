@@ -1,5 +1,5 @@
 // Função base para a estrutura do CARD
-function card(uid_pack, uid_item, card_header, card_body, card_footer, priority) {
+export function card(uid_pack, uid_item, card_header, card_body, card_footer, priority) {
 
     const card_html = `
                 <div class="card-item card ${priority}" data-uid="${uid_item}" data-packId="${uid_pack}">
@@ -20,7 +20,7 @@ function card(uid_pack, uid_item, card_header, card_body, card_footer, priority)
 }
 
 // Função base para a estrutura da linha (TR)
-function row(content, dataSets) {
+export function row(content, dataSets) {
     return `
         <tr class="row-item" ${dataSets}>
             ${content}
@@ -29,7 +29,7 @@ function row(content, dataSets) {
 }
 
 // Função base para a estrutura do CARD de uma gravação
-function create_job_card(json_order, json_job) {
+export function create_job_card(json_order, json_job) {
     // 1. Dicionários de prioridades
     const priority_class = { 0: "priority-high", 1: "priority-medium", 2: "priority-low" };
     const priority_text = { 0: "Urgente", 1: "Normal", 2: "Baixa" };
@@ -119,7 +119,7 @@ function create_job_card(json_order, json_job) {
 }
 
 // Função para construção da linha da tabela de pedidos
-function create_order_row(json_order, job_summary) {
+export function create_order_row(json_order, job_summary) {
     // Dicionários de Status para mapear o valor do banco para o visual da tabela
     const status_config = {
         0: { text: "Aguardando Confirmação", class: "bg-warning" },
@@ -185,7 +185,9 @@ function create_order_row(json_order, job_summary) {
 }
 
 // Cria uma linha da tabela de produtos
-function create_product_row(json_product) {
+export function create_product_row(json_product, permission) {
+    const isEdit = permission === 'edit';
+
     // Dicionários de Status para mapear o valor do banco para o visual da tabela
     const status_config = {
         0: { text: "Em dia", class: "bg-success" },
@@ -205,14 +207,20 @@ function create_product_row(json_product) {
         <td name="product_stock_min">${json_product.product_stock_min}</td>
         <td name="product_status"><span class="status-pill ${current_status.class}">${current_status.text}</span></td>
         <td>
-            <div class="actions-cell">
+        <div class="actions-cell">
+            ${isEdit ? `
                 <button class="btn-req square in" onclick="actions.updateUnitStock('${json_product.uid}', 'in')"><i
                         class="bi bi-plus-lg"></i></button>
                 <button class="btn-req square out" onclick="actions.updateUnitStock('${json_product.uid}', 'out')"><i
                         class="bi bi-dash-lg"></i></button>
                 <button class="btn-req square btn-for-modal" data-uid="${json_product.uid}"  data-modal="modal-product"
                 data-callback="actions.getProductDetails" title="Editar Produto"><i class="bi bi-pencil"></i></button>
-            </div>
+            ` : `
+            <button class="btn-local square"><i class="bi bi-plus-lg"></i></button>
+            <button class="btn-local square"><i class="bi bi-dash-lg"></i></button>
+            <button class="btn-local square"><i class="bi bi-pencil"></i></button>
+            `}
+        </div>
         </td>
     `;
 
@@ -222,12 +230,144 @@ function create_product_row(json_product) {
     const html_dataSets = `
     id="productRow_${json_product.uid}" data-search="${search_string}" data-type="${json_product.product_type}" data-color="${json_product.product_color}"
     `
+    if (isEdit) {
+    }
+    return row(row_content, html_dataSets);
+}
+
+function getPermissions(permissionsJSON) {
+    if (!permissionsJSON) return '<span class="badge-none">Sem Acesso</span>';
+
+    const permsObj = typeof permissionsJSON === 'string' ? JSON.parse(permissionsJSON) : permissionsJSON;
+
+    // Tradução das seções para o seu dashboard
+    const sectionLabels = {
+        "home": "Home",
+        "orders": "Pedidos",
+        "production": "Produção",
+        "stock": "Estoque",
+        "staff": "Equipe",
+        "creator": "Criador"
+    };
+
+    // Filtramos apenas o que não é 'blocked'
+    const activeEntries = Object.entries(permsObj).filter(([_, value]) => value !== 'blocked');
+
+    if (activeEntries.length === 0) return '<span class="badge-none">Acesso Bloqueado</span>';
+
+    // Geramos os badges
+    const badges = activeEntries.map(([key, value]) => {
+        const label = sectionLabels[key] || key;
+        // Classe CSS muda se for 'edit' (mais vibrante) ou 'view' (mais discreto)
+        const badgeClass = value === 'edit' ? 'badge-edit' : 'badge-view';
+        const icon = value === 'edit' ? '<i class="bi bi-pencil-fill" style="font-size: 8px; margin-right: 3px;"></i>' : '';
+
+        return `<span class="badge-perm ${badgeClass}">${icon}${label}</span>`;
+    });
+
+    return `<div class="permissions-container">${badges.join('')}</div>`;
+}
+
+function getRelativeAccessTime(lastAccessISO, tokenTimeISO) {
+    const now = new Date();
+
+    // Compensação de 3 horas (180 minutos) para alinhar com o padrão do seu banco
+    const offsetMs = 3 * 60 * 60 * 1000;
+
+    // Criamos as datas e "empurramos" 3h para frente para neutralizar o atraso de leitura
+    const tokenTime = new Date(new Date(tokenTimeISO).getTime() + offsetMs);
+    const lastAccess = new Date(new Date(lastAccessISO).getTime() + offsetMs);
+
+    // 1. Verificação de Online (agora com tempos alinhados)
+    if (tokenTime > now) {
+        return `<span class="status-online" style="color: #00ff00; font-weight: bold;">Online</span>`;
+    }
+
+    // 2. Cálculo da diferença real
+    const diffMs = now - lastAccess;
+    const diffMin = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // Lógica de exibição amigável
+    if (diffMin < 1) return "Visto agora há pouco";
+    if (diffMin <= 40) return `Visto há ${diffMin} min`;
+
+    if (diffHours < 24) {
+        return `Visto há ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    }
+
+    if (diffDays < 7) {
+        return `Visto há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+    }
+
+    return "Visto por último há muito tempo";
+}
+// Cria uma linha da tabela da equipe
+export function create_staff_row(json_team, uid, permission) {
+    // 1. Verifica se esta linha pertence ao usuário logado
+    const isMe = json_team.uid === uid;
+
+    // Se for "eu", o botão de edição fica desabilitado independente da permissão global
+    const canEdit = permission === 'edit' && !isMe;
+
+    // Iniciais e Cores
+    const initials = json_team.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const hue = Math.floor(Math.random() * 360);
+    const backgroundColor = `hsl(${hue}, 100%, 50%)`;
+    const textColor = (hue > 40 && hue < 190) ? '#000000' : '#ffffff';
+
+    // Permissões
+    const permissions = getPermissions(json_team.permissions_sections);
+
+    // Status/Tempo Relativo
+    const accessStatus = getRelativeAccessTime(json_team.last_access, json_team.token_time);
+
+    const row_content = `
+        <td name="staff_name">
+            <div class="box-h">
+                <div class="user-avatar" style="background-color: ${backgroundColor}; color: ${textColor};">
+                    <span>${initials}</span>
+                </div>
+                <strong>${isMe ? "Você" : json_team.name}</strong>
+            </div>
+        </td>
+        <td name="staff_email">${json_team.email}</td>
+        <td name="staff_job">${json_team.job_position || '---'}</td>
+        <td name="staff_level">${json_team.permissions_level}</td>
+        <td name="staff_level">${permissions}</td>
+        <td name="staff_last_access">${accessStatus}</td>
+        <td>
+            <div class="actions-cell">
+                ${canEdit ? `
+                    <button class="btn-req square btn-generate-password" data-uid="${json_team.uid}" title="Redefinir Senha desse colaborador"><i class="bi bi-key"></i></button>
+                    <button class="btn-req square btn-disabled-staff" data-uid="${json_team.uid}" title="Desativar"><i class="bi bi-person-x"></i></button>
+                    <button class="btn-req square btn-for-modal" data-uid="${json_team.uid}" data-modal="modal-permissions" title="Permissões"><i class="bi bi-shield-lock"></i></button>
+                    <button class="btn-req square btn-for-modal" data-uid="${json_team.uid}" data-modal="modal-staff"
+                    data-callback="actions.getStaffDetails" title="Editar Membro"><i class="bi bi-pencil"></i></button>
+                ` : `
+                    <button class="btn-req square" disabled title="${isMe ? ' Vocé não pode redefinir sua senha por aqui' : 'Sem permissão'}">
+                        <i class="bi bi-key"></i></button>
+                    <button class="btn-local square" disabled title="${isMe ? ' Vocé não pode desativar sua conta por aqui' : 'Sem permissão'}">
+                        <i class="bi bi-person-x"></i></button>
+                    <button class="btn-local square" disabled title="${isMe ? 'Você não pode editar suas permissões por aqui' : 'Sem permissão'}">
+                        <i class="bi bi-shield-lock"></i></button>
+                    <button class="btn-local square" disabled title="${isMe ? 'Você não pode editar suas informações por aqui' : 'Sem permissão'}">
+                        <i class="bi bi-pencil"></i></button>
+                `}
+            </div>
+        </td>
+    `;
+
+    // No search_string, mantemos o nome original para que o usuário ainda se encontre ao digitar o próprio nome
+    const search_string = `${json_team.uid} ${json_team.name} ${json_team.job_position || ''}`.toLowerCase();
+    const html_dataSets = `id="staffRow_${json_team.uid}" data-search="${search_string}" data-job="${json_team.job_position || ''}" data-status="${json_team.permissions_level}"`;
 
     return row(row_content, html_dataSets);
 }
 
 // Cria um item de seleção
-function create_selection_item(data, groupName, aditionalClass = null, dataAtb = {}, atributes = null, inputClass = null) {
+export function create_selection_item(data, groupName, aditionalClass = null, dataAtb = {}, atributes = null, inputClass = null) {
     const inputId = `sel_${groupName}_${data.id}_01`;
     const nameAttribute = `${groupName}_selection_01`;
 
@@ -249,5 +389,3 @@ function create_selection_item(data, groupName, aditionalClass = null, dataAtb =
         </label>
     `;
 }
-
-export { create_job_card, create_order_row, create_product_row, create_selection_item };

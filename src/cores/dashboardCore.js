@@ -25,14 +25,24 @@ export default async function dashboardCore(request, env) {
     const permissions_level = auth.permissions_level || 0;
 
 
-    // GET /dashboard/start
+    // GET: carrega toda a estrutura do dashboard de acordo com as permissões do usuário
     if (subPath.startsWith("/start") && method === "GET") {
         try {
-            const sections_html = await buildDashboardPayloadSections(permissions_map, env)
+            const sections_html = await buildDashboardPayloadSections(permissions_map, auth.uid, env)
+            const scripts = `
+<script src="./script/dashboard_main.js"></script>
+            `
+            sections_html.scripts = scripts
 
             return new Response(JSON.stringify(sections_html), { status: 200 });
-        } catch {
-            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        } catch (error) {
+            const html = `
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Erro ao carregar dashboard</h4>
+                <p>${error.message}</p>
+            </div>
+        `
+            return new Response(JSON.stringify({ sections_html: html, modals_html: '', pages_list_html: '' }), JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
 
@@ -336,6 +346,7 @@ export default async function dashboardCore(request, env) {
         }
     }
 
+    // GET /orders/search-sale
     if (subPath.startsWith("/orders/search-sale") && method === "GET") {
         try {
             const order_uid = url.searchParams.get("uid");
@@ -712,10 +723,9 @@ export default async function dashboardCore(request, env) {
 
     // POST: Criar Produto
     if (subPath.startsWith("/products/create") && method === "POST") {
-        let imageSalePath = null;
-        let imageCreatorPath = null;
-
         try {
+            let imageSalePath = null;
+            let imageCreatorPath = null;
             const formData = await request.formData();
 
             // 1. Processamento de dados numéricos e status
@@ -972,10 +982,9 @@ export default async function dashboardCore(request, env) {
             }, env);
 
             if (updated instanceof Response) return updated;
-
             return new Response(JSON.stringify({
                 success: true,
-                new_row_html: create_product_row(updated[0])
+                new_row_html: create_product_row(updated[0], permissions_map.stock)
             }), { status: 200 });
 
         } catch (error) {
@@ -989,7 +998,7 @@ export default async function dashboardCore(request, env) {
             const products = await dataBaseRequest("dashboard_products?select=*&order=product_title.asc", "GET", null, env);
             if (products instanceof Response) return products;
 
-            const productsRows = products.map(product => create_product_row(product));
+            const productsRows = products.map(product => create_product_row(product, permissions_map.stock));
             return new Response(JSON.stringify(productsRows), { status: 200 });
         } catch (error) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -1454,6 +1463,183 @@ export default async function dashboardCore(request, env) {
 
         } catch (error) {
             console.error(`[Vector Delete Error]: ${error.message}`);
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    // --- ROTAS DE STAFF --- //
+    // POST: Criar Colaborador
+    if (subPath.startsWith("/staff/create") && method === "POST") {
+        try {
+            // Mudamos de .formData() para .json() para bater com o seu saveStaff
+            const body = await request.json();
+
+            if (!body) throw new Error("Dados não recebidos corretamente.");
+
+            // Validação da senha conforme sua lógica de front
+            if (!body.password) throw new Error("A senha do colaborador deve ser informada!");
+
+            // Mapeamento do status (front envia 'enabled_account')
+            const enable_account_value = body.enabled_account === 'active';
+
+            const data = {
+                email: body.email,
+                name: body.name,
+                phone: body.phone,
+                job_position: body.job_position,
+                permissions_level: parseInt(body.permissions_level) || 1,
+                date_of_birth: body.date_of_birth || null,
+
+                state_account: false, // Inativa até o primeiro login (sua lógica)
+                enable_account: enable_account_value,
+
+                // Permissões padrão para novos usuários
+                permissions_sections: JSON.stringify({
+                    "home": "view",
+                    "orders": "blocked",
+                    "production": "blocked",
+                    "stock": "blocked",
+                    "staff": "blocked",
+                    "creator": "blocked"
+                }),
+                configs: JSON.stringify({}),
+                password: body.password // Aqui entra a senha (texto puro para o seu hash posterior)
+            };
+
+            const staffResult = await dataBaseRequest("auth_staff", "POST", data, env);
+
+            if (staffResult instanceof Response) {
+                const errorDb = await staffResult.json();
+                throw new Error(errorDb.message || "Erro ao salvar no banco.");
+            }
+
+            return new Response(JSON.stringify({ success: true, data: staffResult[0] }), {
+                status: 201,
+                headers: { "Content-Type": "application/json" }
+            });
+
+        } catch (error) {
+            console.error(`[Staff Create Error]: ${error.message}`);
+            return new Response(JSON.stringify({ error: error.message }), {
+                status: 500,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+    }
+
+    // PATCH: Atualizar Colaborador
+    if (subPath.startsWith("/staff/update") && method === "PATCH") {
+        try {
+            const formData = await request.formData();
+            const staffUid = formData.get('uid');
+
+            if (!staffUid) throw new Error("UID do colaborador é obrigatório.");
+
+            // 1. Busca dados atuais para conferência ou logs (opcional)
+            const current = await dataBaseRequest(`auth_staff?uid=eq.${staffUid}`, "GET", null, env);
+            if (current instanceof Response || !current.length) throw new Error("Colaborador não encontrado.");
+
+            // 2. Montagem do objeto de atualização
+            const updateData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                job_position: formData.get('job_position'),
+                permissions_level: parseInt(formData.get('permissions_level')),
+                date_of_birth: formData.get('date_of_birth'),
+                state_account: formData.get('status') === 'active',
+                permissions_secti: formData.get('permissions') // Assume que o front envia a string JSON das seções
+            };
+
+            // Só atualiza a senha se uma nova foi enviada
+            const newPassword = formData.get('password');
+            if (newPassword && newPassword.length > 0) {
+                updateData.password = newPassword; // Aplique o Hash aqui se necessário
+            }
+
+            // 3. Execução do Update
+            const updateResult = await dataBaseRequest(`auth_staff?uid=eq.${staffUid}`, "PATCH", updateData, env);
+
+            if (updateResult instanceof Response) throw new Error("Erro ao atualizar dados no banco.");
+
+            return new Response(JSON.stringify({ success: true }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+
+        } catch (error) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    // GET: Buscar detalhes de um colaborador
+    if (subPath.startsWith("/staff/get") && method === "GET") {
+        try {
+            const staffUid = url.searchParams.get("uid");
+
+            if (!staffUid) {
+                return new Response(JSON.stringify({ error: "UID do colaborador não informado" }), {
+                    status: 400,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+
+            // 1. Busca os dados na tabela auth_staff
+            const data = await dataBaseRequest(`auth_staff?uid=eq.${staffUid}`, "GET", null, env);
+
+            if (data instanceof Response) return data;
+            if (!data || data.length === 0) {
+                return new Response(JSON.stringify({ error: "Colaborador não encontrado" }), {
+                    status: 404,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+
+            // 2. Retorna os dados para popular o modal
+            // Diferente de produtos, aqui não temos prefixo de imagem, então retornamos o objeto puro
+            return new Response(JSON.stringify(data[0]), {
+                status: 200,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*"
+                }
+            });
+
+        } catch (error) {
+            return new Response(JSON.stringify({ error: "Erro interno ao processar detalhes do colaborador" }), {
+                status: 500,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+    }
+
+    // GET: Carregar lista da tabela de colaboradores
+    if (subPath.startsWith("/staff/load") && method === "GET") {
+        try {
+            // 1. Busca todos os membros ordenados por nome
+            const staffList = await dataBaseRequest("auth_staff?select=*&order=name.asc", "GET", null, env);
+
+            if (staffList instanceof Response) return staffList;
+
+            /**
+             * 2. Mapeamento da Tabela
+             * userId: UID do usuário logado (enviado no header pelo seu apiFetch)
+             * permissions_map.staff: Nível de acesso do usuário atual para a seção de equipe
+             */
+            const staffRows = staffList.map(member =>
+                create_staff_row(
+                    member,
+                    auth.uid, // Identifica se é "Você" baseado no uid vindo do banco
+                    permissions_map.staff // 'edit', 'view' ou 'blocked'
+                )
+            );
+
+            return new Response(JSON.stringify(staffRows), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+
+        } catch (error) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
