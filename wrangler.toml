@@ -1,4 +1,4 @@
-name = "click_laser"
+name = "click-laser"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
