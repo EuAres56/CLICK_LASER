@@ -7,17 +7,5 @@ directory = "public"
 binding = "ASSETS"
 
 [[r2_buckets]]
-binding = "sale"
-bucket_name = "click-laser-products-sale"
-
-[[r2_buckets]]
-binding = "creator"
-bucket_name = "click-laser-products-creator"
-
-[[r2_buckets]]
 binding = "lib"
 bucket_name = "click-laser-assets"
-
-[[r2_buckets]]
-binding = "temp"
-bucket_name = "click-laser-temp"
