@@ -546,63 +546,170 @@ export default async function dashboardCore(request, env) {
 
     // --- ROTAS DE JOBS (TRABALHOS) ---
 
-    if (dbData.production_jobs && Array.isArray(dbData.production_jobs) && dbData.production_jobs.length > 0) {
-        // 1. Mapear UIDs únicos para buscar as ordens
-        const orderUids = [...new Set(dbData.production_jobs.map(j => j.order_uid))];
-        const ordersFromDb = await dataBaseRequest(`dashboard_orders?uid=in.(${orderUids.join(',')})&select=*`, "GET", null, env);
+    // GET: Buscar Jobs para o Dashboard de Produção
+    if (subPath.startsWith("/jobs/search") && method === "GET") {
+        try {
+            let startDate = url.searchParams.get("start");
+            let endDate = url.searchParams.get("end");
 
-        // Converter ordens para um Map para busca rápida
-        const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
+            // 1. LÓGICA DE DATA PADRÃO (Semana Atual: Domingo a Sábado)
+            if (!startDate || !endDate) {
+                const today = new Date();
+                // Retrocede até o Domingo (dia 0)
+                const sunday = new Date(today);
+                sunday.setDate(today.getDate() - today.getDay());
+                // Avança até o Sábado (dia 6)
 
-        // 2. Definir a Blacklist de Status da Ordem (mesma da rota de busca)
-        // 0: Pendente, 3: Concluído, 99: Cancelado/Aprovado
-        const blackListView = [0, 3, 99];
+                const saturday = new Date(sunday);
 
-        templateData.production = {
-            html: dbData.production_jobs
+                saturday.setDate(sunday.getDate() + 6);
+                // Formatação YYYY-MM-DD
+
+                const offset = today.getTimezoneOffset() * 60000;
+
+                startDate = new Date(sunday - offset).toISOString().split('T')[0];
+
+                endDate = new Date(saturday - offset).toISOString().split('T')[0];
+
+            }
+            // 2. BUSCA OS JOBS NO INTERVALO
+            // Usamos gte (maior ou igual) e lte (menor ou igual) no campo job_start_date
+            const endpointJobs = `dashboard_jobs?job_start_date=gte.${startDate}T00:00:00&job_start_date=lte.${endDate}T23:59:59&select=*`;
+            const jobsFromDb = await dataBaseRequest(endpointJobs, "GET", null, env);
+            if (jobsFromDb instanceof Response) return jobsFromDb;
+
+
+
+            // Se não houver jobs, retornamos array vazio (melhor que erro 500 para o front)
+
+            if (!jobsFromDb || jobsFromDb.length === 0) {
+
+                return new Response(JSON.stringify([]), { status: 200 });
+
+            }
+
+
+
+            // 3. BUSCAR DETALHES DAS ORDERS CORRESPONDENTES
+
+            const orderUids = [...new Set(jobsFromDb.map(j => j.order_uid))];
+
+            const ordersFromDb = await dataBaseRequest(`dashboard_orders?uid=in.(${orderUids.join(',')})&select=*`, "GET", null, env);
+
+            if (ordersFromDb instanceof Response) return ordersFromDb;
+
+
+
+            const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
+
+
+
+            // 4. FILTRAGEM E MAPEAMENTO PARA CARDS
+
+            // Blacklist: 0 (pendente/aguardando), 3 (concluido), 99 (cancelado/aprovado)
+
+            // Nota: Ajuste os números conforme sua regra de negócio exata
+
+            const blackListView = [0, 3, 99];
+
+
+
+            const htmlCardsArray = jobsFromDb
+
                 .filter(row => {
+
                     const order = ordersMap.get(row.order_uid);
-                    // Só exibe se a ordem existir e não estiver nos status bloqueados
+
+                    // Só exibe se a ordem existir e não estiver no status de exclusão da visualização
+
                     return order && !blackListView.includes(parseInt(order.order_status));
+
                 })
+
                 .sort((a, b) => {
-                    // Ordenação por prioridade da Ordem (descendente)
-                    const priorityA = ordersMap.get(a.order_uid)?.order_priority || 0;
-                    const priorityB = ordersMap.get(b.order_uid)?.order_priority || 0;
-                    return priorityB - priorityA;
+
+                    // Ordenação por prioridade da Ordem (descendente: 3 alta, 1 baixa)
+
+                    const orderA = ordersMap.get(a.order_uid);
+
+                    const orderB = ordersMap.get(b.order_uid);
+
+                    return (orderB?.order_priority || 0) - (orderA?.order_priority || 0);
+
                 })
+
                 .map(row => {
+
                     const order = ordersMap.get(row.order_uid);
 
-                    // Formatar URL de referência (usando prefixo público e bucket lib)
-                    const url_reference = row.job_image_url_reference
-                        ? `${publicServePrefix}${row.job_image_url_reference}?b=lib`
-                        : "";
+                    const url_reference = row.job_image_url_reference ? `${publicServePrefix}${row.job_image_url_reference}?b=lib` : "";
 
-                    // Retornar o card com TODOS os dados que a rota de busca fornece
+
+
                     return create_job_card(
+
                         {
+
                             order_uid: row.order_uid,
+
                             order_id: order.id_num,
+
                             priority: order.order_priority
+
                         },
+
                         {
+
                             uid: row.uid,
+
                             product_title: row.product_title,
+
                             product_color: row.product_color,
+
                             text: row.job_text_title || "",
+
                             font: row.job_text_font || "",
+
                             art_json: row.job_art_json || "",
+
                             url_ref: url_reference,
+
                             name_image: row.job_figure_name || "",
+
                             url_image: row.job_figure_url || "",
+
                             json_image: row.job_image_json || "",
+
                             observ: row.job_observ || "",
+
                             status: row.job_status
+
                         }
+
                     );
-                }).join('')
-        };
+
+                });
+
+
+
+            return new Response(JSON.stringify(htmlCardsArray), {
+
+                status: 200,
+
+                headers: { "Content-Type": "application/json" }
+
+            });
+
+
+
+        } catch (error) {
+
+            console.error(`[Jobs Search Error]: ${error.message}`);
+
+            return new Response(JSON.stringify({ error: "Erro ao carregar lista de produção" }), { status: 500 });
+
+        }
+
     }
 
     // PATCH: Atualizar um Job individualmente (Fonte, Título, Observação, etc.)
