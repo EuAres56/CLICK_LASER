@@ -130,11 +130,16 @@ const ui = {
 
             modal.dataset.uid = "";
             modal.dataset.originalData = "";
-            modal.querySelectorAll('input').forEach(i => i.value = "");
+            modal.querySelectorAll('input [type="text"]').forEach(i => i.value = "");
+            modal.querySelectorAll('input [type="checkbox"]').forEach(i => i.checked = false);
             modal.querySelectorAll('textarea').forEach(i => i.value = "");
             modal.querySelectorAll('.image-preview').forEach(img => img.src = "");
             modal.querySelectorAll('.font-preview-display').forEach(font => font.style.fontFamily = "");
             modal.querySelectorAll('.sale-font-example span').forEach(span => span.innerText = "Sem texto aplicado");
+            modal.querySelectorAll('.fake-input').forEach(input => {
+                input.innerText = ""
+                input.setAttribute('data-value', "");
+            });
 
         });
     },
@@ -641,6 +646,22 @@ document.addEventListener('click', async e => {
         }
     }
 
+    if (btn && btn.classList.contains('btn-refresh')) {
+        const callbackStr = btn.dataset.callback;
+        if (callbackStr) {
+            const parts = callbackStr.split('.');
+            const funcName = parts.pop();
+            const parent = parts.reduce((obj, prop) => obj[prop], window);
+            const fillCallback = parent[funcName];
+            if (typeof fillCallback === 'function') {
+                await fillCallback.call(parent);
+            }
+            ui.resLoading(btn, true);
+        } else {
+            ui.resLoading(btn, false);
+        }
+    }
+
     // Controle de fechamento dos modais
     if (btn.classList.contains('btn-printer')) {
         if (btn.getAttribute('data-print') === 'order') {
@@ -827,6 +848,5 @@ document.addEventListener('input', e => {
         }
     }
 })
-
 
 

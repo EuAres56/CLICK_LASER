@@ -1,3 +1,8 @@
+import { dataBaseRequest } from '../utils/connectDataBase.js';
+import * as dashboard from "../static/dashboard.js";
+
+
+
 // Função base para a estrutura do CARD
 export function card(uid_pack, uid_item, card_header, card_body, card_footer, priority) {
 
@@ -340,16 +345,16 @@ export function create_staff_row(json_team, uid, permission) {
         <td>
             <div class="actions-cell">
                 ${canEdit ? `
-                    <button class="btn-req square btn-generate-password" data-uid="${json_team.uid}" title="Redefinir Senha desse colaborador"><i class="bi bi-key"></i></button>
-                    <button class="btn-req square btn-disabled-staff" data-uid="${json_team.uid}" title="Desativar"><i class="bi bi-person-x"></i></button>
-                    <button class="btn-req square btn-for-modal" data-uid="${json_team.uid}" data-modal="modal-permissions" title="Permissões"><i class="bi bi-shield-lock"></i></button>
+                    <!-- <button class="btn-req square btn-generate-password" data-uid="${json_team.uid}" title="Redefinir Senha desse colaborador"><i class="bi bi-key"></i></button> -->
+                    <!-- <button class="btn-req square btn-disabled-staff" data-uid="${json_team.uid}" title="Desativar"><i class="bi bi-person-x"></i></button> -->
+                    <button class="btn-req square btn-for-modal" data-uid="${json_team.uid}" data-modal="modal-permissions" data-callback="actions.getPermissionsDetails" title="Permissões"><i class="bi bi-shield-lock"></i></button>
                     <button class="btn-req square btn-for-modal" data-uid="${json_team.uid}" data-modal="modal-staff"
                     data-callback="actions.getStaffDetails" title="Editar Membro"><i class="bi bi-pencil"></i></button>
                 ` : `
-                    <button class="btn-req square" disabled title="${isMe ? ' Vocé não pode redefinir sua senha por aqui' : 'Sem permissão'}">
-                        <i class="bi bi-key"></i></button>
-                    <button class="btn-local square" disabled title="${isMe ? ' Vocé não pode desativar sua conta por aqui' : 'Sem permissão'}">
-                        <i class="bi bi-person-x"></i></button>
+                    <!-- <button class="btn-req square" disabled title="${isMe ? ' Vocé não pode redefinir sua senha por aqui' : 'Sem permissão'}">
+                        <i class="bi bi-key"></i></button> -->
+                    <!-- <button class="btn-local square" disabled title="${isMe ? ' Vocé não pode desativar sua conta por aqui' : 'Sem permissão'}">
+                        <i class="bi bi-person-x"></i></button> -->
                     <button class="btn-local square" disabled title="${isMe ? 'Você não pode editar suas permissões por aqui' : 'Sem permissão'}">
                         <i class="bi bi-shield-lock"></i></button>
                     <button class="btn-local square" disabled title="${isMe ? 'Você não pode editar suas informações por aqui' : 'Sem permissão'}">
@@ -388,4 +393,277 @@ export function create_selection_item(data, groupName, aditionalClass = null, da
             <span class="item-content">${data.label.toUpperCase()}</span>
         </label>
     `;
+}
+
+
+export async function buildDashboardPayloadSections(map, uid, env) {
+    try {
+        const dataPromises = {};
+        const authorized_modals = [];
+        const authorized_page_lists = [];
+
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+
+        // --- Lógica de Datas ---
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const firstDayMonth = new Date(firstDay.getTime() - offset).toISOString().split('T')[0];
+        const lastDayMonth = new Date(lastDay.getTime() - offset).toISOString().split('T')[0];
+
+        const sunday = new Date(now);
+        sunday.setDate(now.getDate() - now.getDay());
+        const saturday = new Date(sunday);
+        saturday.setDate(sunday.getDate() + 6);
+        const startWeek = new Date(sunday.getTime() - offset).toISOString().split('T')[0];
+        const endWeek = new Date(saturday.getTime() - offset).toISOString().split('T')[0];
+
+        let permissionsMap = map;
+        if (typeof permissionsMap === 'string') {
+            try {
+                permissionsMap = JSON.parse(permissionsMap);
+            } catch (e) {
+                console.error("Erro ao parsear permissionsMap dentro do buildDashboardPayloadSections");
+                permissionsMap = { home: "view" };
+            }
+        }
+
+        // --- Lote de Promessas ---
+        if (permissionsMap.home !== "blocked") {
+            dataPromises.home_stats = Promise.all([
+                dataBaseRequest("dashboard_orders?order_status=eq.0&select=count", "GET", null, env),
+                dataBaseRequest("dashboard_jobs?job_status=eq.2&select=count", "GET", null, env),
+                dataBaseRequest("dashboard_orders?order_status=eq.2&select=count", "GET", null, env)
+            ]);
+        }
+
+        if (permissionsMap.orders !== "blocked") {
+            const endpoint = `dashboard_orders?order_created_at=gte.${firstDayMonth}T00:00:00&order_created_at=lte.${lastDayMonth}T23:59:59&order=order_created_at.desc`;
+            dataPromises.orders_data = dataBaseRequest(endpoint, "GET", null, env);
+            if (permissionsMap.orders === "edit") {
+                authorized_modals.push(dashboard.constructModalSale());
+            }
+            authorized_modals.push(dashboard.constructModalViewOrder());
+            authorized_page_lists.push(dashboard.constructPageNav("sales", "Vendas"));
+        }
+
+        if (permissionsMap.production !== "blocked") {
+            const endpointJobs = `dashboard_jobs?job_start_date=gte.${startWeek}T00:00:00&job_start_date=lte.${endWeek}T23:59:59&select=*`;
+            dataPromises.production_jobs = dataBaseRequest(endpointJobs, "GET", null, env);
+            authorized_page_lists.push(dashboard.constructPageNav("jobs", "Produção"));
+        }
+
+        if (permissionsMap.creator !== "blocked") {
+            dataPromises.creator = Promise.all([
+                dataBaseRequest("dashboard_fonts?select=*&order=font_name.asc", "GET", null, env),
+                dataBaseRequest("dashboard_figures?select=*&order=figure_class.asc,figure_name.asc", "GET", null, env)
+            ])
+            if (permissionsMap.creator === "edit") {
+                authorized_modals.push(dashboard.constructModalFont());
+                authorized_modals.push(dashboard.constructModalFigure());
+            }
+            authorized_page_lists.push(dashboard.constructPageNav("creator", "Asservo"));
+        }
+
+        if (permissionsMap.stock !== "blocked") {
+            dataPromises.stock = dataBaseRequest("dashboard_products?select=*&order=id.asc", "GET", null, env);
+            if (permissionsMap.stock === "edit") {
+                authorized_modals.push(dashboard.constructModalProduct());
+            }
+            authorized_page_lists.push(dashboard.constructPageNav("stock", "Estoque"));
+        }
+
+        if (permissionsMap.staff !== "blocked") {
+            dataPromises.staff = dataBaseRequest("auth_staff?select=*&order=name.asc", "GET", null, env);
+            if (permissionsMap.staff === "edit") {
+                authorized_modals.push(dashboard.constructModalStaff());
+                authorized_modals.push(dashboard.constructModalPermissions());
+            }
+            authorized_page_lists.push(dashboard.constructPageNav("team", "Equipe"));
+        }
+
+        // Execução em paralelo
+        const results = await Promise.all(Object.values(dataPromises));
+        const keys = Object.keys(dataPromises);
+        const dbData = keys.reduce((acc, key, i) => { acc[key] = results[i]; return acc; }, {});
+
+        // --- Processamento dos Templates ---
+        const templateData = {};
+
+        if (dbData.home_stats) {
+            templateData.home = {
+                pending_orders: dbData.home_stats[0][0]?.count || 0,
+                active_jobs: dbData.home_stats[1][0]?.count || 0,
+                completed_jobs: dbData.home_stats[2][0]?.count || 0
+            };
+        }
+
+        if (dbData.orders_data && Array.isArray(dbData.orders_data)) {
+            templateData.orders = {
+                html: dbData.orders_data.map(order => create_order_row(order, (order.order_list_jobs?.length || 0) + " itens")).join('')
+            };
+        }
+
+        if (dbData.production_jobs && Array.isArray(dbData.production_jobs) && dbData.production_jobs.length > 0) {
+            // 1. Mapear UIDs únicos para buscar as ordens
+            const orderUids = [...new Set(dbData.production_jobs.map(j => j.order_uid))];
+            const ordersFromDb = await dataBaseRequest(`dashboard_orders?uid=in.(${orderUids.join(',')})&select=*`, "GET", null, env);
+
+            // Converter ordens para um Map para busca rápida
+            const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
+
+            // 2. Definir a Blacklist de Status da Ordem (mesma da rota de busca)
+            // 0: Pendente, 3: Concluído, 99: Cancelado/Aprovado
+            const blackListView = [0, 3, 99];
+
+            templateData.production = {
+                html: dbData.production_jobs
+                    .filter(row => {
+                        const order = ordersMap.get(row.order_uid);
+                        // Só exibe se a ordem existir e não estiver nos status bloqueados
+                        return order && !blackListView.includes(parseInt(order.order_status));
+                    })
+                    .sort((a, b) => {
+                        // Ordenação por prioridade da Ordem (descendente)
+                        const priorityA = ordersMap.get(a.order_uid)?.order_priority || 0;
+                        const priorityB = ordersMap.get(b.order_uid)?.order_priority || 0;
+                        return priorityB - priorityA;
+                    })
+                    .map(row => {
+                        const order = ordersMap.get(row.order_uid);
+
+                        // Formatar URL de referência (usando prefixo público e bucket lib)
+                        const url_reference = row.job_image_url_reference
+                            ? `${publicServePrefix}${row.job_image_url_reference}?b=lib`
+                            : "";
+
+                        // Retornar o card com TODOS os dados que a rota de busca fornece
+                        return create_job_card(
+                            {
+                                order_uid: row.order_uid,
+                                order_id: order.id_num,
+                                priority: order.order_priority
+                            },
+                            {
+                                uid: row.uid,
+                                product_title: row.product_title,
+                                product_color: row.product_color,
+                                text: row.job_text_title || "",
+                                font: row.job_text_font || "",
+                                art_json: row.job_art_json || "",
+                                url_ref: url_reference,
+                                name_image: row.job_figure_name || "",
+                                url_image: row.job_figure_url || "",
+                                json_image: row.job_image_json || "",
+                                observ: row.job_observ || "",
+                                status: row.job_status
+                            }
+                        );
+                    }).join('')
+            };
+        }
+
+        const publicServePrefix = "/api/public/assets/serve/";
+        if (dbData.creator && Array.isArray(dbData.creator)) {
+
+            templateData.creator = {
+                fonts: dbData.creator[0]
+                    .map(f => {
+                        // Monta a URL completa apontando para o seu novo router público
+                        const fontUrl = `${publicServePrefix}${f.font_url}?b=lib`;
+
+                        return create_selection_item(
+                            { id: f.uid, label: f.font_name.toUpperCase() },
+                            "font",
+                            null,
+                            {
+                                font_uid: f.uid,
+                                font_name: f.font_name,
+                                font_url: fontUrl, // <--- URL Padronizada
+                                font_type: f.font_type
+                            },
+                            `style="font-family: '${f.font_name}'"`,
+                            "input-creator_assets_font"
+                        );
+                    }).join(''),
+                figures: dbData.creator[1]
+                    .map(f => {
+                        const figureUrl = `${publicServePrefix}${f.figure_url}?b=lib`;
+
+                        return create_selection_item(
+                            { id: f.uid, label: `${f.figure_name.toUpperCase()}` },
+                            "figure",
+                            null,
+                            {
+                                figure_uid: f.uid,
+                                figure_name: f.figure_name,
+                                figure_class: f.figure_class,
+                                figure_url: figureUrl
+                            },
+                            null,
+                            "input-creator_assets_figure" // inputClass
+
+                        )
+                    }).join('')
+            };
+        }
+
+        if (dbData.stock && Array.isArray(dbData.stock)) {
+            templateData.stock = {
+                html: dbData.stock
+                    .map(item => {
+                        return item = create_product_row(item, permissionsMap.stock);
+                    }).join('')
+            };
+        }
+
+        if (dbData.staff && Array.isArray(dbData.staff)) {
+            templateData.staff = {
+                html: dbData.staff
+                    .map(item => {
+                        return item = create_staff_row(item, uid, permissionsMap.staff);
+                    }).join('')
+            };
+        }
+
+        // --- Construção do HTML Final ---
+        const SECTION_TEMPLATES = {
+            home: () => dashboard.constructHome(templateData.home),
+            orders: () => dashboard.constuctOrders(templateData.orders),
+            production: () => dashboard.constructProduction(templateData.production),
+            creator: () => dashboard.constructCreator(templateData.creator),
+            stock: () => dashboard.constuctStock(templateData.stock),
+            staff: () => dashboard.constructStaff(templateData.staff)
+        };
+
+        const authorizedSectionsHtml = [];
+
+        for (const [section, accessLevel] of Object.entries(permissionsMap)) {
+            if (accessLevel !== "blocked" && SECTION_TEMPLATES[section]) {
+                let html = SECTION_TEMPLATES[section]();
+
+                // Controle de UI
+                if (accessLevel !== "edit") {
+                    html = html.replace(/class="[^"]*btn-for-modal[^"]*"/g, (match) => `${match} disabled style="opacity:0.6; pointer-events:none;"`);
+                }
+                authorizedSectionsHtml.push(html);
+            }
+        }
+
+        return {
+            sections_html: authorizedSectionsHtml.join('\n'),
+            modals_html: authorized_modals.join('\n'),
+            pages_list_html: authorized_page_lists.join('\n')
+        };
+    } catch (error) {
+        console.error(error);
+        const html = `
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Erro ao carregar dashboard</h4>
+                <p>${error.message}</p>
+            </div>
+        `
+
+        return { sections_html: html, modals_html: '', pages_list_html: '' }
+    }
 }

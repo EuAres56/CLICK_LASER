@@ -23,7 +23,11 @@ const actions = {
 
         const response = await fetch(`/api/private/dashboard/${endpoint}`, config);
 
-        if (response.status >= 400 && response.status < 500) {
+        if (response.status >= 400) {
+            ui.alert('Erro: ' + response.statusText, 'error');
+        }
+        if (response.status === 401) {
+            console.warn("Sessão expirada, efetuando logout...");
             logout();
             return null;
         }
@@ -210,7 +214,7 @@ const actions = {
 
             if (response && response.ok) {
                 ui.alert('Produto excluído com sucesso!', 'success');
-                if (typeof closeModal === 'function') ui.closeModal();
+                if (typeof ui.closeModal === 'function') ui.closeModal();
                 this.loadProducts();
             } else {
                 const err = await response.json();
@@ -229,57 +233,54 @@ const actions = {
 
             // 1. Captura campos de texto
             const fields = {
-                name: 'stock-name',
-                type: 'stock-type',
-                color: 'stock-color',
-                description: 'stock-description',
-                amount: 'stock-amount',
-                amount_min: 'stock-amount-min',
-                price_buy: 'stock-price-buy',
-                price_sell: 'stock-price-sell'
+                'name': 'stock-name',
+                'type': 'stock-type',
+                'color': 'stock-color',
+                'description': 'stock-description',
+                'amount': 'stock-amount',
+                'amount_min': 'stock-amount-min',
+                'price_buy': 'stock-price-buy',
+                'price_sell': 'stock-price-sell'
             };
 
             for (const [key, id] of Object.entries(fields)) {
                 const input = document.getElementById(id);
                 formData.append(key, input ? input.value : "");
             }
+
             if (uid) formData.append('uid', uid);
 
-            // 2. Processamento das Imagens
+            // 2. Processamento das Imagens (Usando o processImage para garantir WebP)
             const inputSale = document.getElementById('stock-image');
             const inputCreator = document.getElementById('stock-image-creator');
 
-            if (inputSale?.files?.[0]) {
+            if (inputSale.files[0]) {
+                // Processamos para WebP antes de anexar ao FormData
                 const processedSale = await utils.processImage(inputSale.files[0], 1);
                 formData.append('image_sale', processedSale, 'product_sale.webp');
             }
 
-            if (inputCreator?.files?.[0]) {
+            if (inputCreator.files[0]) {
                 const processedCreator = await utils.processImage(inputCreator.files[0], 2);
                 formData.append('image_creator', processedCreator, 'product_creator.webp');
             }
 
-            // 3. Definição Dinâmica de Método e Endpoint
-            // Se tem UID, é UPDATE (PATCH), se não, é CREATE (POST)
             const method = uid ? 'PATCH' : 'POST';
             const endpoint = uid ? `products/update` : `products/create`;
 
-
-            // 4. Envio
             const response = await this.apiFetch(endpoint, method, formData);
 
             if (response && response.ok) {
-                ui.alert(uid ? 'Produto atualizado!' : 'Produto criado!', 'success');
-                if (typeof closeModal === 'function') ui.closeModal();
-                this.loadProducts();
-                this.loadProductsOptions();
+                ui.alert(uid ? 'Produto atualizado!' : 'Produto criado com sucesso!', 'success');
+                if (typeof ui.closeModal === 'function') ui.closeModal();
+                this.loadProducts(); // Recarrega a tabela
             } else {
-                const err = await response.json().catch(() => ({ error: 'Erro na resposta da API' }));
-                ui.alert('Erro: ' + (err.error || 'Não foi possível salvar'), 'error');
+                const err = await response.json().catch(() => ({ error: 'Erro na resposta do servidor' }));
+                ui.alert('Erro: ' + (err.error || 'Falha ao salvar'), 'error');
             }
 
         } catch (error) {
-            console.error("Erro no salvamento:", error);
+            console.error("Erro no salvamento do produto:", error);
             ui.alert("Falha técnica ao processar o produto.", 'error');
         }
     },
@@ -479,7 +480,7 @@ const actions = {
             if (response && response.ok) {
                 await this.assetsLoadVectors();
                 ui.alert(uid ? 'Vetor atualizado!' : 'Ativo salvo na biblioteca!', 'success');
-                if (typeof closeModal === 'function') ui.closeModal();
+                if (typeof ui.closeModal === 'function') ui.closeModal();
             } else {
                 const err = await response.json().catch(() => ({ error: 'Erro ao processar ativo' }));
                 ui.alert('Erro: ' + (err.error || 'Falha no upload'), 'error');
@@ -588,27 +589,15 @@ const actions = {
     // Ação para Edição de Funcionarios
     async getStaffDetails(uid) {
         // O uid vem do botão da tabela (data-callback)
-        const response = await this.apiFetch(`staff/details?uid=${uid}`, 'GET');
+        const response = await this.apiFetch(`staff/get?uid=${uid}`, 'GET');
 
-        if (!response) return; // apiFetch já cuida do erro/logout
+
+        if (!response) {
+            return
+        } // apiFetch já cuida do erro/logout
 
         const data = await response.json();
-        const modal = document.querySelector('#modal-staff');
-
-        // Populando o modal com os dados retornados
-        modal.querySelector('#staff-name').value = data.name || '';
-        modal.querySelector('#staff-email').value = data.email || '';
-        modal.querySelector('#staff-phone').value = data.phone || '';
-        modal.querySelector('#staff-date-of-birth').value = data.date_of_birth || '';
-        modal.querySelector('#staff-level').value = data.permissions_level || '';
-        modal.querySelector('#staff-job-position').value = data.job_position || '';
-        modal.querySelector('#staff-status').value = data.status || 'active';
-
-        modal.querySelector('#staff-password').value = '********';
-        modal.querySelector('#staff-password').setAttribute("data-password", "");
-
-        // Atribuímos o UID ao modal para o saveStaff saber que é edição
-        modal.dataset.currentUid = uid;
+        renders.render_modal_staff_edit(data);
     },
 
     async saveStaff() {
@@ -626,29 +615,95 @@ const actions = {
             enabled_account: modal.querySelector('#staff-status').value
         };
 
-        const password = modal.querySelector('.password-generated').getAttribute("data-password");
-        if (!isUpdate) {
-            if (password) {
-                staffData.password = password;
-            } else {
-                ui.alert("A senha do colaborador deve ser informada!", "error");
-                return;
-            }
+        const password = modal.querySelector('.password-generated').getAttribute("data-value");
+
+        if (!isUpdate && !!password) {
+            ui.alert("A senha do colaborador deve ser informada!", "error");
+            return;
         }
+        if (password) staffData.password = password;
         // Define endpoint e método baseado na existência do UID
         const endpoint = isUpdate ? `staff/update?uid=${uid}` : `staff/create`;
         const method = isUpdate ? 'PATCH' : 'POST';
 
         const response = await this.apiFetch(endpoint, method, staffData);
 
+        if (!response && !response.ok) {
+            ui.alert("Erro ao salvar colaborador", "error");
+            return;
+        }
+        // Função que você deve ter para dar refresh na lista da tabela
+        this.loadStaffTable();
+        ui.alert(isUpdate ? "Colaborador atualizado!" : "Colaborador criado!", "success");
+        ui.closeModal();
+
+    },
+
+    async getPermissionsDetails(uid) {
+        const response = await actions.apiFetch(`staff/permissions?uid=${uid}`, 'GET');
+
         if (response && response.ok) {
-            ui.alert(isUpdate ? "Colaborador atualizado!" : "Colaborador criado!", "success");
-            ui.closeModal();
-            // Função que você deve ter para dar refresh na lista da tabela
-            actions.loadStaffTable();
+            const permissions = await response.json();
+            const modal = document.querySelector('#modal-permissions');
+
+            // Iteramos sobre o JSON de permissões (ex: { home: "edit", orders: "view", ... })
+            Object.entries(permissions).forEach(([section, value]) => {
+                const radio = modal.querySelector(`input[name="perm-${section}"][value="${value}"]`);
+                if (radio) radio.checked = true;
+            });
+
         }
     },
 
+    async updatePermissions() {
+        const modal = document.querySelector('#modal-permissions');
+        const uid = modal.getAttribute('data-uid');
+
+        // Mapeamos as seções para reconstruir o JSON
+        const sections = ['home', 'orders', 'production', 'creator', 'stock', 'staff'];
+        const newPermissions = {};
+
+        sections.forEach(s => {
+            const selected = modal.querySelector(`input[name="perm-${s}"]:checked`);
+            newPermissions[s] = selected ? selected.value : 'blocked';
+        });
+        const response = await actions.apiFetch(`staff/permissions/update?uid=${uid}`, 'PATCH', {
+            permissions_sections: JSON.stringify(newPermissions)
+        });
+
+        if (response && response.ok) {
+            ui.alert("Permissões atualizadas com sucesso!", "success");
+            ui.closeModal();
+            actions.loadStaffTable(); // Recarrega para atualizar os badges na tabela
+        }
+    },
+
+    async loadStaffTable() {
+        // 2. Busca os dados na rota que criamos anteriormente
+        // O apiFetch já cuida do Token, UserId e do logout em caso de 401/403
+        const response = await actions.apiFetch('staff/load', 'GET');
+
+        if (response && response.ok) {
+            const staffRowsHtml = await response.json();
+
+            // 3. Seleciona o corpo da tabela de equipe
+            const tableBody = document.getElementById('staff-table-body');
+
+            if (tableBody) {
+                // Se a lista vier vazia, podemos colocar um aviso ou apenas limpar
+                if (staffRowsHtml.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum colaborador encontrado.</td></tr>`;
+                    return;
+                }
+                // staffRowsHtml já vem como um array de strings (HTML das linhas)
+                // vindas do Worker através do create_staff_row
+                tableBody.innerHTML = "";
+                staffRowsHtml.forEach(row => {
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+        }
+    }
 }
 
 const renders = {
@@ -978,32 +1033,49 @@ const renders = {
                 </div>
             </div>
         `}).join('');
+    },
+
+    render_modal_staff_edit(data) {
+        const modal = document.querySelector('#modal-staff');
+
+        // Populando o modal com os dados retornados
+        modal.querySelector('#staff-name').value = data.name || '';
+        modal.querySelector('#staff-email').value = data.email || '';
+        modal.querySelector('#staff-phone').value = data.phone || '';
+        modal.querySelector('#staff-date-of-birth').value = data.date_of_birth || '';
+        modal.querySelector('#staff-level').value = data.permissions_level || '';
+        modal.querySelector('#staff-job-position').value = data.job_position || '';
+        modal.querySelector('#staff-status').value = data.status || 'active';
+
+        modal.querySelector('.password-generated').innerText = '********';
+
+        // Atribuímos o UID ao modal para o saveStaff saber que é edição
+        modal.dataset.uid = data.uid;
     }
 }
 
 const utils = {
     async processImage(file, maxSizeMB) {
+        const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
+
             reader.onload = (event) => {
                 const img = new Image();
                 img.src = event.target.result;
+
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
 
-                    // Opcional: Redimensionar se for muito grande (ex: max 1920px)
                     const maxResolution = 1920;
                     if (width > maxResolution || height > maxResolution) {
-                        if (width > height) {
-                            height *= maxResolution / width;
-                            width = maxResolution;
-                        } else {
-                            width *= maxResolution / height;
-                            height = maxResolution;
-                        }
+                        const ratio = Math.min(maxResolution / width, maxResolution / height);
+                        width = Math.floor(width * ratio);
+                        height = Math.floor(height * ratio);
                     }
 
                     canvas.width = width;
@@ -1011,26 +1083,34 @@ const utils = {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Tentativa inicial de conversão com qualidade 0.8
-                    let quality = 0.8;
-
-                    const convert = (q) => {
+                    // Função interna para tentar compressão progressiva
+                    const attemptCompression = (q) => {
                         canvas.toBlob((blob) => {
-                            if (blob.size > maxSizeMB * 1024 * 1024 && q > 0.1) {
-                                // Se ainda for grande, tenta com qualidade menor
-                                convert(q - 0.1);
-                            } else if (blob.size > maxSizeMB * 1024 * 1024) {
-                                reject(`A imagem é muito grande. Mesmo comprimida, excedeu ${maxSizeMB}MB.`);
-                            } else {
+                            if (!blob) {
+                                reject("Erro ao gerar Blob da imagem.");
+                                return;
+                            }
+
+                            // Se o tamanho estiver ok OU a qualidade atingir o mínimo (0.1)
+                            if (blob.size <= maxSizeBytes) {
                                 resolve(blob);
+                            } else if (q > 0.1) {
+                                // Tenta novamente com qualidade menor
+                                attemptCompression(Number((q - 0.1).toFixed(2)));
+                            } else {
+                                // Se chegou no mínimo de qualidade e ainda é grande
+                                reject(`A imagem excedeu ${maxSizeMB}MB mesmo com compressão máxima.`);
                             }
                         }, 'image/webp', q);
                     };
 
-                    convert(quality);
+                    attemptCompression(0.8);
                 };
+
+                img.onerror = () => reject("Erro ao carregar imagem no elemento Image.");
             };
-            reader.onerror = (err) => reject(err);
+
+            reader.onerror = (err) => reject("Erro ao ler o arquivo.");
         });
     },
 
@@ -1528,9 +1608,9 @@ const utils = {
             .map((x) => chars[x % chars.length])
             .join('');
 
-        const display = document.querySelector('.password-generated');
+        const display = modal.querySelector('.password-generated');
         display.innerText = pass;
-        display.setAttribute('data-password', pass);
+        display.setAttribute('data-value', pass);
 
         // Efeito visual tech: copiar para o clipboard automaticamente
         navigator.clipboard.writeText(pass);

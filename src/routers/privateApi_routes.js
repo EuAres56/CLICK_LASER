@@ -1,5 +1,4 @@
 import login from "../auth/login.js";
-import updatePassword from "../auth/updatePassword.js";
 import verifyAuth from "../auth/verifyAuth.js";
 // import register from "../auth/register.js";
 
@@ -13,12 +12,8 @@ export default async function apiPrivateRouter(request, env) {
     //  Area de Autenticação
     //  ======================================================================
     // Rota: Login
-    if (url.pathname === "/api/private/auth/login" && method === "POST") {
+    if (url.pathname.startsWith("/api/private/auth")) {
         return await login(request, env);
-    }
-    // Rota: Atualizar senha
-    if (url.pathname === "/api/private/auth/update-password" && method === "POST") {
-        return await updatePassword(request, env);
     }
 
     if (url.pathname === "/api/private/auth/check" && method === "GET") {

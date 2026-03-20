@@ -34,7 +34,7 @@
             </div>
         </div>
 
-        <div class="btn-cart-trigger" onclick="toggleCart()">
+        <div class="btn-cart-trigger" onclick="shoppingUI.toggleCart()">
             <span class="cart-count" id="cartCount">0</span>
             🛒
         </div>
@@ -52,7 +52,7 @@
                     <span>Total:</span>
                     <span id="cartTotal">R$ 0,00</span>
                 </div>
-                <button class="cta-button" onclick="alert('Indo para o Customizador...')">
+                <button class="cta-button" onclick="shoppingActions.checkout()">
                     PERSONALIZAR AGORA
                 </button>
             </div>
@@ -65,10 +65,13 @@
             </div>
         </div>
     </div>
+    <div class="body-overlay" id="bodyOverlay" onclick="shoppingUI.toggleCart()"></div>
+
+    <span class="close-cart" onclick="shoppingUI.toggleCart()">✕</span>
 
     <Script src="./script/main.js"></Script>
     <Script src="./script/main_ui.js"></Script>
-    <script src="./script/shopping_ui.js"></script>
+    <script src="./script/shopping_main.js"></script>
 </body>
 
 </html>

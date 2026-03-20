@@ -116,11 +116,11 @@ async function updatePassword() {
     try {
         hideLoader();
         const res = await fetch("/api/private/auth/update-password", {
-            method: "POST",
+            method: "PATCH",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("token")}`,
-                'X-User-Id': localStorage.getItem("user_id")
+                "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
+                'X-User-Id': localStorage.getItem("user_id"),
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ newPassword: newPass })
         });

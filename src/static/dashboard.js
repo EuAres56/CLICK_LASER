@@ -69,7 +69,6 @@ export function constuctOrders(data) {
                         placeholder="Buscar por Cliente ou ID..." data-list_class="table-sales"
                         data-list_type="row-item">
                 </div>
-
                 <div class="filter-group">
                     <select id="filter-sale-period" onchange="utils.handlePeriodChange()">
                         <option value="this-month">Este Mês</option>
@@ -87,22 +86,9 @@ export function constuctOrders(data) {
                         </button>
                     </div>
                 </div>
-                <div class="filter-group">
-                    <select id="filter-sale-status" onchange="filterSales()">
-                        <option value="all">Todos os Status</option>
-                        <option value="Aguardando">Aguardando Confirmação</option>
-                        <option value="Produção">Em Produção</option>
-                        <option value="Pronto">Pronto para Entrega</option>
-                        <option value="Concluído">Concluído</option>
-                    </select>
-
-                    <select id="filter-sale-origin" onchange="filterSales()">
-                        <option value="all">Todas as Origens</option>
-                        <option value="Instagram">Instagram</option>
-                        <option value="WhatsApp">WhatsApp</option>
-                        <option value="Site">Site</option>
-                    </select>
-                </div>
+                <button class="btn-req square btn-refresh"  data-callback="utils.handlePeriodChange">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
 
             <div class="card-inventory-container">
@@ -152,20 +138,9 @@ export function constructProduction(data) {
                     <input class="search-box" type="text" id="filter-job-search" placeholder="Buscar pedido ou item..."
                         data-list_class="card-grid-jobs" data-list_type="card-item">
                 </div>
-
-                <div class="filter-group">
-                    <select id="filter-machine" onchange="filterJobs()">
-                        <option value="all">Todas as Máquinas</option>
-                        <option value="Laser 01">Laser Fiber 01</option>
-                        <option value="Laser 02">Laser CO2 01</option>
-                    </select>
-
-                    <select id="filter-priority" onchange="filterJobs()">
-                        <option value="all">Todas as Prioridades</option>
-                        <option value="Alta">Urgente</option>
-                        <option value="Normal">Normal</option>
-                    </select>
-                </div>
+                <button class="btn-req square btn-refresh" data-callback="actions.searchJobs">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
 
             <div id="jobs-grid" class="card-grid card-grid-jobs">
@@ -198,25 +173,9 @@ export function constuctStock(data) {
                     <input class="search-box" type="text" id="filter-stock-title" placeholder="Buscar por produto..."
                         data-list_class="table-inventory" data-list_type="row-item">
                 </div>
-
-                <div class="filter-group">
-                    <select id="filter-stock-type">
-                        <option value="all">Todos os Tipos</option>
-                        <option value="Copo">Copos</option>
-                        <option value="Garrafa">Garrafas</option>
-                        <option value="Caneca">Canecas</option>
-                        <option value="Acessório">Acessórios</option>
-                    </select>
-
-                    <select id="filter-stock-color">
-                        <option value="all">Todas as Cores</option>
-                        <option value="Preto">Preto</option>
-                        <option value="Branco">Branco</option>
-                        <option value="Azul">Azul</option>
-                        <option value="Rosa">Rosa</option>
-                        <option value="Verde">Verde</option>
-                    </select>
-                </div>
+                <button class="btn-req square btn-refresh"  data-callback="actions.loadProducts">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
 
             <div class="card-inventory-container">
@@ -271,6 +230,9 @@ export function constructCreator(data) {
                                 <input class="search-box" type="text" id="filter-font" placeholder="Buscar fonte..."
                                     data-list_class="assets-list-fonts" data-list_type="select-item">
                             </div>
+                            <button class="btn-req square btn-refresh"  data-callback="actions.assetsLoadFonts">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -311,13 +273,9 @@ export function constructCreator(data) {
                                     placeholder="Nome do arquivo..." data-list_class="assets-list-figures"
                                     data-list_type="select-item">
                             </div>
-                            <select id="filter-vector-category" onchange="filterAssets('vector')">
-                                <option value="all">Todas Categorias</option>
-                                <option value="Logos">Logos</option>
-                                <option value="Brasões">Brasões</option>
-                                <option value="Datas">Datas</option>
-                                <option value="Desenhos">Desenhos</option>
-                            </select>
+                            <button class="btn-req square btn-refresh"  data-callback="actions.assetsLoadVectors">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -364,28 +322,16 @@ export function constructStaff(data) {
             <div class="filter-bar-inventory">
                 <div class="search-container">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="filter-staff-name" placeholder="Buscar por nome ou e-mail...">
+                    <input class="search-box" type="text" id="filter-staff-name" placeholder="Buscar por nome ou e-mail..."
+                    data-list_class="table-staff" data-list_type="row-item">
                 </div>
-
-                <div class="filter-group">
-                    <select id="filter-staff-role" onchange="filterStaff()">
-                        <option value="all">Todos os Cargos</option>
-                        <option value="Gerente">Gerente</option>
-                        <option value="Operador Laser">Operador Laser</option>
-                        <option value="Vendedor">Vendedor</option>
-                        <option value="Designer">Designer</option>
-                    </select>
-
-                    <select id="filter-staff-status" onchange="filterStaff()">
-                        <option value="all">Todos os Status</option>
-                        <option value="Ativo">Ativos</option>
-                        <option value="Inativo">Inativos</option>
-                    </select>
-                </div>
+                <button class="btn-req square btn-refresh"  data-callback="actions.loadStaffTable">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
 
             <div class="card-staff-container">
-                <table class="table-custom">
+                <table class="table-custom table-staff">
                     <thead>
                         <tr>
                             <th>Colaborador</th>
@@ -438,7 +384,7 @@ export function constructModalBase(modal_name, modal_header, modal_body, modal_f
 
 export function constructModalProduct() {
     const modal_header = `
-<h2>Produto</h2><button class="btn-local square close-modal" onclick="ui.closeModal()"><iclass="bi bi-x-lg"></i></button>
+<h2>Produto</h2><button class="btn-local square close-modal" onclick="ui.closeModal()"><i class="bi bi-x-lg"></i></button>
     `
     const modal_body = `
 <div class="form-line">
@@ -896,7 +842,7 @@ export function constructModalStaff() {
             <div class="form-group">
                 <label>Senha:</label>
                 <div class="password-container">
-                    <span class="password-generated"></span>
+                    <span class="password-generated fake-input"></span>
                     <button type="button" class="btn-local square" onclick="utils.generatePassword()">
                         <i class="bi bi-key-fill"></i>
                     </button>
@@ -936,17 +882,17 @@ export function constructModalPermissions() {
         <div class="form-line permission-item">
             <div class="form-group">
                 <label>${s.label}:</label>
-            </div>
-            <div class="form-group-row">
-                <label class="radio-option">
-                    <input type="radio" name="perm-${s.id}" value="blocked"> Bloqueado
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="perm-${s.id}" value="view"> Ver
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="perm-${s.id}" value="edit"> Editar
-                </label>
+                <div class="form-group-row">
+                    <label class="radio-option">
+                        <input type="radio" name="perm-${s.id}" value="blocked"> Bloqueado
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="perm-${s.id}" value="view"> Ver
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="perm-${s.id}" value="edit"> Editar
+                    </label>
+                </div>
             </div>
         </div>
     `).join('');

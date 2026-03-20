@@ -2,143 +2,93 @@
  * 1. Upload de Imagens de Produto/Venda
  * Mantida exatamente como sua versão original (Tratamento WebP + wsrv.nl)
  */
-export async function uploadImage(fileData, bucketType, env) {
-    const bucket = env[bucketType];
-
-    if (typeof fileData === 'string' && !fileData.startsWith('data:') && !fileData.startsWith('blob:')) {
-        return null;
-    }
-
-    let blob;
-    if (typeof fileData === 'string' && fileData.startsWith('data:')) {
-        const res = await fetch(fileData);
-        blob = await res.blob();
-    } else {
-        blob = fileData;
-    }
-
-    if (!blob || blob.size === 0) return null;
-
-    const finalBuffer = await blob.arrayBuffer();
-    const contentType = blob.type || "image/webp";
-
-    const limit = bucketType === 'sale' ? 1.5 * 1024 * 1024 : 3 * 1024 * 1024;
-    if (finalBuffer.byteLength > limit) {
-        throw new Error("Arquivo excede o limite de segurança de tamanho (1.5MB venda / 3MB outras).");
-    }
-
-    const extension = contentType.split('/')[1] || 'webp';
-
-    const type = bucketType === 'sale' || bucketType === 'sales' ? 'products' : 'figures';
-    const newFileName = `${type}/${crypto.randomUUID()}.${extension}`;
-
-    await bucket.put(newFileName, finalBuffer, {
-        httpMetadata: { contentType: contentType }
-    });
-
-    return newFileName;
-}
-
-/**
- * 2. Upload de Ativos da Biblioteca (Figuras/PNG)
- * Focado em manter a integridade (transparência) para uso do Staff
- */
-export async function uploadLibraryAsset(fileData, env) {
-    const bucket = env['lib'];
-
-    // 1. Validar se o dado existe
-    if (!fileData || fileData.size === 0) return null;
-
-    // 2. Extrair o buffer
-    const buffer = await fileData.arrayBuffer();
-
-    // 3. Identificar a extensão e o MIME correto
-    // Se fileData for um File (do FormData), ele tem .name e .type
-    const extension = fileData.name ? fileData.name.split('.').pop().toLowerCase() : 'png';
-
-    // Mapeamento manual para evitar o "text/plain"
-    const mimeTypes = {
-        'png': 'image/png',
-        'svg': 'image/svg+xml',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'webp': 'image/webp',
-        'gif': 'image/gif'
-    };
-
-    // Prioridade: tipo do arquivo > mapa manual > padrão image/png
-    const contentType = fileData.type && fileData.type !== "text/plain"
-        ? fileData.type
-        : (mimeTypes[extension] || "image/png");
-
-    const newFileName = `vectors/${crypto.randomUUID()}.${extension}`;
-
-    // 4. O PULO DO GATO: Salvar explicitamente o contentType
-    await bucket.put(newFileName, buffer, {
-        httpMetadata: {
-            contentType: contentType, // Aqui garantimos que não será text/plain
-            cacheControl: "public, max-age=31536000, immutable"
-        }
-    });
-
-    return newFileName;
-}
-
-/**
- * 3. Upload de Fontes da Biblioteca
- */
-export async function uploadFont(fileData, env) {
+export async function uploadLibraryAsset(fileData, assetType, env) {
     const bucket = env["lib"];
 
-    if (typeof fileData === 'string' && !fileData.startsWith('data:') && !fileData.startsWith('blob:')) {
+    if (!bucket) {
+        console.error("[R2 Error] Bucket 'lib' não encontrado no env.");
         return null;
     }
 
+    // 1. Tratamento de Input (Garante que Base64 vire Blob real)
     let blob;
     if (typeof fileData === 'string' && fileData.startsWith('data:')) {
         const res = await fetch(fileData);
         blob = await res.blob();
-    } else {
+    } else if (fileData instanceof Blob || (fileData && fileData.size)) {
         blob = fileData;
+    } else {
+        return null;
     }
 
     if (!blob || blob.size === 0) return null;
 
-    const allowedTypes = [
-        "font/ttf", "font/otf", "font/woff", "font/woff2",
-        "application/font-sfnt", "application/x-font-ttf"
-    ];
+    // 2. Configurações por Tipo de Asset
+    const configs = {
+        image: {
+            limit: 1.5 * 1024 * 1024, // Ajustado para 1.5MB conforme seu comentário
+            folder: 'products',
+            mimes: { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'webp': 'image/webp' }
+        },
+        figure: {
+            limit: 3 * 1024 * 1024, // Ajustado para 3MB
+            folder: 'figures',
+            mimes: { 'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'webp': 'image/webp', 'svg': 'image/svg+xml' }
+        },
+        font: {
+            limit: 5 * 1024 * 1024,
+            folder: 'fonts',
+            mimes: { 'ttf': 'font/ttf', 'otf': 'font/otf', 'woff': 'font/woff', 'woff2': 'font/woff2' }
+        }
+    };
 
-    const isFont = allowedTypes.includes(blob.type) ||
-        (blob.name && /\.(ttf|otf|woff|woff2)$/i.test(blob.name));
-
-    if (!isFont) {
-        throw new Error("Formato de fonte inválido. Use TTF, OTF ou WOFF2.");
+    const config = configs[assetType];
+    if (!config) {
+        console.error(`[R2 Error] Configuração de ${assetType} não encontrada.`);
+        return null;
     }
 
-    if (blob.size > 5 * 1024 * 1024) throw new Error("Fonte muito pesada (Máx 5MB).");
+    // 3. Validação de Tamanho
+    if (blob.size > config.limit) {
+        const sizeMB = (config.limit / (1024 * 1024)).toFixed(1);
+        throw new Error(`Arquivo excede o limite para ${assetType} (Máx: ${sizeMB}MB).`);
+    }
 
-    const buffer = await blob.arrayBuffer();
-
-    let extension = "woff2";
+    // 4. Determinar Extensão e Corrigir Content-Type (O Pulo do Gato)
+    let extension = "bin";
     if (blob.name) {
         extension = blob.name.split('.').pop().toLowerCase();
     } else if (blob.type) {
-        extension = blob.type.replace("font/", "").replace("application/x-font-", "");
+        extension = blob.type.split('/').pop().replace('x-font-', '').replace('svg+xml', 'svg');
     }
 
-    const newFileName = `fonts/${crypto.randomUUID()}.${extension}`;
+    // IMPORTANTE: Se o blob veio como octet-stream, tentamos mapear pela extensão
+    // Isso resolve o problema das imagens que não renderizam
+    const contentType = (blob.type === "application/octet-stream" || !blob.type)
+        ? (config.mimes[extension] || "application/octet-stream")
+        : blob.type;
 
-    await bucket.put(newFileName, buffer, {
-        httpMetadata: {
-            contentType: blob.type || `font/${extension}`,
-            cacheControl: "public, max-age=31536000, immutable"
-        }
-    });
+    const newFileName = `${config.folder}/${crypto.randomUUID()}.${extension}`;
 
-    return newFileName;
+    try {
+        // 5. Extração do Buffer e Upload com Metadados Explícitos
+        const buffer = await blob.arrayBuffer();
+        console.log(`[Upload] ${newFileName} (${contentType})`);
+        console.log(buffer);
+        await bucket.put(newFileName, buffer, {
+            httpMetadata: {
+                contentType: contentType, // O navegador precisa disso correto para exibir a imagem
+                cacheControl: "public, max-age=31536000, immutable"
+            }
+        });
+
+        return newFileName;
+
+    } catch (error) {
+        console.error(`[Upload Critical Error]: ${error.message}`);
+        throw error;
+    }
 }
-
 
 export async function deleteFromBucket(fileIdentifier, bucketType, env) {
     const bucket = env[bucketType];

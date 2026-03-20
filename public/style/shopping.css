@@ -152,3 +152,229 @@
     cursor: pointer;
     font-size: 1.5rem;
 }
+
+
+.product-image {
+    position: relative;
+    /* Necessário para o badge se posicionar */
+}
+
+.stock-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--roxo-dark);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eee;
+}
+
+.product-card:hover .stock-badge {
+    background: var(--roxo-dark);
+    color: white;
+}
+
+/* Escurecer o fundo quando o carrinho abre */
+.body-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s;
+}
+
+.body-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Toast de feedback rápido */
+.toast-added {
+    position: fixed;
+    bottom: 110px;
+    right: 30px;
+    height: 50px;
+    background: #4CAF50;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 3000;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Estilo do Card mais limpo */
+.product-card {
+    border: none;
+    background: #fdfdfd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.stock-tag {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: var(--roxo-dark);
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Carrinho mais "Pro" */
+.cart-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-item-remove {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.empty-cart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 100px;
+}
+
+/* Container do Item no Carrinho */
+.cart-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 1. LIMITAR O TAMANHO DA IMAGEM NO CARRINHO */
+.cart-item-img {
+    width: 60px;
+    /* Tamanho fixo para a miniatura */
+    height: 60px;
+    /* Tamanho fixo para a miniatura */
+    min-width: 60px;
+    /* Impede que o flexbox esmague a imagem */
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    /* Corta o que sobrar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+}
+
+.cart-item-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Garante que a garrafa apareça inteira sem esticar */
+    padding: 2px;
+}
+
+/* 2. AJUSTAR OS DETALHES PARA NÃO QUEBRAR */
+.cart-item-details {
+    flex: 1;
+    /* Ocupa o espaço restante */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    /* Importante para o truncate de texto funcionar */
+}
+
+.cart-item-details h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--roxo-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Corta o nome com "..." se for muito longo */
+}
+
+.cart-item-details p {
+    margin: 2px 0 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+}
+
+/* 3. BOTÃO DE REMOVER DISCRETO */
+.btn-remove {
+    background: #ffebee;
+    color: #ff4444;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+
+.btn-remove:hover {
+    background: #ff4444;
+    color: white;
+}
+
+/* Item Esgotado no Carrinho */
+.cart-item.item-sold-out {
+    opacity: 0.6;
+    filter: grayscale(1);
+    border: 1px dashed #ff4444;
+}
+
+.sold-out-badge {
+    position: absolute;
+    background: #ff4444;
+    color: white;
+    font-size: 0.5rem;
+    font-weight: 800;
+    padding: 2px 4px;
+    border-radius: 4px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+}
+
+/* Impedir checkout se houver itens esgotados */
+.cart-item.item-sold-out~.cart-footer .cta-button {
+    background: #ccc;
+    pointer-events: none;
+}

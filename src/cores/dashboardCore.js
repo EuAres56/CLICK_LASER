@@ -1,8 +1,7 @@
 import verifyAuth from '../auth/verifyAuth.js';
-import { create_job_card, create_order_row, create_product_row, create_selection_item } from "../renders/dashboard.js";
-import { uploadFont, uploadLibraryAsset, uploadImage, deleteFromBucket } from "../utils/connectBuckets.js";
+import { create_job_card, create_order_row, create_product_row, create_selection_item, create_staff_row, buildDashboardPayloadSections } from "../renders/dashboard.js";
+import { uploadLibraryAsset, deleteFromBucket } from "../utils/connectBuckets.js";
 import { dataBaseRequest } from '../utils/connectDataBase.js';
-import { buildDashboardPayloadSections } from '../auth/permissions.js';
 
 
 export default async function dashboardCore(request, env) {
@@ -21,7 +20,7 @@ export default async function dashboardCore(request, env) {
             headers: { "Content-Type": "application/json" }
         });
     }
-    const permissions_map = auth.permissions_map || {};
+    const permissions_map = JSON.parse(auth.permissions_map) || {};
     const permissions_level = auth.permissions_level || 0;
 
 
@@ -547,70 +546,40 @@ export default async function dashboardCore(request, env) {
 
     // --- ROTAS DE JOBS (TRABALHOS) ---
 
-    // GET: Buscar Jobs para o Dashboard de Produção
-    if (subPath.startsWith("/jobs/search") && method === "GET") {
-        try {
-            let startDate = url.searchParams.get("start");
-            let endDate = url.searchParams.get("end");
+    if (dbData.production_jobs && Array.isArray(dbData.production_jobs) && dbData.production_jobs.length > 0) {
+        // 1. Mapear UIDs únicos para buscar as ordens
+        const orderUids = [...new Set(dbData.production_jobs.map(j => j.order_uid))];
+        const ordersFromDb = await dataBaseRequest(`dashboard_orders?uid=in.(${orderUids.join(',')})&select=*`, "GET", null, env);
 
-            // 1. LÓGICA DE DATA PADRÃO (Semana Atual: Domingo a Sábado)
-            if (!startDate || !endDate) {
-                const today = new Date();
+        // Converter ordens para um Map para busca rápida
+        const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
 
-                // Retrocede até o Domingo (dia 0)
-                const sunday = new Date(today);
-                sunday.setDate(today.getDate() - today.getDay());
+        // 2. Definir a Blacklist de Status da Ordem (mesma da rota de busca)
+        // 0: Pendente, 3: Concluído, 99: Cancelado/Aprovado
+        const blackListView = [0, 3, 99];
 
-                // Avança até o Sábado (dia 6)
-                const saturday = new Date(sunday);
-                saturday.setDate(sunday.getDate() + 6);
-
-                // Formatação YYYY-MM-DD
-                const offset = today.getTimezoneOffset() * 60000;
-                startDate = new Date(sunday - offset).toISOString().split('T')[0];
-                endDate = new Date(saturday - offset).toISOString().split('T')[0];
-            }
-
-            // 2. BUSCA OS JOBS NO INTERVALO
-            // Usamos gte (maior ou igual) e lte (menor ou igual) no campo job_start_date
-            const endpointJobs = `dashboard_jobs?job_start_date=gte.${startDate}T00:00:00&job_start_date=lte.${endDate}T23:59:59&select=*`;
-            const jobsFromDb = await dataBaseRequest(endpointJobs, "GET", null, env);
-
-            if (jobsFromDb instanceof Response) return jobsFromDb;
-
-            // Se não houver jobs, retornamos array vazio (melhor que erro 500 para o front)
-            if (!jobsFromDb || jobsFromDb.length === 0) {
-                return new Response(JSON.stringify([]), { status: 200 });
-            }
-
-            // 3. BUSCAR DETALHES DAS ORDERS CORRESPONDENTES
-            const orderUids = [...new Set(jobsFromDb.map(j => j.order_uid))];
-            const ordersFromDb = await dataBaseRequest(`dashboard_orders?uid=in.(${orderUids.join(',')})&select=*`, "GET", null, env);
-            if (ordersFromDb instanceof Response) return ordersFromDb;
-
-            const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
-
-            // 4. FILTRAGEM E MAPEAMENTO PARA CARDS
-            // Blacklist: 0 (pendente/aguardando), 3 (concluido), 99 (cancelado/aprovado)
-            // Nota: Ajuste os números conforme sua regra de negócio exata
-            const blackListView = [0, 3, 99];
-
-            const htmlCardsArray = jobsFromDb
+        templateData.production = {
+            html: dbData.production_jobs
                 .filter(row => {
                     const order = ordersMap.get(row.order_uid);
-                    // Só exibe se a ordem existir e não estiver no status de exclusão da visualização
+                    // Só exibe se a ordem existir e não estiver nos status bloqueados
                     return order && !blackListView.includes(parseInt(order.order_status));
                 })
                 .sort((a, b) => {
-                    // Ordenação por prioridade da Ordem (descendente: 3 alta, 1 baixa)
-                    const orderA = ordersMap.get(a.order_uid);
-                    const orderB = ordersMap.get(b.order_uid);
-                    return (orderB?.order_priority || 0) - (orderA?.order_priority || 0);
+                    // Ordenação por prioridade da Ordem (descendente)
+                    const priorityA = ordersMap.get(a.order_uid)?.order_priority || 0;
+                    const priorityB = ordersMap.get(b.order_uid)?.order_priority || 0;
+                    return priorityB - priorityA;
                 })
                 .map(row => {
                     const order = ordersMap.get(row.order_uid);
-                    const url_reference = row.job_image_url_reference ? `${publicServePrefix}${row.job_image_url_reference}?b=temp` : "";
 
+                    // Formatar URL de referência (usando prefixo público e bucket lib)
+                    const url_reference = row.job_image_url_reference
+                        ? `${publicServePrefix}${row.job_image_url_reference}?b=lib`
+                        : "";
+
+                    // Retornar o card com TODOS os dados que a rota de busca fornece
                     return create_job_card(
                         {
                             order_uid: row.order_uid,
@@ -632,17 +601,8 @@ export default async function dashboardCore(request, env) {
                             status: row.job_status
                         }
                     );
-                });
-
-            return new Response(JSON.stringify(htmlCardsArray), {
-                status: 200,
-                headers: { "Content-Type": "application/json" }
-            });
-
-        } catch (error) {
-            console.error(`[Jobs Search Error]: ${error.message}`);
-            return new Response(JSON.stringify({ error: "Erro ao carregar lista de produção" }), { status: 500 });
-        }
+                }).join('')
+        };
     }
 
     // PATCH: Atualizar um Job individualmente (Fonte, Título, Observação, etc.)
@@ -723,105 +683,29 @@ export default async function dashboardCore(request, env) {
 
     // POST: Criar Produto
     if (subPath.startsWith("/products/create") && method === "POST") {
+        let pathSale = null;
+        let pathCreator = null;
+
         try {
-            let imageSalePath = null;
-            let imageCreatorPath = null;
             const formData = await request.formData();
 
-            // 1. Processamento de dados numéricos e status
+            // 1. Upload das Imagens (se existirem)
+            const fileSale = formData.get('image_sale');
+            const fileCreator = formData.get('image_creator');
+
+            if (fileSale && fileSale.size > 0) {
+                pathSale = await uploadLibraryAsset(fileSale, 'image', env);
+            }
+            if (fileCreator && fileCreator.size > 0) {
+                pathCreator = await uploadLibraryAsset(fileCreator, 'image', env);
+            }
+
+            // 2. Preparação dos dados para o banco
             const stockNow = parseInt(formData.get('amount')) || 0;
             const stockMin = parseInt(formData.get('amount_min')) || 0;
             const status = stockNow <= 0 ? 2 : (stockNow < stockMin ? 1 : 0);
 
             const data = {
-                product_title: formData.get('name'), // Verifique se o nome da coluna no banco é 'name' ou 'product_title'
-                product_type: formData.get('type'),
-                product_color: formData.get('color'),
-                product_desc: formData.get('description'),
-                product_stock_now: stockNow,
-                product_stock_min: stockMin,
-                product_price_buy: parseFloat(formData.get('price_buy')) || 0,
-                product_price_sell: parseFloat(formData.get('price_sell')) || 0,
-                product_status: status
-            };
-
-            // 2. Lógica de Upload Condicional
-            const fileSale = formData.get('image_sale');
-            const fileCreator = formData.get('image_creator');
-
-            // Só faz upload se 'fileSale' for um objeto File/Blob e tiver tamanho > 0
-            if (fileSale && typeof fileSale !== 'string' && fileSale.size > 0) {
-                imageSalePath = await uploadImage(fileSale, "sale", env);
-                if (!imageSalePath) throw new Error("Erro ao processar imagem de venda.");
-                data.product_image_sale = imageSalePath;
-            } else {
-                data.product_image_sale = null; // Ou uma string vazia, conforme seu banco
-            }
-
-            if (fileCreator && typeof fileCreator !== 'string' && fileCreator.size > 0) {
-                imageCreatorPath = await uploadImage(fileCreator, "creator", env);
-                if (!imageCreatorPath) throw new Error("Erro ao processar imagem do criador.");
-                data.product_image_creator = imageCreatorPath;
-            } else {
-                data.product_image_creator = null;
-            }
-
-            // 3. Persistência no Banco
-            const productData = await dataBaseRequest("dashboard_products", "POST", data, env);
-
-            if (productData instanceof Response) throw new Error("Erro ao salvar no banco");
-
-            return new Response(JSON.stringify({ success: true, data: productData[0] }), {
-                status: 201,
-                headers: { "Content-Type": "application/json" }
-            });
-
-        } catch (error) {
-            // Cleanup de imagens em caso de erro no banco
-            const cleanup = async () => {
-                if (imageSalePath) await env.MY_BUCKET_SALE.delete(imageSalePath).catch(() => { });
-                if (imageCreatorPath) await env.MY_BUCKET_CREATOR.delete(imageCreatorPath).catch(() => { });
-            };
-
-            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(cleanup()); else await cleanup();
-
-            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-        }
-    }
-
-    // PATCH: Atualizar Produto
-    if (subPath.startsWith("/products/update") && method === "PATCH") {
-        let newImageSale, newImageCreator, oldImageSale, oldImageCreator;
-
-        try {
-            const formData = await request.formData();
-            const productUid = formData.get('uid');
-
-            if (!productUid) throw new Error("UID do produto é obrigatório.");
-
-            const current = await dataBaseRequest(`dashboard_products?uid=eq.${productUid}`, "GET", null, env);
-            if (current instanceof Response || !current.length) throw new Error("Produto não encontrado.");
-
-            const productDataOld = current[0];
-            oldImageSale = productDataOld.product_image_sale;
-            oldImageCreator = productDataOld.product_image_creator;
-
-            const stockNow = parseInt(formData.get('amount')) || 0;
-            const stockMin = parseInt(formData.get('amount_min')) || 0;
-            const status = stockNow <= 0 ? 2 : (stockNow < stockMin ? 1 : 0);
-
-            // Uploads
-            const imgSale = formData.get('image_sale');
-            const imgCreator = formData.get('image_creator');
-
-            if (imgSale && typeof imgSale !== 'string' && imgSale.size > 0) {
-                newImageSale = await uploadImage(imgSale, "sale", env);
-            }
-            if (imgCreator && typeof imgCreator !== 'string' && imgCreator.size > 0) {
-                newImageCreator = await uploadImage(imgCreator, "creator", env);
-            }
-
-            const updateResult = await dataBaseRequest(`dashboard_products?uid=eq.${productUid}`, "PATCH", {
                 product_title: formData.get('name'),
                 product_type: formData.get('type'),
                 product_color: formData.get('color'),
@@ -830,41 +714,98 @@ export default async function dashboardCore(request, env) {
                 product_stock_min: stockMin,
                 product_price_buy: parseFloat(formData.get('price_buy')) || 0,
                 product_price_sell: parseFloat(formData.get('price_sell')) || 0,
-                product_image_sale: newImageSale || oldImageSale,
-                product_image_creator: newImageCreator || oldImageCreator,
+                product_image_sale: pathSale,
+                product_image_creator: pathCreator,
                 product_status: status
-            }, env);
-
-            if (updateResult instanceof Response) throw new Error("Erro na atualização do banco");
-
-            // Cleanup: Deleta as ANTIGAS (Success Path)
-            const successCleanup = async () => {
-                const cleanupPromises = [];
-                if (newImageSale && oldImageSale && newImageSale !== oldImageSale) {
-                    cleanupPromises.push(deleteFromBucket(oldImageSale, 'sale', env));
-                }
-                if (newImageCreator && oldImageCreator && newImageCreator !== oldImageCreator) {
-                    cleanupPromises.push(deleteFromBucket(oldImageCreator, 'creator', env));
-                }
-                await Promise.allSettled(cleanupPromises);
             };
 
-            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(successCleanup());
-            else await successCleanup();
+            const result = await dataBaseRequest("dashboard_products", "POST", data, env);
+            if (result instanceof Response) throw new Error("Erro ao salvar no banco.");
+
+            return new Response(JSON.stringify({ success: true }), { status: 201 });
+
+        } catch (error) {
+            // Rollback: Deleta o que subiu se o banco falhou
+            if (pathSale) await deleteFromBucket(pathSale, 'sale', env).catch(() => { });
+            if (pathCreator) await deleteFromBucket(pathCreator, 'creator', env).catch(() => { });
+
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    // PATCH: Atualizar Produto
+    if (subPath.startsWith("/products/update") && method === "PATCH") {
+        let newPathSale = null;
+        let newPathCreator = null;
+        let oldPathSale = null;
+        let oldPathCreator = null;
+
+        try {
+            const formData = await request.formData();
+            const uid = formData.get('uid');
+            if (!uid) throw new Error("UID obrigatório.");
+
+            // 1. Busca dados atuais para cleanup futuro
+            const current = await dataBaseRequest(`dashboard_products?uid=eq.${uid}`, "GET", null, env);
+            if (current instanceof Response || !current.length) throw new Error("Não encontrado.");
+
+            const dbProd = current[0];
+            oldPathSale = dbProd.product_image_sale;
+            oldPathCreator = dbProd.product_image_creator;
+
+            // 2. Upload de novos arquivos
+            const fileSale = formData.get('image_sale');
+            const fileCreator = formData.get('image_creator');
+
+            if (typeof fileSale === 'string') console.log("String:", fileSale);
+            if (typeof fileCreator === 'string') console.log("String:", fileCreator);
+            if (fileSale && typeof fileSale !== 'string' && fileSale.size > 0) {
+                console.log("File: ", fileSale);
+                newPathSale = await uploadLibraryAsset(fileSale, "image", env);
+                if (!newPathSale) throw new Error("Falha ao realizar upload da imagem.");
+            };
+            if (fileCreator && typeof fileCreator !== 'string' && fileCreator.size > 0) {
+                console.log("File: ", fileCreator);
+                newPathCreator = await uploadLibraryAsset(fileCreator, "image", env);
+                if (!newPathCreator) throw new Error("Falha ao realizar upload da imagem.");
+
+            }
+
+            // 3. Montagem do Update
+            const stockNow = parseInt(formData.get('amount')) || 0;
+            const stockMin = parseInt(formData.get('amount_min')) || 0;
+
+            const updateData = {
+                product_title: formData.get('name'),
+                product_type: formData.get('type'),
+                product_color: formData.get('color'),
+                product_desc: formData.get('description'),
+                product_stock_now: stockNow,
+                product_stock_min: stockMin,
+                product_price_buy: parseFloat(formData.get('price_buy')) || 0,
+                product_price_sell: parseFloat(formData.get('price_sell')) || 0,
+                product_status: stockNow <= 0 ? 2 : (stockNow < stockMin ? 1 : 0)
+            };
+
+            if (newPathSale) updateData.product_image_sale = newPathSale;
+            if (newPathCreator) updateData.product_image_creator = newPathCreator;
+
+            const result = await dataBaseRequest(`dashboard_products?uid=eq.${uid}`, "PATCH", updateData, env);
+            if (result instanceof Response) throw new Error("Erro no banco.");
+
+            // 4. Cleanup de arquivos antigos (Sucesso)
+            const cleanup = async () => {
+                if (newPathSale && oldPathSale) await deleteFromBucket(oldPathSale, 'sale', env);
+                if (newPathCreator && oldPathCreator) await deleteFromBucket(oldPathCreator, 'creator', env);
+            };
+            if (typeof ctx !== 'undefined') ctx.waitUntil(cleanup()); else await cleanup();
 
             return new Response(JSON.stringify({ success: true }), { status: 200 });
 
         } catch (error) {
-            // Rollback: Deleta as NOVAS (Error Path)
-            const rollback = async () => {
-                const rollbackPromises = [];
-                if (newImageSale) rollbackPromises.push(deleteFromBucket(newImageSale, 'sale', env));
-                if (newImageCreator) rollbackPromises.push(deleteFromBucket(newImageCreator, 'creator', env));
-                await Promise.allSettled(rollbackPromises);
-            };
-
-            if (typeof ctx !== 'undefined' && ctx.waitUntil) ctx.waitUntil(rollback());
-            else await rollback();
+            // Rollback de arquivos novos (Erro)
+            if (newPathSale) await deleteFromBucket(newPathSale, 'sale', env).catch(() => { });
+            if (newPathCreator) await deleteFromBucket(newPathCreator, 'creator', env).catch(() => { });
 
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
@@ -939,10 +880,10 @@ export default async function dashboardCore(request, env) {
             const productWithUrls = {
                 ...product,
                 url_sale_preview: product.product_image_sale
-                    ? `${publicPrefix}${product.product_image_sale}?b=sale`
+                    ? `${publicPrefix}${product.product_image_sale}?b=lib`
                     : null,
                 url_creator_preview: product.product_image_creator
-                    ? `${publicPrefix}${product.product_image_creator}?b=creator`
+                    ? `${publicPrefix}${product.product_image_creator}?b=lib`
                     : null
             };
 
@@ -1132,7 +1073,8 @@ export default async function dashboardCore(request, env) {
 
             if (file && file.size > 0) {
                 // Agora usa a função específica para fontes
-                uploadedPath = await uploadFont(file, env);
+                console.log(file);
+                uploadedPath = await uploadLibraryAsset(file, "font", env);
                 if (!uploadedPath) throw new Error("Erro no processamento da fonte.");
             }
 
@@ -1173,7 +1115,7 @@ export default async function dashboardCore(request, env) {
             // 2. Lógica de Upload (Apenas se for um arquivo novo/Blob)
             const file = formData.get('file');
             if (file && typeof file !== 'string' && file.size > 0) {
-                newUploadedPath = await uploadFont(file, env);
+                newUploadedPath = await uploadLibraryAsset(file, "font", env);
                 if (!newUploadedPath) throw new Error("Erro no processamento do novo arquivo de fonte.");
             }
 
@@ -1253,7 +1195,6 @@ export default async function dashboardCore(request, env) {
         try {
             const figures = await dataBaseRequest("dashboard_figures?select=*&order=figure_class.asc,figure_name.asc", "GET", null, env);
             if (figures instanceof Response) return figures;
-
             // No map das figuras:
             const htmlItems = figures.map(fig => {
                 const figureUrl = `${publicServePrefix}${fig.figure_url}?b=lib`;
@@ -1265,17 +1206,17 @@ export default async function dashboardCore(request, env) {
                     {
                         figure_uid: fig.uid,
                         figure_name: fig.figure_name,
-                        figure_class: f.figure_class,
+                        figure_class: fig.figure_class,
                         figure_url: figureUrl
                     },
                     null,
                     "input-creator_assets_figure" // inputClass
                 )
             });
-
             return new Response(JSON.stringify(htmlItems), { status: 200 });
         } catch (error) {
-            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+            console.log(error);
+            return new Response(JSON.stringify({ error: error }), { status: 500 });
         }
     }
 
@@ -1344,7 +1285,7 @@ export default async function dashboardCore(request, env) {
             const file = formData.get('file');
 
             if (file && file.size > 0) {
-                uploadedPath = await uploadLibraryAsset(file, env);
+                uploadedPath = await uploadLibraryAsset(file, "figure", env);
                 if (!uploadedPath) throw new Error("Erro no upload do vetor.");
             }
 
@@ -1385,7 +1326,8 @@ export default async function dashboardCore(request, env) {
             // 2. Processamento do novo arquivo (se houver)
             const file = formData.get('file');
             if (file && typeof file !== 'string' && file.size > 0) {
-                newUploadedPath = await uploadLibraryAsset(file, env);
+                console.log("File: ", file);
+                newUploadedPath = await uploadLibraryAsset(file, "figure", env);
                 if (!newUploadedPath) throw new Error("Erro no upload do novo vetor.");
             }
 
@@ -1494,14 +1436,14 @@ export default async function dashboardCore(request, env) {
                 enable_account: enable_account_value,
 
                 // Permissões padrão para novos usuários
-                permissions_sections: JSON.stringify({
-                    "home": "view",
-                    "orders": "blocked",
-                    "production": "blocked",
-                    "stock": "blocked",
-                    "staff": "blocked",
-                    "creator": "blocked"
-                }),
+                permissions_sections: {
+                    home: "view",
+                    orders: "blocked",
+                    production: "blocked",
+                    stock: "blocked",
+                    staff: "blocked",
+                    creator: "blocked"
+                },
                 configs: JSON.stringify({}),
                 password: body.password // Aqui entra a senha (texto puro para o seu hash posterior)
             };
@@ -1530,37 +1472,40 @@ export default async function dashboardCore(request, env) {
     // PATCH: Atualizar Colaborador
     if (subPath.startsWith("/staff/update") && method === "PATCH") {
         try {
-            const formData = await request.formData();
-            const staffUid = formData.get('uid');
+            const url = new URL(request.url);
+            const staffUid = url.searchParams.get("uid");
 
             if (!staffUid) throw new Error("UID do colaborador é obrigatório.");
 
-            // 1. Busca dados atuais para conferência ou logs (opcional)
-            const current = await dataBaseRequest(`auth_staff?uid=eq.${staffUid}`, "GET", null, env);
-            if (current instanceof Response || !current.length) throw new Error("Colaborador não encontrado.");
+            const body = await request.json();
+            if (!body) throw new Error("Dados de atualização não recebidos.");
 
-            // 2. Montagem do objeto de atualização
+            // 1. Mapeamento dos campos vindos do seu staffData (JS)
+            // Note que aqui só incluímos o que o seu front-end realmente envia
             const updateData = {
-                name: formData.get('name'),
-                email: formData.get('email'),
-                phone: formData.get('phone'),
-                job_position: formData.get('job_position'),
-                permissions_level: parseInt(formData.get('permissions_level')),
-                date_of_birth: formData.get('date_of_birth'),
-                state_account: formData.get('status') === 'active',
-                permissions_secti: formData.get('permissions') // Assume que o front envia a string JSON das seções
+                name: body.name,
+                email: body.email,
+                phone: body.phone,
+                job_position: body.job_position,
+                permissions_level: body.permissions_level,
+                date_of_birth: body.date_of_birth || null,
+                enable_account: body.enabled_account === 'active'
             };
 
-            // Só atualiza a senha se uma nova foi enviada
-            const newPassword = formData.get('password');
-            if (newPassword && newPassword.length > 0) {
-                updateData.password = newPassword; // Aplique o Hash aqui se necessário
+            // 2. Lógica condicional de senha:
+            // Se o operador gerou uma senha nova (reset), ela vai no body e atualizamos.
+            if (body.password) {
+                updateData.password = body.password; // O hash deve ser feito aqui antes do banco
+                // Opcional: updateData.state_account = false; // Forçar reset no primeiro acesso
             }
 
-            // 3. Execução do Update
+            // 3. Persistência no banco de dados
             const updateResult = await dataBaseRequest(`auth_staff?uid=eq.${staffUid}`, "PATCH", updateData, env);
 
-            if (updateResult instanceof Response) throw new Error("Erro ao atualizar dados no banco.");
+            if (updateResult instanceof Response) {
+                const errorDb = await updateResult.json();
+                throw new Error(errorDb.message || "Erro na atualização do banco.");
+            }
 
             return new Response(JSON.stringify({ success: true }), {
                 status: 200,
@@ -1568,10 +1513,10 @@ export default async function dashboardCore(request, env) {
             });
 
         } catch (error) {
+            console.error(`[Staff Update Error]: ${error.message}`);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
-
     // GET: Buscar detalhes de um colaborador
     if (subPath.startsWith("/staff/get") && method === "GET") {
         try {
@@ -1618,7 +1563,6 @@ export default async function dashboardCore(request, env) {
         try {
             // 1. Busca todos os membros ordenados por nome
             const staffList = await dataBaseRequest("auth_staff?select=*&order=name.asc", "GET", null, env);
-
             if (staffList instanceof Response) return staffList;
 
             /**
@@ -1626,12 +1570,13 @@ export default async function dashboardCore(request, env) {
              * userId: UID do usuário logado (enviado no header pelo seu apiFetch)
              * permissions_map.staff: Nível de acesso do usuário atual para a seção de equipe
              */
-            const staffRows = staffList.map(member =>
-                create_staff_row(
+            const staffRows = staffList.map(member => {
+                return create_staff_row(
                     member,
                     auth.uid, // Identifica se é "Você" baseado no uid vindo do banco
                     permissions_map.staff // 'edit', 'view' ou 'blocked'
                 )
+            }
             );
 
             return new Response(JSON.stringify(staffRows), {
@@ -1643,6 +1588,87 @@ export default async function dashboardCore(request, env) {
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
     }
+
+    // GET: Buscar apenas permissões de um colaborador
+    if (subPath.startsWith("/staff/permissions") && method === "GET") {
+        try {
+            const staffUid = url.searchParams.get("uid");
+            if (!staffUid) throw new Error("UID não informado");
+
+            // Buscamos apenas a coluna necessária para economizar banda
+            const data = await dataBaseRequest(`auth_staff?select=permissions_sections&uid=eq.${staffUid}`, "GET", null, env);
+
+            if (data instanceof Response || !data.length) {
+                return new Response(JSON.stringify({ error: "Não encontrado" }), { status: 404 });
+            }
+
+            return new Response(JSON.stringify(data[0].permissions_sections), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+        } catch (error) {
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
+    // PATCH: Atualizar permissões com Sanitização e Segurança
+    if (subPath.startsWith("/staff/permissions/update") && method === "PATCH") {
+        try {
+            const staffUid = url.searchParams.get("uid");
+            if (!staffUid) throw new Error("UID do colaborador é obrigatório.");
+
+            const body = await request.json();
+            if (!body || !body.permissions_sections) throw new Error("Dados não recebidos.");
+
+            // 1. Definição das Regras de Ouro (Whitelist)
+            const validSections = ['home', 'orders', 'production', 'creator', 'stock', 'staff'];
+            const validLevels = ['blocked', 'view', 'edit'];
+
+            // 2. Parse da string (caso venha stringificada do front)
+            let rawPermissions = typeof body.permissions_sections === 'string'
+                ? JSON.parse(body.permissions_sections)
+                : body.permissions_sections;
+
+            // 3. Sanitização Rigorosa
+            const sanitizedPermissions = {};
+
+            // Garantimos que TODAS as seções válidas existam no objeto final
+            validSections.forEach(section => {
+                const incomingValue = rawPermissions[section];
+
+                // Se o valor enviado for válido, usamos ele. Caso contrário, 'blocked' por segurança.
+                if (validLevels.includes(incomingValue)) {
+                    sanitizedPermissions[section] = incomingValue;
+                } else {
+                    sanitizedPermissions[section] = 'blocked';
+                }
+            });
+
+            // 4. Persistência no banco (tabela auth_staff)
+            // Enviamos o objeto puro, o dataBaseRequest deve cuidar da formatação SQL/JSON
+            const updateResult = await dataBaseRequest(`auth_staff?uid=eq.${staffUid}`, "PATCH", {
+                permissions_sections: sanitizedPermissions
+            }, env);
+
+            if (updateResult instanceof Response) {
+                const errorDb = await updateResult.json();
+                throw new Error(errorDb.message || "Erro ao atualizar banco.");
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: "Permissões sanitizadas e atualizadas."
+            }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
+
+        } catch (error) {
+            console.error(`[Permissions Security Error]: ${error.message}`);
+            return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+    }
+
 
     return new Response(JSON.stringify({ error: "Rota não encontrada" }), { status: 404 });
 }

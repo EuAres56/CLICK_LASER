@@ -1,19 +1,22 @@
+import shoppingCore from "../cores/shoppingCore.js";
+
 export default async function apiPublicRouter(request, env) {
     const url = new URL(request.url);
     const method = request.method;
-    const subPath = url.pathname.replace("/api/public", "");
+    const subPath = url.pathname.replace("/api/public/", "");
+
     // --- ROTA UNIVERSAL PARA SERVIR ASSETS (R2) ---
-    if (subPath.startsWith("/assets/serve/") && method === "GET") {
+    if (subPath.startsWith("assets/serve/") && method === "GET") {
         try {
             // 1. Extrai o nome do arquivo (ex: "produtos/camisa.png")
-            const filePath = subPath.replace("/assets/serve/", "");
+            const filePath = subPath.replace("assets/serve/", "");
             if (!filePath) return new Response("Caminho vazio", { status: 400 });
 
             // 2. Define o bucket alvo via parâmetro ?b= (default: lib)
             const bucketKey = url.searchParams.get("b") || "lib";
-            
+
             // Whitelist de buckets permitidos
-            const allowedBuckets = ['lib', 'temp', 'sale', 'creator'];
+            const allowedBuckets = ['lib'];
             if (!allowedBuckets.includes(bucketKey)) {
                 return new Response("Acesso negado", { status: 403 });
             }
@@ -45,11 +48,11 @@ export default async function apiPublicRouter(request, env) {
                 const mimeMap = {
                     'png': 'image/png', 'svg': 'image/svg+xml', 'jpg': 'image/jpeg',
                     'jpeg': 'image/jpeg', 'webp': 'image/webp', 'woff2': 'font/woff2',
-                    'ttf': 'font/ttf'
+                    'ttf': 'font/ttf', 'otf': 'font/otf'
                 };
-                headers.set("Content-Type", mimeMap[ext] || "application/octet-stream");
+                headers.set("Content-Type", mimeMap[ext]);
             }
-
+            console.log(`[R2] ${bucketKey}: ${filePath}`);
             return new Response(object.body, { headers });
 
         } catch (error) {
@@ -57,6 +60,12 @@ export default async function apiPublicRouter(request, env) {
             return new Response("Erro interno ao servir arquivo", { status: 500 });
         }
     }
+
+    // --- ROTA DO CATALOGO DE PRODUTOS ---
+    if (subPath.startsWith("shopping/")) {
+        return await shoppingCore(request, env);
+    }
+
 
     // Se nenhuma rota bater
     return new Response(JSON.stringify({ error: "Rota de API não mapeada" }), {
