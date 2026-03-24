@@ -612,91 +612,48 @@ export default async function dashboardCore(request, env) {
                     return order && !blackListView.includes(parseInt(order.order_status));
 
                 })
-
                 .sort((a, b) => {
-
                     // Ordenação por prioridade da Ordem (descendente: 3 alta, 1 baixa)
-
                     const orderA = ordersMap.get(a.order_uid);
-
                     const orderB = ordersMap.get(b.order_uid);
-
                     return (orderB?.order_priority || 0) - (orderA?.order_priority || 0);
-
                 })
-
                 .map(row => {
-
                     const order = ordersMap.get(row.order_uid);
-
                     const url_reference = row.job_image_url_reference ? `${publicServePrefix}${row.job_image_url_reference}?b=lib` : "";
-
-
-
                     return create_job_card(
-
                         {
-
                             order_uid: row.order_uid,
-
                             order_id: order.id_num,
-
                             priority: order.order_priority
-
                         },
-
                         {
-
                             uid: row.uid,
-
                             product_title: row.product_title,
-
                             product_color: row.product_color,
-
                             text: row.job_text_title || "",
-
                             font: row.job_text_font || "",
-
                             art_json: row.job_art_json || "",
-
                             url_ref: url_reference,
-
                             name_image: row.job_figure_name || "",
-
                             url_image: row.job_figure_url || "",
-
                             json_image: row.job_image_json || "",
-
                             observ: row.job_observ || "",
-
                             status: row.job_status
-
                         }
 
                     );
 
                 });
 
-
-
             return new Response(JSON.stringify(htmlCardsArray), {
-
                 status: 200,
-
                 headers: { "Content-Type": "application/json" }
-
             });
-
-
-
         } catch (error) {
-
             console.error(`[Jobs Search Error]: ${error.message}`);
-
             return new Response(JSON.stringify({ error: "Erro ao carregar lista de produção" }), { status: 500 });
-
         }
-
     }
 
     // PATCH: Atualizar um Job individualmente (Fonte, Título, Observação, etc.)
