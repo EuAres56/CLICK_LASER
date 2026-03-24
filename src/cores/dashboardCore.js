@@ -598,30 +598,17 @@ export default async function dashboardCore(request, env) {
 
             if (ordersFromDb instanceof Response) return ordersFromDb;
 
-
-
             const ordersMap = new Map(ordersFromDb.map(o => [o.uid, o]));
 
-
-
             // 4. FILTRAGEM E MAPEAMENTO PARA CARDS
-
             // Blacklist: 0 (pendente/aguardando), 3 (concluido), 99 (cancelado/aprovado)
-
             // Nota: Ajuste os números conforme sua regra de negócio exata
-
             const blackListView = [0, 3, 99];
 
-
-
             const htmlCardsArray = jobsFromDb
-
                 .filter(row => {
-
                     const order = ordersMap.get(row.order_uid);
-
                     // Só exibe se a ordem existir e não estiver no status de exclusão da visualização
-
                     return order && !blackListView.includes(parseInt(order.order_status));
 
                 })
