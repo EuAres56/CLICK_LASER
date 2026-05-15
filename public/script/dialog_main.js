@@ -48,8 +48,6 @@ async function loadFonts() {
 
         const fonts = await response.json();
 
-        console.log(fonts);
-
         const container =
             document.getElementById(
                 "fontsContainer"
@@ -144,12 +142,9 @@ async function loadVectors() {
     try {
 
         const response =
-            await fetch(
-                "/api/public/dialog/vectors/load"
-            );
+            await fetch("/api/public/dialog/vectors/load");
 
-        const categories =
-            await response.json();
+        const categories = await response.json();
 
         const tabs =
             document.getElementById(

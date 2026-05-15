@@ -90,11 +90,7 @@ export default async function apiPublicRouter(request, env) {
         try {
 
             const figures = await dataBaseRequest(
-                `
-                dashboard_figures
-                ?select=uid,figure_name,figure_class,figure_url
-                &order=figure_class.asc,figure_name.asc
-                `,
+                `dashboard_figures?select=uid,figure_name,figure_class,figure_url&order=figure_class.asc,figure_name.asc`,
                 "GET",
                 null,
                 env
