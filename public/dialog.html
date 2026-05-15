@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pedido de Gravação</title>
+
+    <link rel="stylesheet" href="./style/dialog.css">
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="dialog">
+
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <!-- ETAPA 1 -->
+            <div class="step active">
+
+                <div class="question">
+                    Qual o nome do cliente?
+                </div>
+
+                <div class="description">
+                    Digite o nome da pessoa responsável pelo pedido.
+                </div>
+
+                <input type="text" id="clientName" placeholder="Nome do cliente">
+
+                <div class="buttons">
+                    <button class="next-btn" onclick="nextStep()">
+                        Continuar
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- ETAPA 2 -->
+            <div class="step">
+
+                <div class="question">
+                    Qual o contato do cliente?
+                </div>
+
+                <div class="description">
+                    Número de telefone ou WhatsApp.
+                </div>
+
+                <input type="text" id="clientContact" placeholder="(00) 00000-0000">
+
+                <div class="buttons">
+                    <button class="back-btn" onclick="prevStep()">
+                        Voltar
+                    </button>
+
+                    <button class="next-btn" onclick="nextStep()">
+                        Continuar
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- ETAPA 3 -->
+            <div class="step">
+
+                <div class="question">
+                    O que será escrito na gravação?
+                </div>
+
+                <div class="description">
+                    Caso não queira texto, deixe em branco.
+                </div>
+
+                <textarea id="engravingText" placeholder="Digite aqui..."></textarea>
+
+                <div class="buttons">
+
+                    <button class="back-btn" onclick="prevStep()">
+                        Voltar
+                    </button>
+
+                    <button class="next-btn" onclick="nextStep()">
+                        Continuar
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- ETAPA 4 -->
+            <div class="step">
+
+                <div class="question">
+                    Escolha uma fonte
+                </div>
+
+                <div class="description">
+                    Clique em uma fonte para selecionar.
+                </div>
+
+                <div class="fonts-grid" id="fontsContainer"></div>
+
+                <div class="buttons">
+
+                    <button class="back-btn" onclick="prevStep()">
+                        Voltar
+                    </button>
+
+                    <button class="skip-btn" onclick="nextStep()">
+                        Pular
+                    </button>
+
+                    <button class="next-btn" id="fontContinueBtn" onclick="nextStep()">
+                        Continuar
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- ETAPA 5 -->
+            <div class="step">
+
+                <div class="question">
+                    Escolha um vetor
+                </div>
+
+                <div class="description">
+                    Navegue pelas categorias e selecione uma arte.
+                </div>
+
+                <div class="catalog-tabs" id="catalogTabs"></div>
+
+                <div class="vectors-grid" id="vectorsGrid"></div>
+
+                <div class="buttons">
+
+                    <button class="back-btn" onclick="prevStep()">
+                        Voltar
+                    </button>
+
+                    <button class="skip-btn" onclick="nextStep()">
+                        Continuar
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- ETAPA 6 -->
+            <div class="step">
+
+                <div class="question">
+                    Confirme os dados
+                </div>
+
+                <div class="description">
+                    Revise tudo antes de enviar.
+                </div>
+
+                <div class="resume">
+
+                    <div class="resume-card">
+                        <div class="resume-title">Cliente</div>
+                        <div class="resume-value" id="resumeName"></div>
+                    </div>
+
+                    <div class="resume-card">
+                        <div class="resume-title">Contato</div>
+                        <div class="resume-value" id="resumeContact"></div>
+                    </div>
+
+                    <div class="resume-card">
+                        <div class="resume-title">Texto</div>
+                        <div class="resume-value" id="resumeText"></div>
+                    </div>
+
+                    <div class="resume-card">
+                        <div class="resume-title">Fonte</div>
+                        <div class="resume-value" id="resumeFont"></div>
+                    </div>
+
+                    <div class="resume-card">
+                        <div class="resume-title">Figura</div>
+                        <div class="resume-value" id="resumeFigure"></div>
+                    </div>
+
+                </div>
+
+                <div class="buttons">
+
+                    <button class="back-btn" onclick="prevStep()">
+                        Voltar
+                    </button>
+
+                    <button class="confirm-btn" onclick="sendWhatsApp()">
+                        Confirmar e Enviar
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="./script/dialog.js"></script>
+
+</body>
+
+</html>

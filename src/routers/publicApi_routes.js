@@ -66,6 +66,11 @@ export default async function apiPublicRouter(request, env) {
         return await shoppingCore(request, env);
     }
 
+    // --- ROTA DO DIALOGO DE COMPRA ---
+    if (subPath.startsWith("dialog/")) {
+        return await dialogCore(request, env);
+    }
+
 
     // Se nenhuma rota bater
     return new Response(JSON.stringify({ error: "Rota de API não mapeada" }), {
