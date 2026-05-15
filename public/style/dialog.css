@@ -246,6 +246,27 @@ button:hover {
     background: #2fe06f;
 }
 
+.resume-figure-image {
+
+    width: 100%;
+    max-width: 260px;
+
+    height: 220px;
+
+    object-fit: contain;
+    object-position: center;
+
+    background: #fff;
+
+    border-radius: 14px;
+
+    padding: 12px;
+
+    margin-top: 15px;
+
+    display: block;
+}
+
 @media (max-width: 768px) {
 
     body {

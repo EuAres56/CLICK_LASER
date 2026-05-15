@@ -440,12 +440,37 @@ function updateResume() {
             : "Nenhuma";
 
 
-    document.getElementById(
-        "resumeFigure"
-    ).innerText =
-        selectedVector
-            ? selectedVector.figure_name
-            : "Nenhuma";
+    const resumeFigure =
+        document.getElementById(
+            "resumeFigure"
+        );
+
+    const resumeFigureImage =
+        document.getElementById(
+            "resumeFigureImage"
+        );
+
+
+    if (selectedVector) {
+
+        resumeFigure.innerText =
+            selectedVector.figure_name;
+
+        resumeFigureImage.src =
+            selectedVector.figure_url;
+
+        resumeFigureImage.style.display =
+            "block";
+
+    } else {
+
+        resumeFigure.innerText =
+            "Nenhuma";
+
+        resumeFigureImage.style.display =
+            "none";
+
+    }
 
 }
 
