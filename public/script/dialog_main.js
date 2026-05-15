@@ -46,8 +46,9 @@ async function loadFonts() {
                 "/api/public/dialog/fonts/load"
             );
 
-        const fonts =
-            await response.json();
+        const fonts = await response.json();
+
+        console.log(fonts);
 
         const container =
             document.getElementById(

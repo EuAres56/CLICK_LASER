@@ -26,11 +26,7 @@ export default async function apiPublicRouter(request, env) {
 
         try {
             const fonts = await dataBaseRequest(
-                `
-                dashboard_fonts
-                ?select=uid,font_name,font_url,font_type
-                &order=font_name.asc
-                `,
+                `dashboard_fonts?select=uid,font_name,font_url,font_type&order=font_name.asc`,
                 "GET",
                 null,
                 env
@@ -46,10 +42,7 @@ export default async function apiPublicRouter(request, env) {
 
                 font_name: font.font_name,
 
-                font_url:
-                    font.font_url
-                        ? `${publicPrefix}${font.font_url}?b=lib`
-                        : null,
+                font_url: font.font_url ? `${publicPrefix}${font.font_url}?b=lib` : null,
 
                 font_type: font.font_type
 
