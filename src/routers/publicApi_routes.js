@@ -1,4 +1,5 @@
 import shoppingCore from "../cores/shoppingCore.js";
+import dialogCore from "../cores/dialogCore.js";
 
 export default async function apiPublicRouter(request, env) {
     const url = new URL(request.url);
