@@ -12,15 +12,9 @@ export default async function apiPublicRouter(request, env) {
 
     const method = request.method;
 
-    const subPath =
-        url.pathname.replace(
-            /^\/api\/public\/dialog\//,
-            ""
-        );
+    const subPath = url.pathname.replace("/api/public/dialog/", "");
 
-    const publicPrefix =
-        "/api/public/assets/serve/";
-
+    const publicPrefix = "/api/public/assets/serve/";
 
     /*
     =========================================================
@@ -28,13 +22,9 @@ export default async function apiPublicRouter(request, env) {
     =========================================================
     */
 
-    if (
-        subPath.startsWith("fonts/load")
-        && method === "GET"
-    ) {
+    if (subPath.startsWith("fonts/load") && method === "GET") {
 
         try {
-
             const fonts = await dataBaseRequest(
                 `
                 dashboard_fonts
