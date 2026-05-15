@@ -195,8 +195,15 @@ button:hover {
 .vector-card img {
     width: 100%;
     height: 180px;
-    object-fit: cover;
-    background: white;
+
+    object-fit: contain;
+    object-position: center;
+
+    background: #fff;
+
+    padding: 10px;
+
+    display: block;
 }
 
 .vector-name {
@@ -338,6 +345,7 @@ button:hover {
 
     .vector-card img {
         height: 140px;
+        padding: 8px;
     }
 
     .vector-name {
