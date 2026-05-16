@@ -190,8 +190,7 @@ async function loadVectors() {
 
         tabs.innerHTML = "";
 
-        const categoryNames =
-            Object.keys(categories);
+        const categoryNames = Object.keys(categories);
 
         if (categoryNames.length === 0)
             return;

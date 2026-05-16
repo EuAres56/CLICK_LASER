@@ -111,7 +111,11 @@ export default async function apiPublicRouter(request, env) {
             figures.forEach(fig => {
 
                 const category =
-                    fig.figure_class || "Outros";
+                    (
+                        fig.figure_class ||
+                        "Outros"
+                    )
+                    .trim();
 
                 if (!grouped[category]) {
                     grouped[category] = [];
