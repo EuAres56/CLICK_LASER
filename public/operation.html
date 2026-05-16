@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Ordens de Serviço</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="/styles/operation.css" />
+
+</head>
+
+<body>
+
+    <!-- HEADER -->
+
+    <div class="page-header">
+
+        <div class="header-left">
+
+            <div class="title">
+                Ordens de Serviço
+            </div>
+
+            <div class="subtitle">
+                Controle de gravações e produção
+            </div>
+
+        </div>
+
+        <div class="header-actions">
+
+            <input type="date" class="date-input" id="filterDate">
+
+            <button class="create-btn" onclick="openCreateModal()">
+                <i class="fa-solid fa-plus"></i>
+                Nova OS
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- GRID -->
+
+    <div class="os-grid" id="osGrid"></div>
+
+
+    <!-- MODAL -->
+
+    <div class="modal" id="osModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div class="modal-title" id="modalTitle">
+                    Nova Ordem de Serviço
+                </div>
+
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <!-- SELLER -->
+
+                <div class="input-group">
+
+                    <label>
+                        Nome do vendedor
+                    </label>
+
+                    <input type="text" id="sellerName">
+
+                </div>
+
+
+                <!-- CLIENT -->
+
+                <div class="form-grid">
+
+                    <div class="input-group">
+
+                        <label>
+                            Nome do cliente
+                        </label>
+
+                        <input type="text" id="clientName">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>
+                            Contato
+                        </label>
+
+                        <input type="text" id="clientContact">
+
+                    </div>
+
+                </div>
+
+
+                <!-- TEXT -->
+
+                <div class="input-group">
+
+                    <label>
+                        Texto da gravação
+                    </label>
+
+                    <textarea id="engravingText" oninput="updateFontPreviews()"></textarea>
+
+                </div>
+
+
+                <!-- FONTS -->
+
+                <div id="fontsSection">
+
+                    <div class="input-group">
+
+                        <label>
+                            Fonte
+                        </label>
+
+                    </div>
+
+                    <div class="fonts-grid" id="fontsGrid"></div>
+
+                </div>
+
+
+                <!-- VECTORS -->
+
+                <div class="input-group">
+
+                    <label>
+                        Vetor
+                    </label>
+
+                    <div class="catalog-tabs" id="catalogTabs"></div>
+
+                    <div class="vectors-grid" id="vectorsGrid"></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+
+            <div class="modal-footer">
+
+                <button class="secondary-btn" onclick="closeModal()">
+                    Cancelar
+                </button>
+
+                <button class="primary-btn" onclick="saveOS()">
+                    Salvar OS
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DELETE -->
+
+    <div class="modal" id="deleteModal">
+
+        <div class="confirm-box">
+
+            <div class="confirm-title">
+                Deletar OS?
+            </div>
+
+            <div class="confirm-text">
+                Essa ação não poderá ser desfeita.
+            </div>
+
+            <div class="confirm-actions">
+
+                <button class="secondary-btn" onclick="closeDeleteModal()">
+                    Cancelar
+                </button>
+
+                <button class="danger-btn" onclick="confirmDelete()">
+                    Deletar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="script/operation_main.js"></script>
+
+</body>
+
+</html>
