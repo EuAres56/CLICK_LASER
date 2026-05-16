@@ -442,7 +442,7 @@ async function loadVectors() {
         */
 
         renderCategory(
-            categoryNames[0]
+            categoryNames[1]
         );
 
     } catch (error) {
