@@ -34,15 +34,6 @@ export default async function apiPublicRouter(request, env) {
 
             if (fonts instanceof Response)
                 return fonts;
-            console.log(
-                "[RAW FIGURES ARRAY]",
-                JSON.stringify(figures, null, 2)
-            );
-
-            console.log(
-                "[TOTAL FIGURES]",
-                figures.length
-            );
 
             const body = fonts.map(font => ({
 
