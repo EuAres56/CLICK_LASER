@@ -517,10 +517,32 @@ function sendWhatsApp() {
     =========================================
     */
 
-    const figureUrl =
-        selectedVector
-            ? selectedVector.figure_url
-            : null;
+    let figureUrl = null;
+
+    if (selectedVector?.figure_url) {
+
+        /*
+        =========================================
+        URL ABSOLUTA
+        =========================================
+        */
+
+        if (
+            selectedVector.figure_url.startsWith("/api/")
+        ) {
+
+            figureUrl =
+                window.location.origin +
+                selectedVector.figure_url;
+
+        } else {
+
+            figureUrl =
+                selectedVector.figure_url;
+
+        }
+
+    }
 
 
     /*
