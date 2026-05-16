@@ -511,6 +511,24 @@ function sendWhatsApp() {
             : "Nenhuma";
 
 
+    /*
+    =========================================
+    IMAGE URL
+    =========================================
+    */
+
+    const figureUrl =
+        selectedVector
+            ? selectedVector.figure_url
+            : null;
+
+
+    /*
+    =========================================
+    DATE
+    =========================================
+    */
+
     const now = new Date();
 
     const formattedDate =
@@ -519,7 +537,13 @@ function sendWhatsApp() {
         + now.toLocaleTimeString("pt-BR");
 
 
-    const message =
+    /*
+    =========================================
+    MESSAGE
+    =========================================
+    */
+
+    let message =
         `*Dados da Gravação*
 Cliente: "${client}"
 Contato: "${contact}"
@@ -533,13 +557,35 @@ Data: ${formattedDate}`;
 
     /*
     =========================================
+    ADD IMAGE LINK
+    =========================================
+    */
+
+    if (figureUrl) {
+
+        message +=
+
+            `\n\n*Imagem Selecionada:*
+${figureUrl}`;
+
+    }
+
+
+    /*
+    =========================================
     WHATSAPP NUMBER
     =========================================
     */
 
     const phone =
-        "5587999999999";
+        "5574998005640";
 
+
+    /*
+    =========================================
+    OPEN WHATSAPP
+    =========================================
+    */
 
     const url =
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
