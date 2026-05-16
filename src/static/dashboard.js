@@ -524,6 +524,7 @@ export function constructModalFigure() {
             <option value="Gamer">Gamer</option>
             <option value="Anime">Anime</option>
             <option value="Herois">Herois</option>
+            <option value="Religião">Religião</option>
             <option value="Diversos">Diversos</option>
         </select>
     </div>
