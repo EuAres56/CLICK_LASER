@@ -4,202 +4,475 @@
     box-sizing: border-box;
 }
 
+:root {
+
+    /*
+    =========================================================
+    DASH PALETTE
+    =========================================================
+    */
+
+    --bg: #efefef;
+
+    --card: #ffffff;
+
+    --card-2: #f7f7f7;
+
+    --border: #d8d8d8;
+
+    --text: #2d2d2d;
+
+    --text-soft: #707070;
+
+    --primary: #6b0d67;
+
+    --primary-hover: #82127d;
+
+    --primary-soft: rgba(107, 13, 103, 0.12);
+
+    --success: #32d46b;
+
+    --success-soft: rgba(50, 212, 107, 0.12);
+
+    --danger: #ff4d4d;
+
+    --shadow:
+        0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
 body {
-    background: #0f0f0f;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
+
+    background: var(--bg);
+
+    color: var(--text);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
     min-height: 100vh;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     padding: 20px;
 }
 
 .container {
+
     width: 100%;
-    max-width: 900px;
+
+    max-width: 950px;
 }
 
 .dialog {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 24px;
-    padding: 30px;
+
+    background: var(--card);
+
+    border: 1px solid var(--border);
+
+    border-radius: 28px;
+
+    padding: 34px;
+
     min-height: 650px;
+
     display: flex;
+
     flex-direction: column;
+
+    box-shadow: var(--shadow);
 }
 
 .progress {
+
     width: 100%;
+
     height: 8px;
-    background: #2c2c2c;
-    border-radius: 20px;
+
+    background: #dddddd;
+
+    border-radius: 999px;
+
     overflow: hidden;
+
     margin-bottom: 35px;
 }
 
 .progress-bar {
+
     width: 20%;
+
     height: 100%;
-    background: #ff3b3b;
-    transition: 0.3s;
+
+    background: var(--primary);
+
+    transition: 0.3s ease;
 }
 
 .step {
+
     display: none;
+
     flex: 1;
+
     flex-direction: column;
 }
 
 .step.active {
+
     display: flex;
 }
 
 .question {
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 25px;
+
+    font-size: 34px;
+
+    font-weight: 700;
+
+    color: var(--text);
+
+    margin-bottom: 20px;
+
     line-height: 1.2;
 }
 
 .description {
-    color: #999;
+
+    color: var(--text-soft);
+
     margin-bottom: 30px;
-    line-height: 1.5;
+
+    line-height: 1.6;
+
+    font-size: 15px;
 }
 
 input,
 textarea {
+
     width: 100%;
-    background: #262626;
-    border: none;
+
+    background: var(--card-2);
+
+    border: 1px solid var(--border);
+
     outline: none;
+
     padding: 18px;
+
     border-radius: 16px;
-    color: white;
-    font-size: 17px;
+
+    color: var(--text);
+
+    font-size: 16px;
+
+    transition: 0.2s;
+}
+
+input:focus,
+textarea:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 4px var(--primary-soft);
 }
 
 textarea {
+
     min-height: 140px;
+
     resize: none;
 }
 
 .buttons {
+
     margin-top: auto;
+
     display: flex;
+
     gap: 15px;
-    padding-top: 30px;
+
+    padding-top: 35px;
 }
 
 button {
+
     border: none;
+
     border-radius: 14px;
+
     padding: 16px 24px;
+
     cursor: pointer;
+
     font-size: 15px;
-    font-weight: bold;
+
+    font-weight: 700;
+
     transition: 0.2s;
+
     min-width: 160px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 }
 
-.next-btn {
-    background: #ff3b3b;
-    color: white;
-    margin-left: auto;
-    box-shadow:
-        0 0 20px rgba(255, 59, 59, 0.25);
-}
-
-.next-btn:hover {
-    background: #ff5252;
-}
-
 button:hover {
+
     transform: translateY(-2px);
 }
 
+
+/*
+=========================================================
+PRIMARY BUTTON
+=========================================================
+*/
+
+.next-btn {
+
+    background: var(--primary);
+
+    color: white;
+
+    margin-left: auto;
+
+    box-shadow:
+        0 8px 20px rgba(107, 13, 103, 0.18);
+}
+
+.next-btn:hover {
+
+    background: var(--primary-hover);
+}
+
+
+/*
+=========================================================
+SECONDARY BUTTONS
+=========================================================
+*/
+
+.back-btn,
+.skip-btn {
+
+    background: #ececec;
+
+    color: var(--text);
+}
+
+.back-btn:hover,
+.skip-btn:hover {
+
+    background: #dfdfdf;
+}
+
+
+/*
+=========================================================
+SUCCESS BUTTON
+=========================================================
+*/
+
+.confirm-btn {
+
+    background: var(--success);
+
+    color: white;
+
+    box-shadow:
+        0 8px 20px rgba(50, 212, 107, 0.18);
+}
+
+.confirm-btn:hover {
+
+    background: #2bc260;
+}
+
+
+/*
+=========================================================
+FONTS
+=========================================================
+*/
+
 .fonts-grid {
+
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(220px, 1fr));
+
     gap: 15px;
 }
 
 .font-card {
-    background: #222;
+
+    background: var(--card-2);
+
     border: 2px solid transparent;
-    border-radius: 16px;
+
+    border-radius: 18px;
+
     padding: 25px;
+
     cursor: pointer;
+
     transition: 0.2s;
+
     text-align: center;
 }
 
+.font-card:hover {
+
+    border-color: #c7c7c7;
+}
+
 .font-card.active {
-    border-color: #ff3b3b;
-    background: #351919;
+
+    border-color: var(--primary);
+
+    background: rgba(107, 13, 103, 0.08);
 }
 
 .font-preview {
+
     font-size: 28px;
-    margin-bottom: 10px;
+
+    margin-bottom: 12px;
+
+    color: var(--text);
 }
 
+
+/*
+=========================================================
+CATALOG TABS
+=========================================================
+*/
+
 .catalog-tabs {
+
     display: flex;
+
     gap: 10px;
+
     overflow: auto;
+
     padding-bottom: 10px;
+
     margin-bottom: 25px;
+
+    scrollbar-width: none;
+}
+
+.catalog-tabs::-webkit-scrollbar {
+
+    display: none;
 }
 
 .catalog-tab {
-    background: #252525;
-    border: 1px solid #333;
-    color: white;
+
+    background: var(--card-2);
+
+    border: 1px solid var(--border);
+
+    color: var(--text);
+
     padding: 12px 18px;
+
     border-radius: 999px;
+
     cursor: pointer;
+
     white-space: nowrap;
+
     transition: 0.2s;
+
+    font-weight: 600;
+}
+
+.catalog-tab:hover {
+
+    background: #ececec;
 }
 
 .catalog-tab.active {
-    background: #ff3b3b;
-    border-color: #ff3b3b;
+
+    background: var(--primary);
+
+    border-color: var(--primary);
+
+    color: white;
 }
 
+
+/*
+=========================================================
+VECTORS
+=========================================================
+*/
+
 .vectors-grid {
+
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(180px, 1fr));
+
     gap: 18px;
 }
 
 .vector-card {
-    background: #222;
+
+    background: var(--card-2);
+
     border-radius: 18px;
+
     overflow: hidden;
+
     border: 2px solid transparent;
+
     cursor: pointer;
+
     transition: 0.2s;
 }
 
+.vector-card:hover {
+
+    transform: translateY(-3px);
+
+    border-color: #d0d0d0;
+}
+
 .vector-card.active {
-    border-color: #ff3b3b;
+
+    border-color: var(--primary);
+
+    background:
+        rgba(107, 13, 103, 0.05);
 }
 
 .vector-card img {
+
     width: 100%;
+
     height: 180px;
 
     object-fit: contain;
+
     object-position: center;
 
-    background: #fff;
+    background: white;
 
     padding: 10px;
 
@@ -207,58 +480,86 @@ button:hover {
 }
 
 .vector-name {
-    padding: 12px;
+
+    padding: 14px;
+
     text-align: center;
+
     font-size: 14px;
+
+    font-weight: 600;
+
+    color: var(--text);
 }
 
+
+/*
+=========================================================
+RESUME
+=========================================================
+*/
+
 .resume {
+
     display: grid;
+
     gap: 18px;
 }
 
 .resume-card {
-    background: #222;
+
+    background: var(--card-2);
+
     padding: 18px;
-    border-radius: 16px;
+
+    border-radius: 18px;
+
+    border: 1px solid var(--border);
 }
 
 .resume-title {
-    color: #999;
-    font-size: 14px;
+
+    color: var(--text-soft);
+
+    font-size: 13px;
+
     margin-bottom: 8px;
+
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.4px;
 }
 
 .resume-value {
-    font-size: 18px;
+
+    font-size: 17px;
+
     word-break: break-word;
-}
 
-.back-btn:hover {
-    background: #444;
-}
+    color: var(--text);
 
-.skip-btn:hover {
-    background: #303030;
-}
-
-.confirm-btn:hover {
-    background: #2fe06f;
+    font-weight: 600;
 }
 
 .resume-figure-image {
 
     width: 100%;
+
     max-width: 260px;
 
     height: 220px;
 
     object-fit: contain;
+
     object-position: center;
 
-    background: #fff;
+    background: white;
 
     border-radius: 14px;
+
+    border: 1px solid var(--border);
 
     padding: 12px;
 
@@ -267,32 +568,55 @@ button:hover {
     display: block;
 }
 
+
+/*
+=========================================================
+FORM GRID
+=========================================================
+*/
+
 .form-grid {
+
     display: grid;
+
     gap: 18px;
 }
 
 .input-group {
+
     display: flex;
+
     flex-direction: column;
+
     gap: 10px;
 }
 
 .input-group label {
+
     font-size: 14px;
-    color: #aaa;
-    font-weight: 600;
+
+    color: var(--text-soft);
+
+    font-weight: 700;
 }
+
+
+/*
+=========================================================
+ERROR
+=========================================================
+*/
 
 .step-error {
 
     margin-top: 18px;
 
-    background: #3a1818;
+    background:
+        rgba(255, 77, 77, 0.08);
 
-    border: 1px solid #ff3b3b;
+    border: 1px solid rgba(255, 77, 77, 0.25);
 
-    color: #ff9d9d;
+    color: #c53939;
 
     padding: 14px;
 
@@ -301,177 +625,171 @@ button:hover {
     display: none;
 
     font-size: 14px;
+
+    font-weight: 600;
 }
+
+
+/*
+=========================================================
+TABLET
+=========================================================
+*/
 
 @media (max-width: 768px) {
 
     body {
+
         padding: 12px;
+
         align-items: flex-start;
     }
 
     .container {
+
         max-width: 100%;
     }
 
     .dialog {
-        padding: 20px;
-        min-height: auto;
-        border-radius: 20px;
-    }
 
-    .progress {
-        margin-bottom: 25px;
+        padding: 22px;
+
+        min-height: auto;
+
+        border-radius: 24px;
     }
 
     .question {
-        font-size: 26px;
-        margin-bottom: 18px;
+
+        font-size: 28px;
     }
 
     .description {
+
         font-size: 14px;
-        margin-bottom: 22px;
     }
 
     input,
     textarea {
-        padding: 16px;
-        font-size: 16px;
-        border-radius: 14px;
-    }
 
-    textarea {
-        min-height: 120px;
+        padding: 16px;
+
+        font-size: 16px;
     }
 
     .buttons {
+
         flex-direction: column;
+
         gap: 12px;
-        padding-top: 25px;
     }
 
     button {
+
         width: 100%;
+
         min-width: unset;
-        padding: 16px;
-        font-size: 15px;
     }
 
     .next-btn {
+
         margin-left: 0;
     }
 
     .fonts-grid {
+
         grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .font-card {
-        padding: 20px;
-    }
-
-    .font-preview {
-        font-size: 24px;
-    }
-
-    .catalog-tabs {
-        gap: 8px;
-        padding-bottom: 6px;
-
-        scrollbar-width: none;
-    }
-
-    .catalog-tabs::-webkit-scrollbar {
-        display: none;
-    }
-
-    .catalog-tab {
-        padding: 10px 16px;
-        font-size: 14px;
     }
 
     .vectors-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
 
-    .vector-card {
-        border-radius: 14px;
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 12px;
     }
 
     .vector-card img {
+
         height: 140px;
+
         padding: 8px;
     }
 
-    .vector-name {
-        padding: 10px;
-        font-size: 13px;
-    }
-
-    .resume {
-        gap: 12px;
-    }
-
-    .resume-card {
-        padding: 15px;
-        border-radius: 14px;
-    }
-
-    .resume-title {
-        font-size: 13px;
-    }
-
     .resume-value {
+
         font-size: 16px;
     }
-
 }
 
+
+/*
+=========================================================
+MOBILE
+=========================================================
+*/
 
 @media (max-width: 480px) {
 
     body {
+
         padding: 8px;
     }
 
     .dialog {
+
         padding: 16px;
-        border-radius: 18px;
+
+        border-radius: 20px;
     }
 
     .question {
-        font-size: 22px;
+
+        font-size: 23px;
+
         line-height: 1.3;
     }
 
     .description {
+
         font-size: 13px;
     }
 
     input,
     textarea {
+
         font-size: 15px;
+
         padding: 14px;
     }
 
     button {
+
         font-size: 14px;
+
         padding: 15px;
+
         border-radius: 12px;
     }
 
     .vectors-grid {
-        grid-template-columns: 1fr 1fr;
+
+        grid-template-columns:
+            1fr 1fr;
     }
 
     .vector-card img {
+
         height: 120px;
     }
 
     .font-preview {
+
         font-size: 22px;
     }
 
+    .resume-figure-image {
+
+        height: 180px;
+    }
 }
