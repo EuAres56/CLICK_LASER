@@ -51,108 +51,127 @@
     <div class="os-grid" id="osGrid"></div>
 
 
-    <!-- MODAL -->
+    <!-- =========================================================
+MODAL - CRIAR / EDITAR OS
+========================================================= -->
 
-    <div class="modal" id="osModal">
+    <div class="os-modal-overlay" id="osModal">
 
-        <div class="modal-content">
+        <div class="os-modal">
 
-            <div class="modal-header">
+            <!-- HEADER -->
 
-                <div class="modal-title" id="modalTitle">
-                    Nova Ordem de Serviço
+            <div class="os-modal-header">
+
+                <div>
+                    <h2 id="osModalTitle">
+                        Nova Ordem de Serviço
+                    </h2>
+
+                    <p>
+                        Crie ou edite uma OS rapidamente
+                    </p>
                 </div>
 
-                <button class="close-btn" onclick="closeModal()">
-                    <i class="fa-solid fa-xmark"></i>
+                <button class="os-close-btn" onclick="closeOSModal()">
+                    ✕
                 </button>
 
             </div>
 
 
-            <div class="form-grid">
+            <!-- BODY -->
 
-                <!-- SELLER -->
+            <div class="os-modal-body">
 
-                <div class="input-group">
 
-                    <label>
-                        Nome do vendedor
-                    </label>
+                <!-- VENDEDOR -->
 
-                    <input type="text" id="sellerName">
+                <div class="os-form-grid">
+
+                    <div class="os-input-group">
+
+                        <label>
+                            Nome do vendedor
+                        </label>
+
+                        <input type="text" id="osSeller" placeholder="Ex: João">
+
+                    </div>
 
                 </div>
 
 
-                <!-- CLIENT -->
+                <!-- CLIENTE -->
 
-                <div class="form-grid">
+                <div class="os-form-grid two-columns">
 
-                    <div class="input-group">
+                    <div class="os-input-group">
 
                         <label>
                             Nome do cliente
                         </label>
 
-                        <input type="text" id="clientName">
+                        <input type="text" id="osClient" placeholder="Nome do cliente">
 
                     </div>
 
-                    <div class="input-group">
+                    <div class="os-input-group">
 
                         <label>
                             Contato
                         </label>
 
-                        <input type="text" id="clientContact">
+                        <input type="text" id="osContact" placeholder="WhatsApp">
 
                     </div>
 
                 </div>
 
 
-                <!-- TEXT -->
+                <!-- TEXTO -->
 
-                <div class="input-group">
+                <div class="os-input-group">
 
                     <label>
                         Texto da gravação
                     </label>
 
-                    <textarea id="engravingText" oninput="updateFontPreviews()"></textarea>
+                    <textarea id="osText" placeholder="Digite o texto..." oninput="updateOSFontPreviews()"></textarea>
 
                 </div>
 
 
-                <!-- FONTS -->
+                <!-- FONTES -->
 
-                <div id="fontsSection">
+                <div class="os-section">
 
-                    <div class="input-group">
-
-                        <label>
-                            Fonte
-                        </label>
-
+                    <div class="os-section-title">
+                        Seleção de Fonte
                     </div>
 
-                    <div class="fonts-grid" id="fontsGrid"></div>
+                    <div class="os-fonts-grid" id="osFontsContainer"></div>
 
                 </div>
 
 
-                <!-- VECTORS -->
+                <!-- VETORES -->
 
-                <div class="input-group">
+                <div class="os-section">
 
-                    <label>
-                        Vetor
-                    </label>
+                    <div class="os-section-title">
+                        Vetores / Figuras
+                    </div>
 
-                    <div class="catalog-tabs" id="catalogTabs"></div>
 
-                    <div class="vectors-grid" id="vectorsGrid"></div>
+                    <!-- TABS -->
+
+                    <div class="os-catalog-tabs" id="osCatalogTabs"></div>
+
+
+                    <!-- GRID -->
+
+                    <div class="os-vectors-grid" id="osVectorsGrid"></div>
 
                 </div>
 
@@ -161,13 +180,13 @@
 
             <!-- FOOTER -->
 
-            <div class="modal-footer">
+            <div class="os-modal-footer">
 
-                <button class="secondary-btn" onclick="closeModal()">
+                <button class="os-cancel-btn" onclick="closeOSModal()">
                     Cancelar
                 </button>
 
-                <button class="primary-btn" onclick="saveOS()">
+                <button class="os-save-btn" onclick="saveOS()">
                     Salvar OS
                 </button>
 
