@@ -173,10 +173,68 @@ async function loadVectors() {
 
     try {
 
-        const response =
-            await fetch("/api/public/dialog/vectors/load");
+        /*
+        =========================================================
+        FETCH
+        =========================================================
+        */
 
-        const categories = await response.json();
+        const response =
+            await fetch(
+                "/api/public/dialog/vectors/load"
+            );
+
+
+        /*
+        =========================================================
+        RESPONSE VALIDATION
+        =========================================================
+        */
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+
+        /*
+        =========================================================
+        RAW RESPONSE
+        =========================================================
+        */
+
+        const text =
+            await response.text();
+
+        console.log(
+            "[RAW VECTORS RESPONSE]",
+            text
+        );
+
+
+        /*
+        =========================================================
+        PARSE JSON
+        =========================================================
+        */
+
+        const categories =
+            JSON.parse(text);
+
+        console.log(
+            "[PARSED CATEGORIES]",
+            categories
+        );
+
+
+        /*
+        =========================================================
+        ELEMENTS
+        =========================================================
+        */
 
         const tabs =
             document.getElementById(
@@ -189,64 +247,142 @@ async function loadVectors() {
             );
 
         tabs.innerHTML = "";
-
-        const categoryNames = Object.keys(categories);
-
-        if (categoryNames.length === 0)
-            return;
+        grid.innerHTML = "";
 
 
         /*
-        =========================================
+        =========================================================
+        CATEGORY NAMES
+        =========================================================
+        */
+
+        const categoryNames =
+            Object.keys(categories);
+
+        console.log(
+            "[CATEGORY NAMES]",
+            categoryNames
+        );
+
+
+        /*
+        =========================================================
+        EMPTY
+        =========================================================
+        */
+
+        if (categoryNames.length === 0) {
+
+            grid.innerHTML =
+                `<div style="color:#999;">
+                    Nenhum vetor encontrado
+                </div>`;
+
+            return;
+
+        }
+
+
+        /*
+        =========================================================
         RENDER CATEGORY
-        =========================================
+        =========================================================
         */
 
         function renderCategory(category) {
 
             grid.innerHTML = "";
 
-            categories[category].forEach(fig => {
 
-                const card =
-                    document.createElement("div");
+            /*
+            =========================================
+            INVALID CATEGORY
+            =========================================
+            */
 
-                card.className =
-                    "vector-card";
+            if (
+                !Array.isArray(
+                    categories[category]
+                )
+            ) {
 
-                card.innerHTML = `
-                    <img src="${fig.figure_url}">
+                console.warn(
+                    "Categoria inválida:",
+                    category
+                );
 
-                    <div class="vector-name">
-                        ${fig.figure_name}
-                    </div>
-                `;
+                return;
 
-                card.onclick = () => {
+            }
 
-                    document
-                        .querySelectorAll(".vector-card")
-                        .forEach(el => {
-                            el.classList.remove("active");
-                        });
 
-                    card.classList.add("active");
+            /*
+            =========================================
+            RENDER ITEMS
+            =========================================
+            */
 
-                    selectedVector = fig;
+            categories[category]
+                .forEach(fig => {
 
-                };
+                    const card =
+                        document.createElement("div");
 
-                grid.appendChild(card);
+                    card.className =
+                        "vector-card";
 
-            });
+
+                    card.innerHTML = `
+                        <img
+                            src="${fig.figure_url}"
+                            alt="${fig.figure_name}"
+                            loading="lazy"
+                        >
+
+                        <div class="vector-name">
+                            ${fig.figure_name}
+                        </div>
+                    `;
+
+
+                    /*
+                    =====================================
+                    SELECT
+                    =====================================
+                    */
+
+                    card.onclick = () => {
+
+                        document
+                            .querySelectorAll(".vector-card")
+                            .forEach(el => {
+
+                                el.classList.remove(
+                                    "active"
+                                );
+
+                            });
+
+                        card.classList.add(
+                            "active"
+                        );
+
+                        selectedVector = fig;
+
+                    };
+
+
+                    grid.appendChild(card);
+
+                });
 
         }
 
 
         /*
-        =========================================
-        TABS
-        =========================================
+        =========================================================
+        CREATE TABS
+        =========================================================
         */
 
         categoryNames.forEach(
@@ -258,25 +394,40 @@ async function loadVectors() {
                 tab.className =
                     "catalog-tab";
 
+
                 if (index === 0) {
-                    tab.classList.add("active");
+
+                    tab.classList.add(
+                        "active"
+                    );
+
                 }
 
-                tab.innerText = category;
+
+                tab.innerText =
+                    category;
+
 
                 tab.onclick = () => {
 
                     document
                         .querySelectorAll(".catalog-tab")
                         .forEach(el => {
-                            el.classList.remove("active");
+
+                            el.classList.remove(
+                                "active"
+                            );
+
                         });
 
-                    tab.classList.add("active");
+                    tab.classList.add(
+                        "active"
+                    );
 
                     renderCategory(category);
 
                 };
+
 
                 tabs.appendChild(tab);
 
@@ -285,17 +436,19 @@ async function loadVectors() {
 
 
         /*
-        =========================================
+        =========================================================
         FIRST CATEGORY
-        =========================================
+        =========================================================
         */
 
-        renderCategory(categoryNames[0]);
+        renderCategory(
+            categoryNames[0]
+        );
 
     } catch (error) {
 
         console.error(
-            "Erro ao carregar vetores:",
+            "[LOAD VECTORS ERROR]",
             error
         );
 

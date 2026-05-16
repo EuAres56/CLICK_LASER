@@ -109,32 +109,7 @@ if (
 
         /*
         =========================================================
-        EMPTY RESPONSE
-        =========================================================
-        */
-
-        if (
-            !Array.isArray(figures)
-            || figures.length === 0
-        ) {
-
-            return new Response(
-                JSON.stringify({}),
-                {
-                    status: 200,
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Cache-Control": "public, max-age=3600"
-                    }
-                }
-            );
-
-        }
-
-
-        /*
-        =========================================================
-        GROUP BY CATEGORY
+        GROUPED CATEGORIES
         =========================================================
         */
 
@@ -149,10 +124,13 @@ if (
             =========================================
             */
 
-            const rawCategory =
-                typeof fig.figure_class === "string"
-                    ? fig.figure_class
-                    : "Outros";
+            const category =
+                (
+                    fig.figure_class ||
+                    "Outros"
+                )
+                    .trim()
+                    .replace(/\s+/g, " ");
 
 
             /*
@@ -161,15 +139,17 @@ if (
             =========================================
             */
 
-            const category =
-                rawCategory
-                    .trim()
-                    .replace(/\s+/g, " ");
-
-
             const normalizedCategory =
-                category.charAt(0).toUpperCase() +
-                category.slice(1).toLowerCase();
+                category.length > 0
+
+                    ? category
+                        .toLowerCase()
+                        .replace(
+                            /\b\w/g,
+                            l => l.toUpperCase()
+                        )
+
+                    : "Outros";
 
 
             /*
@@ -187,7 +167,7 @@ if (
 
             /*
             =========================================
-            SAFE IMAGE URL
+            FIGURE URL
             =========================================
             */
 
@@ -232,6 +212,18 @@ if (
 
         /*
         =========================================================
+        DEBUG
+        =========================================================
+        */
+
+        console.log(
+            "[PUBLIC VECTORS]",
+            JSON.stringify(grouped, null, 2)
+        );
+
+
+        /*
+        =========================================================
         RESPONSE
         =========================================================
         */
@@ -250,13 +242,13 @@ if (
     } catch (error) {
 
         console.error(
-            "[PUBLIC VECTORS LOAD ERROR]",
+            "[PUBLIC VECTORS ERROR]",
             error
         );
 
         return new Response(
             JSON.stringify({
-                error: error.message || "Erro interno"
+                error: error.message
             }),
             {
                 status: 500,
