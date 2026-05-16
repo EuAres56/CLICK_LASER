@@ -117,11 +117,17 @@ export default async function apiPublicRouter(request, env) {
                     )
                     .trim();
 
-                if (!grouped[category]) {
-                    grouped[category] = [];
+                const normalizedCategory =
+                    category.charAt(0).toUpperCase() +
+                    category.slice(1).toLowerCase();
+
+                if (!grouped[normalizedCategory]) {
+
+                    grouped[normalizedCategory] = [];
+
                 }
 
-                grouped[category].push({
+                grouped[normalizedCategory].push({
 
                     figure_uid: fig.uid,
 

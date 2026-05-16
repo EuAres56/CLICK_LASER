@@ -1296,7 +1296,7 @@ export default async function dashboardCore(request, env) {
     // GET: Carregar lista de Figuras/Vetores para seleção
     if (subPath.startsWith("/assets/vectors/selection-list") && method === "GET") {
         try {
-            const figures = await dataBaseRequest("dashboard_figures?select=*l&order=figure_name.asc", "GET", null, env
+            const figures = await dataBaseRequest("dashboard_figures?select=*&order=figure_name.asc", "GET", null, env
             );
 
             if (figures instanceof Response) return figures;
