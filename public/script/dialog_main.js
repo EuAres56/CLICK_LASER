@@ -30,6 +30,30 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 });
 
+/*
+=========================================================
+UPDATE FONT PREVIEWS
+=========================================================
+*/
+
+function updateFontPreviews(){
+
+    const text =
+        document
+            .getElementById("engravingText")
+            .value
+            .trim() || "ABC";
+
+
+    document
+        .querySelectorAll(".font-preview")
+        .forEach(preview => {
+
+            preview.innerText = text;
+
+        });
+
+}
 
 /*
 =========================================================
@@ -88,18 +112,26 @@ async function loadFonts() {
 
             card.className = "font-card";
 
+
+            const previewText =
+                document
+                    .getElementById("engravingText")
+                    ?.value
+                    ?.trim() || "ABC";
+
+
             card.innerHTML = `
                 <div
                     class="font-preview"
                     style="font-family:'${font.font_name}'"
                 >
-                    ABC
+                    ${previewText}
                 </div>
 
                 <div>
                     ${font.font_name}
                 </div>
-            `;
+`;
 
             card.onclick = () => {
 

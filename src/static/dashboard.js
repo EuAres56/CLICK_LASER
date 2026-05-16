@@ -519,7 +519,6 @@ export function constructModalFigure() {
             <option value="Cursos">Cursos</option>
             <option value="Natureza">Natureza</option>
             <option value="Times">Times</option>
-            <option value="Desenhos">Desenhos</option>
             <option value="Infantil">Infantil</option>
             <option value="Gamer">Gamer</option>
             <option value="Anime">Anime</option>
