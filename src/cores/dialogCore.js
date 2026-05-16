@@ -82,71 +82,44 @@ export default async function apiPublicRouter(request, env) {
     =========================================================
     */
 
-    if (
-        subPath.startsWith("vectors/load")
-        && method === "GET"
-    ) {
+if (
+    subPath.startsWith("vectors/load")
+    && method === "GET"
+) {
 
-        try {
+    try {
 
-            const figures = await dataBaseRequest(
-                `dashboard_figures?select=uid,figure_name,figure_class,figure_url&order=figure_class.asc,figure_name.asc`,
-                "GET",
-                null,
-                env
-            );
+        /*
+        =========================================================
+        LOAD FIGURES
+        =========================================================
+        */
 
-            if (figures instanceof Response)
-                return figures;
+        const figures = await dataBaseRequest(
+            "dashboard_figures?select=uid,figure_name,figure_class,figure_url&order=figure_class.asc,figure_name.asc",
+            "GET",
+            null,
+            env
+        );
+
+        if (figures instanceof Response) {
+            return figures;
+        }
 
 
-            /*
-            =========================================
-            GROUPED CATEGORIES
-            =========================================
-            */
+        /*
+        =========================================================
+        EMPTY RESPONSE
+        =========================================================
+        */
 
-            const grouped = {};
-
-            figures.forEach(fig => {
-
-                const category =
-                    (
-                        fig.figure_class ||
-                        "Outros"
-                    )
-                    .trim();
-
-                const normalizedCategory =
-                    category.charAt(0).toUpperCase() +
-                    category.slice(1).toLowerCase();
-
-                if (!grouped[normalizedCategory]) {
-
-                    grouped[normalizedCategory] = [];
-
-                }
-
-                grouped[normalizedCategory].push({
-
-                    figure_uid: fig.uid,
-
-                    figure_name: fig.figure_name,
-
-                    figure_class: fig.figure_class,
-
-                    figure_url:
-                        fig.figure_url
-                            ? `${publicPrefix}${fig.figure_url}?b=lib`
-                            : "/assets/default-vector.png"
-
-                });
-
-            });
-
+        if (
+            !Array.isArray(figures)
+            || figures.length === 0
+        ) {
 
             return new Response(
-                JSON.stringify(grouped),
+                JSON.stringify({}),
                 {
                     status: 200,
                     headers: {
@@ -156,20 +129,146 @@ export default async function apiPublicRouter(request, env) {
                 }
             );
 
-        } catch (error) {
-
-            return new Response(
-                JSON.stringify({
-                    error: error.message
-                }),
-                {
-                    status: 500
-                }
-            );
-
         }
 
+
+        /*
+        =========================================================
+        GROUP BY CATEGORY
+        =========================================================
+        */
+
+        const grouped = {};
+
+
+        figures.forEach(fig => {
+
+            /*
+            =========================================
+            SAFE CATEGORY
+            =========================================
+            */
+
+            const rawCategory =
+                typeof fig.figure_class === "string"
+                    ? fig.figure_class
+                    : "Outros";
+
+
+            /*
+            =========================================
+            NORMALIZE CATEGORY
+            =========================================
+            */
+
+            const category =
+                rawCategory
+                    .trim()
+                    .replace(/\s+/g, " ");
+
+
+            const normalizedCategory =
+                category.charAt(0).toUpperCase() +
+                category.slice(1).toLowerCase();
+
+
+            /*
+            =========================================
+            CREATE CATEGORY
+            =========================================
+            */
+
+            if (!grouped[normalizedCategory]) {
+
+                grouped[normalizedCategory] = [];
+
+            }
+
+
+            /*
+            =========================================
+            SAFE IMAGE URL
+            =========================================
+            */
+
+            let figureUrl =
+                "/assets/default-vector.png";
+
+
+            if (
+                fig.figure_url
+                && typeof fig.figure_url === "string"
+            ) {
+
+                figureUrl =
+                    `${publicPrefix}${fig.figure_url}?b=lib`;
+
+            }
+
+
+            /*
+            =========================================
+            PUSH FIGURE
+            =========================================
+            */
+
+            grouped[normalizedCategory].push({
+
+                figure_uid: fig.uid,
+
+                figure_name:
+                    fig.figure_name || "Sem nome",
+
+                figure_class:
+                    normalizedCategory,
+
+                figure_url:
+                    figureUrl
+
+            });
+
+        });
+
+
+        /*
+        =========================================================
+        RESPONSE
+        =========================================================
+        */
+
+        return new Response(
+            JSON.stringify(grouped),
+            {
+                status: 200,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Cache-Control": "public, max-age=3600"
+                }
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "[PUBLIC VECTORS LOAD ERROR]",
+            error
+        );
+
+        return new Response(
+            JSON.stringify({
+                error: error.message || "Erro interno"
+            }),
+            {
+                status: 500,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
     }
+
+}
 
 
     /*
