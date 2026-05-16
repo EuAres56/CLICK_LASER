@@ -297,7 +297,7 @@ function showStep(index) {
     =========================================
     */
 
-    if (index === 5) {
+    if (index === 4) {
         updateResume();
     }
 
@@ -312,7 +312,7 @@ function nextStep() {
     =========================================
     */
 
-    if (currentStep === 2) {
+    if (currentStep === 1) {
 
         const text =
             document
@@ -324,7 +324,7 @@ function nextStep() {
 
         if (text === "") {
 
-            currentStep = 4;
+            currentStep = 3;
 
             showStep(currentStep);
 
@@ -360,7 +360,7 @@ function prevStep() {
     =========================================
     */
 
-    if (currentStep === 4) {
+    if (currentStep === 3) {
 
         const text =
             document
@@ -372,7 +372,7 @@ function prevStep() {
 
         if (text === "") {
 
-            currentStep = 2;
+            currentStep = 1;
 
             showStep(currentStep);
 
@@ -617,5 +617,56 @@ ${figureUrl}`;
         url,
         "_blank"
     );
+
+}
+
+/*
+=========================================================
+VALIDATE STEP 1
+=========================================================
+*/
+
+function validateStep1() {
+
+    const name =
+        document
+            .getElementById("clientName")
+            .value
+            .trim();
+
+    const contact =
+        document
+            .getElementById("clientContact")
+            .value
+            .trim();
+
+    const error =
+        document
+            .getElementById("step1Error");
+
+
+    /*
+    =========================================
+    VALIDATION
+    =========================================
+    */
+
+    if (!name || !contact) {
+
+        error.style.display = "block";
+
+        return;
+    }
+
+
+    /*
+    =========================================
+    SUCCESS
+    =========================================
+    */
+
+    error.style.display = "none";
+
+    nextStep();
 
 }

@@ -516,10 +516,15 @@ export function constructModalFigure() {
     <div class="form-group">
         <label for="asset-vector-category">Categoria:</label>
         <select id="asset-vector-category">
-            <option value="Logos">Logos</option>
-            <option value="Brasões">Brasões</option>
-            <option value="Datas">Datas</option>
+            <option value="Cursos">Cursos</option>
+            <option value="Natureza">Natureza</option>
+            <option value="Times">Times</option>
             <option value="Desenhos">Desenhos</option>
+            <option value="Infantil">Infantil</option>
+            <option value="Gamer">Gamer</option>
+            <option value="Anime">Anime</option>
+            <option value="Herois">Herois</option>
+            <option value="Diversos">Diversos</option>
         </select>
     </div>
 </div>

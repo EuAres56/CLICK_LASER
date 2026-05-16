@@ -21,48 +21,51 @@
                 <div class="progress-bar" id="progressBar"></div>
             </div>
 
-            <!-- ETAPA 1 -->
+            <!-- ETAPA 1 E 2 -->
             <div class="step active">
 
                 <div class="question">
-                    Qual o nome do cliente?
+                    Quem está realizando o pedido?
                 </div>
 
                 <div class="description">
-                    Digite o nome da pessoa responsável pelo pedido.
+                    Preencha os dados para continuar.
                 </div>
 
-                <input type="text" id="clientName" placeholder="Nome do cliente">
+                <div class="form-grid">
+
+                    <div class="input-group">
+
+                        <label>
+                            Nome do cliente
+                        </label>
+
+                        <input type="text" id="clientName" placeholder="Digite o nome">
+
+                    </div>
+
+                    <div class="input-group">
+
+                        <label>
+                            Contato / WhatsApp
+                        </label>
+
+                        <input type="text" id="clientContact" placeholder="(00) 00000-0000">
+
+                    </div>
+
+                </div>
+
+                <div id="step1Error" class="step-error">
+                    Preencha nome e contato para continuar.
+                </div>
 
                 <div class="buttons">
-                    <button class="next-btn" onclick="nextStep()">
+
+                    <button class="next-btn" onclick="validateStep1()">
                         Continuar
                     </button>
-                </div>
 
-            </div>
-
-            <!-- ETAPA 2 -->
-            <div class="step">
-
-                <div class="question">
-                    Qual o contato do cliente?
-                </div>
-
-                <div class="description">
-                    Número de telefone ou WhatsApp.
-                </div>
-
-                <input type="text" id="clientContact" placeholder="(00) 00000-0000">
-
-                <div class="buttons">
-                    <button class="back-btn" onclick="prevStep()">
-                        Voltar
-                    </button>
-
-                    <button class="next-btn" onclick="nextStep()">
-                        Continuar
-                    </button>
                 </div>
 
             </div>

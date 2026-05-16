@@ -267,6 +267,42 @@ button:hover {
     display: block;
 }
 
+.form-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-group label {
+    font-size: 14px;
+    color: #aaa;
+    font-weight: 600;
+}
+
+.step-error {
+
+    margin-top: 18px;
+
+    background: #3a1818;
+
+    border: 1px solid #ff3b3b;
+
+    color: #ff9d9d;
+
+    padding: 14px;
+
+    border-radius: 14px;
+
+    display: none;
+
+    font-size: 14px;
+}
+
 @media (max-width: 768px) {
 
     body {
