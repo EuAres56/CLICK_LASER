@@ -141,7 +141,7 @@ function updateFontPreviews() {
 
     const text =
         document
-            .getElementById("engravingText")
+            .getElementById("osText")
             .value
             .trim() || "ABC";
 
