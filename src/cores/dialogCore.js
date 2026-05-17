@@ -81,185 +81,197 @@ export default async function apiPublicRouter(request, env) {
     =========================================================
     */
 
-if (
-    subPath.startsWith("vectors/load")
-    && method === "GET"
-) {
+    if (
+        subPath.startsWith("vectors/load")
+        && method === "GET"
+    ) {
 
-    try {
-
-        /*
-        =========================================================
-        LOAD FIGURES
-        =========================================================
-        */
-
-        const figures = await dataBaseRequest(
-            "dashboard_figures?select=*&order=figure_class.asc",
-            "GET",
-            null,
-            env
-        );
-
-        if (figures instanceof Response) {
-            return figures;
-        }
-
-
-        /*
-        =========================================================
-        GROUPED CATEGORIES
-        =========================================================
-        */
-
-        const grouped = {};
-
-
-        figures.forEach(fig => {
+        try {
 
             /*
-            =========================================
-            SAFE CATEGORY
-            =========================================
+            =========================================================
+            LOAD FIGURES
+            =========================================================
             */
 
-            const category =
-                (
-                    fig.figure_class ||
-                    "Outros"
-                )
-                    .trim()
-                    .replace(/\s+/g, " ");
+            const figures = await dataBaseRequest(
+                "dashboard_figures?select=*&order=figure_class.asc",
+                "GET",
+                null,
+                env
+            );
 
-
-            /*
-            =========================================
-            NORMALIZE CATEGORY
-            =========================================
-            */
-
-            const normalizedCategory =
-                category.length > 0
-
-                    ? category
-                        .toLowerCase()
-                        .replace(
-                            /\b\w/g,
-                            l => l.toUpperCase()
-                        )
-
-                    : "Outros";
-
-
-            /*
-            =========================================
-            CREATE CATEGORY
-            =========================================
-            */
-
-            if (!grouped[normalizedCategory]) {
-
-                grouped[normalizedCategory] = [];
-
+            if (figures instanceof Response) {
+                return figures;
             }
 
 
             /*
-            =========================================
-            FIGURE URL
-            =========================================
+            =========================================================
+            GROUPED CATEGORIES
+            =========================================================
             */
 
-            let figureUrl =
-                "/assets/default-vector.png";
+            const grouped = {};
 
 
-            if (
-                fig.figure_url
-                && typeof fig.figure_url === "string"
-            ) {
+            figures.forEach(fig => {
 
-                figureUrl =
-                    `${publicPrefix}${fig.figure_url}?b=lib`;
+                /*
+                =========================================
+                SAFE CATEGORY
+                =========================================
+                */
 
-            }
+                const category =
+                    (
+                        fig.figure_class ||
+                        "Outros"
+                    )
+                        .trim()
+                        .replace(/\s+/g, " ");
 
 
-            /*
-            =========================================
-            PUSH FIGURE
-            =========================================
-            */
+                /*
+                =========================================
+                NORMALIZE CATEGORY
+                =========================================
+                */
 
-            grouped[normalizedCategory].push({
+                const normalizedCategory =
+                    category.length > 0
 
-                figure_uid: fig.uid,
+                        ? category
+                            .toLowerCase()
+                            .replace(
+                                /\b\w/g,
+                                l => l.toUpperCase()
+                            )
 
-                figure_name:
-                    fig.figure_name || "Sem nome",
+                        : "Outros";
 
-                figure_class:
-                    normalizedCategory,
 
-                figure_url:
-                    figureUrl
+                /*
+                =========================================
+                CREATE CATEGORY
+                =========================================
+                */
+
+                if (!grouped[normalizedCategory]) {
+
+                    grouped[normalizedCategory] = [];
+
+                }
+
+
+                /*
+                =========================================
+                FIGURE URL
+                =========================================
+                */
+
+                let figureUrl =
+                    "/assets/default-vector.png";
+
+
+                if (
+                    fig.figure_url
+                    && typeof fig.figure_url === "string"
+                ) {
+
+                    figureUrl =
+                        `${publicPrefix}${fig.figure_url}?b=lib`;
+
+                }
+
+
+                /*
+                =========================================
+                PUSH FIGURE
+                =========================================
+                */
+
+                grouped[normalizedCategory].push({
+
+                    figure_uid: fig.uid,
+
+                    figure_name:
+                        fig.figure_name || "Sem nome",
+
+                    figure_class:
+                        normalizedCategory,
+
+                    figure_url:
+                        figureUrl
+
+                });
 
             });
 
-        });
+
+            /*
+            =========================================================
+            DEBUG
+            =========================================================
+            */
+
+            console.log(
+                "[PUBLIC VECTORS]",
+                JSON.stringify(grouped, null, 2)
+            );
 
 
-        /*
-        =========================================================
-        DEBUG
-        =========================================================
-        */
+            /*
+            =========================================================
+            RESPONSE
+            =========================================================
+            */
 
-        console.log(
-            "[PUBLIC VECTORS]",
-            JSON.stringify(grouped, null, 2)
-        );
-
-
-        /*
-        =========================================================
-        RESPONSE
-        =========================================================
-        */
-
-        return new Response(
-            JSON.stringify(grouped),
-            {
-                status: 200,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Cache-Control": "public, max-age=3600"
+            return new Response(
+                JSON.stringify(grouped),
+                {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Cache-Control": "no-store"
+                    }
                 }
-            }
-        );
+            );
 
-    } catch (error) {
 
-        console.error(
-            "[PUBLIC VECTORS ERROR]",
-            error
-        );
+            // return new Response(
+            //     JSON.stringify(grouped),
+            //     {
+            //         status: 200,
+            //         headers: {
+            //             "Content-Type": "application/json",
+            //             "Cache-Control": "public, max-age=3600"
+            //         }
+            //     }
+            // );
 
-        return new Response(
-            JSON.stringify({
-                error: error.message
-            }),
-            {
-                status: 500,
-                headers: {
-                    "Content-Type": "application/json"
+        } catch (error) {
+
+            console.error(
+                "[PUBLIC VECTORS ERROR]",
+                error
+            );
+
+            return new Response(
+                JSON.stringify({
+                    error: error.message
+                }),
+                {
+                    status: 500,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
                 }
-            }
-        );
+            );
+
+        }
 
     }
-
-}
 
 
     /*
