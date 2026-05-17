@@ -179,7 +179,7 @@ async function loadFonts() {
 
         const container =
             document.getElementById(
-                "fontsContainer"
+                "osFontsContainer"
             );
 
         container.innerHTML = "";
@@ -210,9 +210,7 @@ async function loadFonts() {
                 fontFace
                     .load()
                     .then(f => {
-
                         document.fonts.add(f);
-
                     });
 
             }
@@ -302,12 +300,12 @@ async function loadVectors() {
 
         const tabs =
             document.getElementById(
-                "catalogTabs"
+                "osCatalogTabs"
             );
 
         const grid =
             document.getElementById(
-                "vectorsGrid"
+                "osVectorsGrid"
             );
 
 
