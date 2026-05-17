@@ -40,8 +40,7 @@ function openOSModal(uid = null) {
 
     currentOSUid = uid;
 
-    const modal =
-        document.getElementById("osModal");
+    const modal = document.getElementById("osModal");
 
     modal.classList.add("active");
 

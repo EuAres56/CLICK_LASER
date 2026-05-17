@@ -775,16 +775,9 @@ OS MODAL
             box-shadow:
                 0 20px 60px rgba(0, 0, 0, .35);
 
-            opacity: 0;
-            pointer-events: none;
         }
 
         .os-modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .os-modal.active {
             opacity: 1;
             pointer-events: all;
         }

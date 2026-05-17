@@ -36,7 +36,7 @@ UPDATE FONT PREVIEWS
 =========================================================
 */
 
-function updateFontPreviews(){
+function updateFontPreviews() {
 
     const text =
         document
@@ -94,9 +94,11 @@ async function loadFonts() {
                     `url(${font.font_url})`
                 );
 
-                fontFace.load().then(f => {
-                    document.fonts.add(f);
-                });
+                fontFace
+                    .load()
+                    .then(f => {
+                        document.fonts.add(f);
+                    });
 
             }
 
