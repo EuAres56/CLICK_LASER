@@ -459,16 +459,26 @@ async function loadOrders() {
 
             {
                 uid: "1",
-                seller: "Ares",
-                client: "João",
-                text: "Pai"
+                client_name: "Ares",
+                client_phone: "(11) 99999-9999",
+                text: "Pai",
+                font_uid: "ft_1",
+                font_name: "Arial",
+                figure_uid: "fig_1",
+                figure_name: "Estrela",
+                figure_url: "/assets/serve/estrela.svg?b=lib"
             },
 
             {
                 uid: "2",
-                seller: "Maria",
-                client: "Carlos",
-                text: "Família"
+                client_name: "Zeus",
+                client_phone: "(21) 98888-8888",
+                text: "Rei dos Deuses",
+                font_uid: "ft_2",
+                font_name: "Times New Roman",
+                figure_uid: "fig_2",
+                figure_name: "Sol",
+                figure_url: "/assets/serve/sol.svg?b=lib"
             }
 
         ];
@@ -494,6 +504,12 @@ RENDER ORDERS
 =========================================================
 */
 
+/*
+=========================================================
+RENDER ORDERS
+=========================================================
+*/
+
 function renderOrders(orders) {
 
     const container =
@@ -503,6 +519,45 @@ function renderOrders(orders) {
 
     container.innerHTML = "";
 
+
+    /*
+    =========================================
+    EMPTY
+    =========================================
+    */
+
+    if (!orders.length) {
+
+        container.innerHTML = `
+
+            <div class="os-empty">
+
+                <div class="os-empty-icon">
+                    📦
+                </div>
+
+                <div class="os-empty-title">
+                    Nenhuma OS encontrada
+                </div>
+
+                <div class="os-empty-text">
+                    Não existem ordens de serviço nesta data.
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    /*
+    =========================================
+    CARDS
+    =========================================
+    */
 
     orders.forEach(order => {
 
@@ -514,41 +569,132 @@ function renderOrders(orders) {
 
 
         card.innerHTML = `
-            <div class="os-top">
 
-                <div class="os-client">
-                    ${order.client}
+            <div class="os-header">
+
+                <div class="os-client-area">
+
+                    <div class="os-client-name">
+                        ${order.client_name || "Sem nome"}
+                    </div>
+
+                    <div class="os-client-phone">
+                        ${order.client_phone || "-"}
+                    </div>
+
                 </div>
 
-                <div class="os-actions">
+                <div class="os-id">
+                    #${order.id_num || "--"}
+                </div>
 
-                    <button
-                        onclick="viewOrder('${order.uid}')"
-                    >
-                        Visualizar
-                    </button>
+            </div>
 
-                    <button
-                        onclick="openOSModal('${order.uid}')"
-                    >
-                        Editar
-                    </button>
 
-                    <button
-                        onclick="deleteOrder('${order.uid}')"
-                    >
-                        Deletar
-                    </button>
+            <div class="os-body">
+
+                <div class="os-preview">
+
+                    ${order.figure_url
+
+                ? `
+                                <img
+                                    src="${order.figure_url}"
+                                    class="os-preview-image"
+                                >
+                            `
+
+                : `
+                                <div class="os-preview-placeholder">
+                                    Sem Figura
+                                </div>
+                            `
+            }
+
+                </div>
+
+
+                <div class="os-content">
+
+                    <div class="os-field">
+
+                        <div class="os-label">
+                            Texto
+                        </div>
+
+                        <div class="os-value">
+                            ${order.text ||
+            "Sem texto"
+            }
+                        </div>
+
+                    </div>
+
+
+                    <div class="os-row">
+
+                        <div class="os-field">
+
+                            <div class="os-label">
+                                Fonte
+                            </div>
+
+                            <div class="os-value">
+                                ${order.font_name ||
+            "Nenhuma"
+            }
+                            </div>
+
+                        </div>
+
+
+                        <div class="os-field">
+
+                            <div class="os-label">
+                                Vetor
+                            </div>
+
+                            <div class="os-value">
+                                ${order.figure_name ||
+            "Nenhum"
+            }
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
             </div>
 
-            <div class="os-info">
-                ${order.text || "Sem texto"}
+
+            <div class="os-actions">
+
+                <button
+                    class="os-btn view-btn"
+                    onclick="viewOrder('${order.uid}')"
+                >
+                    Visualizar
+                </button>
+
+                <button
+                    class="os-btn edit-btn"
+                    onclick="openOSModal('${order.uid}')"
+                >
+                    Editar
+                </button>
+
+                <button
+                    class="os-btn delete-btn"
+                    onclick="deleteOrder('${order.uid}')"
+                >
+                    Deletar
+                </button>
+
             </div>
+
         `;
-
 
         container.appendChild(card);
 
