@@ -498,7 +498,7 @@ function renderOrders(orders) {
 
     const container =
         document.getElementById(
-            "ordersContainer"
+            "osGrid"
         );
 
     container.innerHTML = "";
