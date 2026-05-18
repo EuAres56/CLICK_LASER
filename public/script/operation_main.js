@@ -598,12 +598,14 @@ function renderOrders(orders) {
                         </div>
                     </div>
                 </div>
-                <div class="os-preview">
+                <div class="os-content">
                     <div class="os-field">
                         <div class="os-label">Vetor</div>
                         <div class="os-value">${order.figure_name || "Nenhum"}</div>
                     </div>
-                    ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
+                    <div class="os-preview">
+                        ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
+                    </div>
                 </div>
             </div>
             <div class="os-actions">
