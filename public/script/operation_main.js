@@ -666,7 +666,7 @@ function renderOrders(orders) {
                 </div>
             </div>
             <div class="os-actions">
-                <button class="os-btn view-btn" onclick="viewOrder('${order.uid}')">Visualizar</button>
+                <button class="os-btn view-btn" onclick="printOrder('${order}')">Imprimir</button>
                 <button class="os-btn edit-btn" onclick="openOSModal('${order.uid}')">Editar</button>
                 <button class="os-btn delete-btn" onclick="deleteOrder('${order.uid}')">Deletar</button>
             </div>
