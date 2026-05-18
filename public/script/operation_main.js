@@ -457,7 +457,7 @@ async function loadOrders() {
 
         const dateInput =
             document.getElementById(
-                "ordersDate"
+                "filterDate"
             );
 
         let selectedDate =
