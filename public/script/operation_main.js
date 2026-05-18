@@ -639,7 +639,7 @@ function renderOrders(orders) {
                     </div>
                 </div>
                 <div class="os-id">
-                    #${order.id_num || "--"}
+                    #${order.uid || "--"}
                 </div>
 
             </div>
