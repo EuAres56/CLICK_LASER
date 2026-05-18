@@ -254,7 +254,7 @@
                 translateY(-4px);
 
             border-color:
-                rgba(255, 59, 59, 0.4);
+                rgba(255, 59, 222, 0.4);
 
             box-shadow:
                 0 20px 40px rgba(0, 0, 0, 0.35);
@@ -313,10 +313,10 @@
             background:
                 rgba(255, 59, 59, 0.12);
 
-            color: #ff5a5a;
+            color: #ae25ee;
 
             border:
-                1px solid rgba(255, 59, 59, 0.2);
+                1px solid rgba(209, 59, 255, 0.2);
 
             border-radius: 999px;
 
@@ -526,7 +526,7 @@
             background:
                 rgba(255, 59, 59, 0.12);
 
-            color: #ff5a5a;
+            color: #7d1278;
 
             border:
                 1px solid rgba(255, 59, 59, 0.25);
@@ -536,7 +536,7 @@
         .edit-btn:hover {
 
             background:
-                rgba(255, 59, 59, 0.2);
+                rgba(232, 59, 255, 0.2);
 
         }
 
@@ -552,7 +552,7 @@
         .delete-btn:hover {
 
             background:
-                rgba(255, 255, 255, 0.12);
+                rgba(232, 59, 255, 0.2);
 
         }
 
