@@ -1006,7 +1006,7 @@ function filterOrders() {
 
     const input =
         document.getElementById(
-            "filterDate"
+            "searchInput"
         );
 
     if (!input) return;
