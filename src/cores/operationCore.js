@@ -257,10 +257,7 @@ export default async function operationCore(request, env) {
     }
 
     // GET: Buscar OS do dia para Operation Core
-    if (
-        subPath.startsWith("/orders/search")
-        && method === "GET"
-    ) {
+    if (subPath.startsWith("/orders/search") && method === "GET") {
 
         try {
 

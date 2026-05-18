@@ -81,10 +81,7 @@ export default async function apiPublicRouter(request, env) {
     =========================================================
     */
 
-    if (
-        subPath.startsWith("vectors/load")
-        && method === "GET"
-    ) {
+    if (subPath.startsWith("vectors/load") && method === "GET") {
 
         try {
 
@@ -265,6 +262,387 @@ export default async function apiPublicRouter(request, env) {
                     status: 500,
                     headers: {
                         "Content-Type": "application/json"
+                    }
+                }
+            );
+
+        }
+
+    }
+
+    // POST: Criar Ordem + Job
+    if (
+        subPath.startsWith("/orders/create")
+        && method === "POST"
+    ) {
+
+        try {
+
+            /*
+            =========================================
+            FORM DATA
+            =========================================
+            */
+
+            const formData =
+                await request.formData();
+
+            const payloadStr =
+                formData.get("payload");
+
+            if (!payloadStr) {
+
+                throw new Error(
+                    "Payload não encontrado."
+                );
+
+            }
+
+
+            /*
+            =========================================
+            PARSE BODY
+            =========================================
+            */
+
+            const body =
+                JSON.parse(payloadStr);
+
+
+            /*
+            =========================================
+            VALIDATE
+            =========================================
+            */
+
+            if (
+                !body.client_name
+                || !body.client_phone
+            ) {
+
+                return new Response(
+                    JSON.stringify({
+                        error:
+                            "Cliente e contato são obrigatórios."
+                    }),
+                    {
+                        status: 400,
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        }
+                    }
+                );
+
+            }
+
+
+            /*
+            =========================================
+            CREATE ORDER
+            =========================================
+            */
+
+            const orderData =
+                await dataBaseRequest(
+                    "dashboard_orders",
+                    "POST",
+                    {
+                        client_name:
+                            body.client_name,
+
+                        client_phone:
+                            body.client_phone,
+
+                        order_status:
+                            1,
+
+                        order_priority:
+                            0,
+
+                        order_created_at:
+                            new Date().toISOString()
+                    },
+                    env
+                );
+
+
+            /*
+            =========================================
+            ORDER ERROR
+            =========================================
+            */
+
+            if (orderData instanceof Response) {
+
+                return orderData;
+
+            }
+
+            if (
+                !Array.isArray(orderData)
+                || !orderData.length
+            ) {
+
+                throw new Error(
+                    "Falha ao criar ordem."
+                );
+
+            }
+
+
+            /*
+            =========================================
+            ORDER DATA
+            =========================================
+            */
+
+            const order =
+                orderData[0];
+
+
+            /*
+            =========================================
+            SAFE JOB
+            =========================================
+            */
+
+            const job =
+                (
+                    body.jobs
+                    && body.jobs.length > 0
+                )
+
+                    ? body.jobs[0]
+
+                    : null;
+
+
+            if (!job) {
+
+                /*
+                =====================================
+                DELETE EMPTY ORDER
+                =====================================
+                */
+
+                await dataBaseRequest(
+                    `dashboard_orders?uid=eq.${order.uid}`,
+                    "DELETE",
+                    null,
+                    env
+                );
+
+                throw new Error(
+                    "Nenhum job enviado."
+                );
+
+            }
+
+
+            /*
+            =========================================
+            CREATE JOB
+            =========================================
+            */
+
+            const jobData =
+                await dataBaseRequest(
+                    "dashboard_jobs",
+                    "POST",
+                    {
+                        order_uid:
+                            order.uid,
+
+                        order_num:
+                            order.id_num,
+
+                        product_title:
+                            job.product_title || null,
+
+                        job_text_title:
+                            job.text_title || null,
+
+                        job_text_font:
+                            job.text_font || null,
+
+                        job_font_uid:
+                            job.font_uid || null,
+
+                        job_figure_name:
+                            job.figure_name || null,
+
+                        job_figure_url:
+                            job.figure_url || null,
+
+                        job_observ:
+                            job.observation || null,
+
+                        job_status:
+                            1,
+
+                        job_start_date:
+                            new Date().toISOString()
+                    },
+                    env
+                );
+
+
+            /*
+            =========================================
+            JOB ERROR
+            =========================================
+            */
+
+            if (jobData instanceof Response) {
+
+                /*
+                =====================================
+                ROLLBACK ORDER
+                =====================================
+                */
+
+                await dataBaseRequest(
+                    `dashboard_orders?uid=eq.${order.uid}`,
+                    "DELETE",
+                    null,
+                    env
+                );
+
+                return jobData;
+
+            }
+
+            if (
+                !Array.isArray(jobData)
+                || !jobData.length
+            ) {
+
+                throw new Error(
+                    "Falha ao criar job."
+                );
+
+            }
+
+
+            /*
+            =========================================
+            JOB DATA
+            =========================================
+            */
+
+            const insertedJob =
+                jobData[0];
+
+
+            /*
+            =========================================
+            UPDATE ORDER JOB LIST
+            =========================================
+            */
+
+            const updateOrder =
+                await dataBaseRequest(
+                    `dashboard_orders?uid=eq.${order.uid}`,
+                    "PATCH",
+                    {
+                        order_list_jobs: [
+                            insertedJob.uid
+                        ]
+                    },
+                    env
+                );
+
+
+            if (updateOrder instanceof Response) {
+
+                throw new Error(
+                    "Falha ao atualizar lista de jobs."
+                );
+
+            }
+
+
+            /*
+            =========================================
+            RESPONSE
+            =========================================
+            */
+
+            return new Response(
+                JSON.stringify({
+
+                    success: true,
+
+                    order: {
+
+                        uid:
+                            order.uid,
+
+                        id_num:
+                            order.id_num,
+
+                        client_name:
+                            order.client_name,
+
+                        client_phone:
+                            order.client_phone
+
+                    },
+
+                    job: {
+
+                        uid:
+                            insertedJob.uid,
+
+                        product_title:
+                            insertedJob.product_title,
+
+                        job_text_title:
+                            insertedJob.job_text_title,
+
+                        job_text_font:
+                            insertedJob.job_text_font,
+
+                        job_figure_name:
+                            insertedJob.job_figure_name,
+
+                        job_figure_url:
+                            insertedJob.job_figure_url,
+
+                        job_observ:
+                            insertedJob.job_observ
+
+                    }
+
+                }),
+                {
+                    status: 201,
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "[CREATE ORDER ERROR]",
+                error
+            );
+
+            return new Response(
+                JSON.stringify({
+                    error:
+                        error.message ||
+                        "Erro interno."
+                }),
+                {
+                    status: 500,
+                    headers: {
+                        "Content-Type":
+                            "application/json"
                     }
                 }
             );

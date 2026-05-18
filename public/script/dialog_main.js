@@ -663,38 +663,306 @@ function updateResume() {
 
 /*
 =========================================================
+SAVE ORDER
+=========================================================
+*/
+
+async function saveOrder() {
+
+    try {
+
+        /*
+        =========================================
+        FORM DATA
+        =========================================
+        */
+
+        const client =
+            document
+                .getElementById("clientName")
+                .value
+                .trim();
+
+        const contact =
+            document
+                .getElementById("clientContact")
+                .value
+                .trim();
+
+        const text =
+            document
+                .getElementById("engravingText")
+                .value
+                .trim();
+
+        const obs =
+            document
+                .getElementById("resumeObs")
+                .value
+                .trim();
+
+
+        /*
+        =========================================
+        VALIDATION
+        =========================================
+        */
+
+        if (!client || !contact) {
+
+            alert(
+                "Preencha cliente e contato."
+            );
+
+            return;
+
+        }
+
+
+        /*
+        =========================================
+        PAYLOAD
+        =========================================
+        */
+
+        const payload = {
+
+            client_name:
+                client,
+
+            client_phone:
+                contact,
+
+            jobs: [
+
+                {
+
+                    product_title:
+                        "Não definido",
+
+                    text_title:
+                        text || null,
+
+                    text_font:
+                        selectedFont
+                            ? selectedFont.font_name
+                            : null,
+
+                    font_uid:
+                        selectedFont
+                            ? selectedFont.font_uid
+                            : null,
+
+                    figure_name:
+                        selectedVector
+                            ? selectedVector.figure_name
+                            : null,
+
+                    figure_url:
+                        selectedVector
+                            ? selectedVector.figure_url
+                            : null,
+
+                    observation:
+                        obs || null
+
+                }
+
+            ]
+
+        };
+
+
+        /*
+        =========================================
+        FORM DATA
+        =========================================
+        */
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "payload",
+            JSON.stringify(payload)
+        );
+
+
+        /*
+        =========================================
+        REQUEST
+        =========================================
+        */
+
+        const response =
+            await fetch(
+                "/api/public/dialog/orders/create",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        /*
+        =========================================
+        RAW RESPONSE
+        =========================================
+        */
+
+        const rawText =
+            await response.text();
+
+        console.log(
+            "[SAVE ORDER RAW]",
+            rawText
+        );
+
+
+        /*
+        =========================================
+        PARSE RESPONSE
+        =========================================
+        */
+
+        let result = null;
+
+        try {
+
+            result =
+                JSON.parse(rawText);
+
+        } catch {
+
+            throw new Error(
+                "Resposta inválida do servidor."
+            );
+
+        }
+
+
+        /*
+        =========================================
+        ERROR RESPONSE
+        =========================================
+        */
+
+        if (!response.ok) {
+
+            console.error(result);
+
+            alert(
+                result.error ||
+                "Erro ao salvar OS."
+            );
+
+            return;
+
+        }
+
+
+        /*
+        =========================================
+        SUCCESS
+        =========================================
+        */
+
+        console.log(
+            "[ORDER CREATED]",
+            result
+        );
+
+
+        /*
+        =========================================
+        SEND WHATSAPP
+        =========================================
+        */
+
+        sendWhatsApp(result);
+
+
+        /*
+        =========================================
+        RESET
+        =========================================
+        */
+
+        resetOSForm();
+
+    } catch (error) {
+
+        console.error(
+            "[SAVE ORDER ERROR]",
+            error
+        );
+
+        alert(
+            "Erro ao salvar ordem."
+        );
+
+    }
+
+}
+
+
+/*
+=========================================================
 WHATSAPP
 =========================================================
 */
 
-function sendWhatsApp() {
+function sendWhatsApp(orderData) {
+
+    /*
+    =========================================
+    SAFE DATA
+    =========================================
+    */
+
+    const order =
+        orderData.order || {};
+
+    const job =
+        orderData.job || {};
+
+
+    /*
+    =========================================
+    ORDER DATA
+    =========================================
+    */
 
     const client =
-        document.getElementById(
-            "clientName"
-        ).value;
+        order.client_name || "Não informado";
 
     const contact =
-        document.getElementById(
-            "clientContact"
-        ).value;
+        order.client_phone || "Não informado";
+
+    const orderId =
+        order.id_num || "N/A";
+
+
+    /*
+    =========================================
+    JOB DATA
+    =========================================
+    */
+
+    const jobUid =
+        job.uid || "N/A";
 
     const text =
-        document.getElementById(
-            "engravingText"
-        ).value || "Nenhum";
-
+        job.job_text_title || "Nenhum";
 
     const font =
-        selectedFont
-            ? selectedFont.font_name
-            : "Nenhuma";
-
+        job.job_text_font || "Nenhuma";
 
     const figure =
-        selectedVector
-            ? selectedVector.figure_name
-            : "Nenhuma";
+        job.job_figure_name || "Nenhuma";
+
+    const obs =
+        job.job_observ || "Nenhuma";
 
 
     /*
@@ -705,26 +973,20 @@ function sendWhatsApp() {
 
     let figureUrl = null;
 
-    if (selectedVector?.figure_url) {
-
-        /*
-        =========================================
-        URL ABSOLUTA
-        =========================================
-        */
+    if (job.job_figure_url) {
 
         if (
-            selectedVector.figure_url.startsWith("/api/")
+            job.job_figure_url.startsWith("/api/")
         ) {
 
             figureUrl =
                 window.location.origin +
-                selectedVector.figure_url;
+                job.job_figure_url;
 
         } else {
 
             figureUrl =
-                selectedVector.figure_url;
+                job.job_figure_url;
 
         }
 
@@ -737,7 +999,8 @@ function sendWhatsApp() {
     =========================================
     */
 
-    const now = new Date();
+    const now =
+        new Date();
 
     const formattedDate =
         now.toLocaleDateString("pt-BR")
@@ -752,27 +1015,38 @@ function sendWhatsApp() {
     */
 
     let message =
-        `*Dados da Gravação*
-Cliente: "${client}"
-Contato: "${contact}"
+        `*Nova Ordem de Serviço*
 
-Texto: "${text}"
-Fonte: "${font}"
-Figura: "${figure}"
+ID da OS: ${jobUid}
 
-Data: ${formattedDate}`;
+Cliente: ${client}
+Contato: ${contact}
+
+Texto:
+"${text}"
+
+Fonte:
+${font}
+
+Figura:
+${figure}
+
+Observações:
+${obs}
+
+Data:
+${formattedDate}`;
 
 
     /*
     =========================================
-    ADD IMAGE LINK
+    IMAGE LINK
     =========================================
     */
 
     if (figureUrl) {
 
         message +=
-
             `\n\n*Imagem Selecionada:*
 ${figureUrl}`;
 
