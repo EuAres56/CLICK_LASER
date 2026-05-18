@@ -884,21 +884,25 @@ async function saveOrder() {
 
         /*
         =========================================
-        RESET
+        FINISH SCREEN
         =========================================
         */
 
-        resetOSForm();
+        showFinishScreen(
+            true,
+            result
+        );
+
 
     } catch (error) {
 
-        console.error(
-            "[SAVE ORDER ERROR]",
-            error
-        );
-
-        alert(
-            "Erro ao salvar ordem."
+        showFinishScreen(
+            false,
+            {
+                error:
+                    error.message ||
+                    "Erro inesperado."
+            }
         );
 
     }
@@ -1128,5 +1132,148 @@ function validateStep1() {
     error.style.display = "none";
 
     nextStep();
+
+}
+
+/*
+=========================================================
+FINISH SCREEN
+=========================================================
+*/
+
+function showFinishScreen(success, data = {}) {
+
+    const icon =
+        document.getElementById(
+            "finishIcon"
+        );
+
+    const title =
+        document.getElementById(
+            "finishTitle"
+        );
+
+    const text =
+        document.getElementById(
+            "finishText"
+        );
+
+
+    /*
+    =========================================
+    SUCCESS
+    =========================================
+    */
+
+    if (success) {
+
+        icon.classList.remove("error");
+
+        icon.innerHTML = "✓";
+
+        title.innerText =
+            "Ordem criada com sucesso";
+
+        text.innerHTML =
+            `
+            OS Nº <b>${data.order?.id_num || "-"}</b><br>
+            Job UID: <b>${data.job?.uid || "-"}</b><br><br>
+            A mensagem foi aberta no WhatsApp.
+            `;
+
+    }
+
+    /*
+    =========================================
+    ERROR
+    =========================================
+    */
+
+    else {
+
+        icon.classList.add("error");
+
+        icon.innerHTML = "!";
+
+        title.innerText =
+            "Erro ao criar ordem";
+
+        text.innerHTML =
+            data.error ||
+            "Não foi possível concluir a operação.";
+
+    }
+
+
+    /*
+    =========================================
+    SHOW STEP
+    =========================================
+    */
+
+    currentStep = 5;
+
+    showStep(currentStep);
+
+}
+
+
+/*
+=========================================================
+RESTART
+=========================================================
+*/
+
+function restartDialog() {
+
+    /*
+    =========================================
+    RESET FORM
+    =========================================
+    */
+
+    document
+        .querySelectorAll("input, textarea")
+        .forEach(el => {
+
+            el.value = "";
+
+        });
+
+
+    /*
+    =========================================
+    RESET SELECTS
+    =========================================
+    */
+
+    selectedFont = null;
+    selectedVector = null;
+
+
+    /*
+    =========================================
+    REMOVE ACTIVE
+    =========================================
+    */
+
+    document
+        .querySelectorAll(".font-card, .vector-card")
+        .forEach(el => {
+
+            el.classList.remove("active");
+
+        });
+
+
+    /*
+    =========================================
+    RETURN STEP 0
+    =========================================
+    */
+
+    currentStep = 0;
+
+    showStep(currentStep);
 
 }
