@@ -697,7 +697,6 @@ async function saveOrder() {
         */
 
         const payload = {
-
             client_name: client,
             client_phone: contact,
             jobs: [
@@ -729,9 +728,7 @@ async function saveOrder() {
         const formData =
             new FormData();
 
-        formData.append(
-            "payload",
-            JSON.stringify(payload)
+        formData.append("payload", JSON.stringify(payload)
         );
 
 
@@ -757,9 +754,12 @@ async function saveOrder() {
         =========================================
         */
 
-        const result =
-            await response.json();
+        const result = await response.json();
 
+        console.log(
+            "[SAVE ORDER RESPONSE]",
+            result
+        );
 
         if (!response.ok) {
 
