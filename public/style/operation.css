@@ -401,6 +401,19 @@
 
         }
 
+        .os-engraving-text {
+
+            font-size: 20px;
+
+            color: #ffffff;
+
+            line-height: 1.3;
+
+            word-break: break-word;
+
+            padding: 6px 0;
+
+        }
 
         /*
         =========================================================
