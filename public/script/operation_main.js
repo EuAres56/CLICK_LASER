@@ -648,14 +648,14 @@ function renderOrders(orders) {
             <div class="os-body">
                 <div class="os-content">
                     <div class="os-field">
+                        <div class="os-label">Fonte</div>
+                        <div class="os-value">${order.font_name || "Nenhuma"}</div>
+                    </div>
+                    <div class="os-field">
                         <div class="os-label">Texto</div>
                         <div class="os-value os-engraving-text" style="font-family: '${order.font_name || "Arial"}', sans-serif;">
                             ${order.text || "Sem texto"}
                         </div>
-                    </div>
-                    <div class="os-field">
-                        <div class="os-label">Fonte</div>
-                        <div class="os-value">${order.font_name || "Nenhuma"}</div>
                     </div>
                 </div>
                 <div class="os-container">
