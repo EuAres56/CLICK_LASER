@@ -707,7 +707,7 @@ async function saveOrder() {
                     font_uid: selectedFont ? selectedFont.font_uid : null,
                     figure_name: selectedVector ? selectedVector.figure_name : null,
                     figure_url: selectedVector ? selectedVector.figure_url : null,
-                    observation: `Vendedor: ${seller}:-${obs}`.trim()
+                    observation: `Vendedor: ${seller}:\n${obs}`.trim()
                 }
             ]
         };
@@ -728,8 +728,7 @@ async function saveOrder() {
         const formData =
             new FormData();
 
-        formData.append("payload", JSON.stringify(payload)
-        );
+        formData.append("payload", JSON.stringify(payload));
 
 
         /*
