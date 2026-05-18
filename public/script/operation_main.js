@@ -654,6 +654,12 @@ async function saveOrder() {
                 .value
                 .trim();
 
+        const product =
+            document
+                .getElementById("osProduct")
+                .value
+                .trim();
+
         const text =
             document
                 .getElementById("osText")
@@ -692,53 +698,19 @@ async function saveOrder() {
 
         const payload = {
 
-            client_name:
-                client,
-
-            client_phone:
-                contact,
-
+            client_name: client,
+            client_phone: contact,
             jobs: [
-
                 {
-
-                    product_title:
-                        "Gravação Personalizada",
-
-                    text_title:
-                        text || null,
-
-                    text_font:
-                        selectedFont
-                            ? selectedFont.font_name
-                            : null,
-
-                    font_uid:
-                        selectedFont
-                            ? selectedFont.font_uid
-                            : null,
-
-                    figure_name:
-                        selectedVector
-                            ? selectedVector.figure_name
-                            : null,
-
-                    figure_url:
-                        selectedVector
-                            ? selectedVector.figure_url
-                            : null,
-
-                    observation:
-                        `
-Vendedor: ${seller}
-
-${obs}
-                        `.trim()
-
+                    product_title: product,
+                    text_title: text || null,
+                    text_font: selectedFont ? selectedFont.font_name : null,
+                    font_uid: selectedFont ? selectedFont.font_uid : null,
+                    figure_name: selectedVector ? selectedVector.figure_name : null,
+                    figure_url: selectedVector ? selectedVector.figure_url : null,
+                    observation: `Vendedor: ${seller}:-${obs}`.trim()
                 }
-
             ]
-
         };
 
 
