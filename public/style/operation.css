@@ -225,7 +225,7 @@
             background:
                 linear-gradient(180deg,
                     #1b1f27 0%,
-                    #15181f 100%);
+                    #cb9fd6 100%);
 
             border:
                 1px solid #2a303b;
@@ -296,7 +296,7 @@
 
             font-weight: 700;
 
-            color: white;
+            color: #2d2d2d;
 
         }
 
@@ -364,7 +364,7 @@
 
             overflow: hidden;
 
-            background: white;
+            background: rgba(51, 51, 51, 0.5);
 
             display: flex;
 

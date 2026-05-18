@@ -598,7 +598,7 @@ function renderOrders(orders) {
                         </div>
                     </div>
                 </div>
-                <div class="os-content">
+                <div class="os-container">
                     <div class="os-preview">
                         ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
                     </div>
