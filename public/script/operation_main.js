@@ -990,6 +990,118 @@ function printOrder(data) {
 
 }
 
+/*
+=========================================================
+FILTER ORDERS
+=========================================================
+*/
+
+function filterOrders() {
+
+    /*
+    =========================================
+    INPUT
+    =========================================
+    */
+
+    const input =
+        document.getElementById(
+            "filterDate"
+        );
+
+    if (!input) return;
+
+
+    /*
+    =========================================
+    FILTER VALUE
+    =========================================
+    */
+
+    const filter =
+        input.value
+            .trim()
+            .toLowerCase();
+
+
+    /*
+    =========================================
+    ALL CARDS
+    =========================================
+    */
+
+    const cards =
+        document.querySelectorAll(
+            ".os-card"
+        );
+
+
+    /*
+    =========================================
+    LOOP
+    =========================================
+    */
+
+    cards.forEach(card => {
+
+        /*
+        =====================================
+        JOB ID
+        =====================================
+        */
+
+        const idElement =
+            card.querySelector(
+                ".os-id"
+            );
+
+        const jobId =
+            idElement
+                ? idElement.textContent
+                    .replace("#", "")
+                    .trim()
+                    .toLowerCase()
+                : "";
+
+
+        /*
+        =====================================
+        SHOW / HIDE
+        =====================================
+        */
+
+        if (
+            !filter
+            || jobId.includes(filter)
+        ) {
+
+            card.style.display =
+                "flex";
+
+        } else {
+
+            card.style.display =
+                "none";
+
+        }
+
+    });
+
+}
+
+
+/*
+=========================================================
+AUTO FILTER
+=========================================================
+*/
+
+document
+    .getElementById("filterDate")
+    ?.addEventListener(
+        "input",
+        filterOrders
+    );
 
 /*
 =========================================================
