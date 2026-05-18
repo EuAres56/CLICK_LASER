@@ -569,21 +569,15 @@ function renderOrders(orders) {
 
 
         card.innerHTML = `
-
             <div class="os-header">
-
                 <div class="os-client-area">
-
                     <div class="os-client-name">
                         ${order.client_name || "Sem nome"}
                     </div>
-
                     <div class="os-client-phone">
                         ${order.client_phone || "-"}
                     </div>
-
                 </div>
-
                 <div class="os-id">
                     #${order.id_num || "--"}
                 </div>
@@ -592,106 +586,30 @@ function renderOrders(orders) {
 
 
             <div class="os-body">
-
-                <div class="os-preview">
-
-                    ${order.figure_url
-
-                ? `
-                                <img
-                                    src="${order.figure_url}"
-                                    class="os-preview-image"
-                                >
-                            `
-
-                : `
-                                <div class="os-preview-placeholder">
-                                    Sem Figura
-                                </div>
-                            `
-            }
-
-                </div>
-
-
                 <div class="os-content">
-
                     <div class="os-field">
-
-                        <div class="os-label">
-                            Texto
-                        </div>
-
-                        <div class="os-value">
-                            ${order.text ||
-            "Sem texto"
-            }
-                        </div>
-
+                        <div class="os-label">Texto</div>
+                        <div class="os-value">${order.text || "Sem texto"}</div>
                     </div>
-
-
                     <div class="os-row">
-
                         <div class="os-field">
-
-                            <div class="os-label">
-                                Fonte
-                            </div>
-
-                            <div class="os-value">
-                                ${order.font_name ||
-            "Nenhuma"
-            }
-                            </div>
-
+                            <div class="os-label">Fonte</div>
+                            <div class="os-value">${order.font_name || "Nenhuma"}</div>
                         </div>
-
-
-                        <div class="os-field">
-
-                            <div class="os-label">
-                                Vetor
-                            </div>
-
-                            <div class="os-value">
-                                ${order.figure_name ||
-            "Nenhum"
-            }
-                            </div>
-
-                        </div>
-
                     </div>
-
                 </div>
-
+                <div class="os-preview">
+                    <div class="os-field">
+                        <div class="os-label">Vetor</div>
+                        <div class="os-value">${order.figure_name || "Nenhum"}</div>
+                    </div>
+                    ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
+                </div>
             </div>
-
-
             <div class="os-actions">
-
-                <button
-                    class="os-btn view-btn"
-                    onclick="viewOrder('${order.uid}')"
-                >
-                    Visualizar
-                </button>
-
-                <button
-                    class="os-btn edit-btn"
-                    onclick="openOSModal('${order.uid}')"
-                >
-                    Editar
-                </button>
-
-                <button
-                    class="os-btn delete-btn"
-                    onclick="deleteOrder('${order.uid}')"
-                >
-                    Deletar
-                </button>
-
+                <button class="os-btn view-btn" onclick="viewOrder('${order.uid}')">Visualizar</button>
+                <button class="os-btn edit-btn" onclick="openOSModal('${order.uid}')">Editar</button>
+                <button class="os-btn delete-btn" onclick="deleteOrder('${order.uid}')">Deletar</button>
             </div>
 
         `;
