@@ -256,6 +256,265 @@ export default async function operationCore(request, env) {
         }
     }
 
+    // GET: Buscar OS do dia para Operation Core
+    if (
+        subPath.startsWith("/orders/search")
+        && method === "GET"
+    ) {
 
+        try {
+
+            /*
+            =========================================================
+            DATE
+            =========================================================
+            */
+
+            let targetDate =
+                url.searchParams.get("date");
+
+
+            /*
+            =========================================================
+            DEFAULT TODAY
+            =========================================================
+            */
+
+            if (!targetDate) {
+
+                const now =
+                    new Date();
+
+                const offset =
+                    now.getTimezoneOffset() * 60000;
+
+                targetDate =
+                    new Date(now - offset)
+                        .toISOString()
+                        .split("T")[0];
+
+            }
+
+
+            /*
+            =========================================================
+            LOAD ORDERS
+            =========================================================
+            */
+
+            const orders =
+                await dataBaseRequest(
+                    `
+                dashboard_orders
+                ?select=*
+                &order_created_at=gte.${targetDate}T00:00:00
+                &order_created_at=lte.${targetDate}T23:59:59
+                &order=id_num.desc
+                `.replace(/\s+/g, ""),
+                    "GET",
+                    null,
+                    env
+                );
+
+
+            if (orders instanceof Response) {
+                return orders;
+            }
+
+
+            /*
+            =========================================================
+            EMPTY
+            =========================================================
+            */
+
+            if (
+                !orders
+                || orders.length === 0
+            ) {
+
+                return new Response(
+                    JSON.stringify([]),
+                    {
+                        status: 200,
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+
+            }
+
+
+            /*
+            =========================================================
+            ORDER UIDS
+            =========================================================
+            */
+
+            const orderUids =
+                orders.map(
+                    order => order.uid
+                );
+
+
+            /*
+            =========================================================
+            LOAD JOBS
+            =========================================================
+            */
+
+            const jobs =
+                await dataBaseRequest(
+                    `
+                dashboard_jobs
+                ?order_uid=in.(${orderUids.join(",")})
+                &select=*
+                `
+                        .replace(/\s+/g, ""),
+                    "GET",
+                    null,
+                    env
+                );
+
+
+            if (jobs instanceof Response) {
+                return jobs;
+            }
+
+
+            /*
+            =========================================================
+            JOBS MAP
+            =========================================================
+            */
+
+            const jobsMap =
+                new Map();
+
+            jobs.forEach(job => {
+
+                jobsMap.set(
+                    job.order_uid,
+                    job
+                );
+
+            });
+
+
+            /*
+            =========================================================
+            FORMAT
+            =========================================================
+            */
+
+            const formatted =
+                orders.map(order => {
+
+                    const job =
+                        jobsMap.get(order.uid);
+
+                    return {
+
+                        uid:
+                            order.uid,
+
+                        order_id:
+                            order.id_num,
+
+                        client_name:
+                            order.client_name || "",
+
+                        client_phone:
+                            order.client_phone || "",
+
+                        order_status:
+                            order.order_status,
+
+                        created_at:
+                            order.order_created_at,
+
+                        seller_name:
+                            job?.job_observ
+                                ?.split(":-")[0]
+                                ?.replace(
+                                    "Vendedor:",
+                                    ""
+                                )
+                                ?.trim() || "",
+
+                        observation:
+                            job?.job_observ
+                                ?.split(":-")[1]
+                                ?.trim() || "",
+
+                        product_title:
+                            job?.product_title || "",
+
+                        text:
+                            job?.job_text_title || "",
+
+                        font_uid:
+                            job?.job_font_uid || null,
+
+                        font_name:
+                            job?.job_text_font || "",
+
+                        figure_name:
+                            job?.job_figure_name || "",
+
+                        figure_url:
+                            job?.job_figure_url || "",
+
+                        job_uid:
+                            job?.uid || null
+
+                    };
+
+                });
+
+
+            /*
+            =========================================================
+            RESPONSE
+            =========================================================
+            */
+
+            return new Response(
+                JSON.stringify(formatted),
+                {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Cache-Control":
+                            "no-store"
+                    }
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "[OPERATION SEARCH ERROR]",
+                error
+            );
+
+            return new Response(
+                JSON.stringify({
+                    error:
+                        "Erro ao carregar OS"
+                }),
+                {
+                    status: 500,
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+        }
+
+    }
 
 }

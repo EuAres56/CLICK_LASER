@@ -451,53 +451,113 @@ async function loadOrders() {
 
         /*
         =========================================
-        TEMP MOCK
+        DATE
         =========================================
         */
 
-        const mock = [
+        const dateInput =
+            document.getElementById(
+                "ordersDate"
+            );
 
-            {
-                uid: "1",
-                client_name: "Ares",
-                client_phone: "(11) 99999-9999",
-                text: "Pai",
-                font_uid: "ft_1",
-                font_name: "Arial",
-                figure_uid: "fig_1",
-                figure_name: "Estrela",
-                figure_url: "/assets/serve/estrela.svg?b=lib"
-            },
+        let selectedDate =
+            dateInput
+                ? dateInput.value
+                : "";
 
-            {
-                uid: "2",
-                client_name: "Zeus",
-                client_phone: "(21) 98888-8888",
-                text: "Rei dos Deuses",
-                font_uid: "ft_2",
-                font_name: "Times New Roman",
-                figure_uid: "fig_2",
-                figure_name: "Sol",
-                figure_url: "/assets/serve/sol.svg?b=lib"
+
+        /*
+        =========================================
+        DEFAULT TODAY
+        =========================================
+        */
+
+        if (!selectedDate) {
+
+            const now =
+                new Date();
+
+            const offset =
+                now.getTimezoneOffset() * 60000;
+
+            selectedDate =
+                new Date(now - offset)
+                    .toISOString()
+                    .split("T")[0];
+
+            if (dateInput) {
+                dateInput.value =
+                    selectedDate;
             }
 
-        ];
+        }
 
 
-        renderOrders(mock);
+        /*
+        =========================================
+        REQUEST
+        =========================================
+        */
+
+        const response =
+            await fetch(
+                `/api/public/operation/orders/search?date=${selectedDate}`
+            );
+
+
+        /*
+        =========================================
+        RESPONSE VALIDATION
+        =========================================
+        */
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Erro ao buscar OS"
+            );
+
+        }
+
+
+        /*
+        =========================================
+        JSON
+        =========================================
+        */
+
+        const orders =
+            await response.json();
+
+
+        console.log(
+            "[ORDERS LOADED]",
+            orders
+        );
+
+
+        /*
+        =========================================
+        RENDER
+        =========================================
+        */
+
+        renderOrders(
+            Array.isArray(orders)
+                ? orders
+                : []
+        );
 
     } catch (error) {
 
         console.error(
-            "Erro ao carregar OS:",
+            "[LOAD ORDERS ERROR]",
             error
         );
 
     }
 
 }
-
-
 /*
 =========================================================
 RENDER ORDERS
