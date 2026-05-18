@@ -272,7 +272,7 @@ export default async function apiPublicRouter(request, env) {
 
     // POST: Criar Ordem + Job
     if (
-        subPath.startsWith("/orders/create")
+        subPath.startsWith("orders/create")
         && method === "POST"
     ) {
 
