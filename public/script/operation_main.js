@@ -628,103 +628,255 @@ SAVE ORDER
 
 async function saveOrder() {
 
-    const seller =
-        document
-            .getElementById("sellerName")
-            .value
-            .trim();
+    try {
 
-    const client =
-        document
-            .getElementById("clientName")
-            .value
-            .trim();
+        /*
+        =========================================
+        FORM DATA
+        =========================================
+        */
 
-    const contact =
-        document
-            .getElementById("clientContact")
-            .value
-            .trim();
+        const seller =
+            document
+                .getElementById("osSeller")
+                .value
+                .trim();
 
-    const text =
-        document
-            .getElementById("engravingText")
-            .value
-            .trim();
+        const client =
+            document
+                .getElementById("osClient")
+                .value
+                .trim();
+
+        const contact =
+            document
+                .getElementById("osContact")
+                .value
+                .trim();
+
+        const text =
+            document
+                .getElementById("osText")
+                .value
+                .trim();
+
+        const obs =
+            document
+                .getElementById("obsText")
+                .value
+                .trim();
 
 
-    /*
-    =========================================
-    VALIDATION
-    =========================================
-    */
+        /*
+        =========================================
+        VALIDATION
+        =========================================
+        */
 
-    if (!seller || !client || !contact) {
+        if (!seller || !client || !contact) {
 
-        alert(
-            "Preencha os campos obrigatórios."
+            alert(
+                "Preencha vendedor, cliente e contato."
+            );
+
+            return;
+
+        }
+
+
+        /*
+        =========================================
+        PAYLOAD
+        =========================================
+        */
+
+        const payload = {
+
+            client_name:
+                client,
+
+            client_phone:
+                contact,
+
+            jobs: [
+
+                {
+
+                    product_title:
+                        "Gravação Personalizada",
+
+                    text_title:
+                        text || null,
+
+                    text_font:
+                        selectedFont
+                            ? selectedFont.font_name
+                            : null,
+
+                    font_uid:
+                        selectedFont
+                            ? selectedFont.font_uid
+                            : null,
+
+                    figure_name:
+                        selectedVector
+                            ? selectedVector.figure_name
+                            : null,
+
+                    figure_url:
+                        selectedVector
+                            ? selectedVector.figure_url
+                            : null,
+
+                    observation:
+                        `
+Vendedor: ${seller}
+
+${obs}
+                        `.trim()
+
+                }
+
+            ]
+
+        };
+
+
+        console.log(
+            "[SAVE ORDER PAYLOAD]",
+            payload
         );
 
-        return;
+
+        /*
+        =========================================
+        FORM DATA
+        =========================================
+        */
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "payload",
+            JSON.stringify(payload)
+        );
+
+
+        /*
+        =========================================
+        REQUEST
+        =========================================
+        */
+
+        const response =
+            await fetch(
+                "/api/public/operation/orders/create",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        /*
+        =========================================
+        RESPONSE
+        =========================================
+        */
+
+        const result =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            console.error(result);
+
+            alert(
+                result.error ||
+                "Erro ao salvar OS."
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+            "[ORDER CREATED]",
+            result
+        );
+
+
+        /*
+        =========================================
+        PRINT
+        =========================================
+        */
+
+        printOrder({
+
+            seller_name:
+                seller,
+
+            client_name:
+                client,
+
+            client_contact:
+                contact,
+
+            engraving_text:
+                text,
+
+            font_name:
+                selectedFont
+                    ? selectedFont.font_name
+                    : null,
+
+            vector_name:
+                selectedVector
+                    ? selectedVector.figure_name
+                    : null,
+
+            vector_url:
+                selectedVector
+                    ? selectedVector.figure_url
+                    : null,
+
+            obs:
+                obs,
+
+            order_id:
+                result.order_id
+
+        });
+
+
+        /*
+        =========================================
+        RESET
+        =========================================
+        */
+
+        resetOSForm();
+
+        closeOSModal();
+
+        await loadOrders();
+
+    } catch (error) {
+
+        console.error(
+            "[SAVE ORDER ERROR]",
+            error
+        );
+
+        alert(
+            "Erro ao salvar ordem."
+        );
 
     }
-
-
-    /*
-    =========================================
-    BODY
-    =========================================
-    */
-
-    const body = {
-
-        seller_name: seller,
-
-        client_name: client,
-
-        client_contact: contact,
-
-        engraving_text: text,
-
-        font_uid:
-            selectedFont
-                ? selectedFont.font_uid
-                : null,
-
-        vector_uid:
-            selectedVector
-                ? selectedVector.figure_uid
-                : null
-
-    };
-
-
-    console.log(
-        "[SAVE ORDER]",
-        body
-    );
-
-
-    /*
-    =========================================
-    PRINT
-    =========================================
-    */
-
-    printOrder(body);
-
-
-    /*
-    =========================================
-    RESET
-    =========================================
-    */
-
-    resetOSForm();
-
-    closeOSModal();
-
-    await loadOrders();
 
 }
 

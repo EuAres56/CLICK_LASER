@@ -67,9 +67,14 @@ export default async function apiPublicRouter(request, env) {
         return await shoppingCore(request, env);
     }
 
-    // --- ROTA DO DIALOGO DE COMPRA ---
+    // --- ROTA DO DIALOGO DE SELEÇÃO DE GRAVAÇÃO ---
     if (subPath.startsWith("dialog/")) {
         return await dialogCore(request, env);
+    }
+
+    // --- ROTA DA PAGINA DO VENDEDOR ---
+    if (subPath.startsWith("operation/")) {
+        return await operationCore(request, env);
     }
 
 
