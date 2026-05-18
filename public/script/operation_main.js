@@ -1097,7 +1097,7 @@ AUTO FILTER
 */
 
 document
-    .getElementById("filterDate")
+    .getElementById("searchInput")
     ?.addEventListener(
         "input",
         filterOrders
