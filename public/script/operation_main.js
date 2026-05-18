@@ -735,10 +735,12 @@ async function saveOrder() {
         =========================================
         */
 
-        const response = await fetch("/api/public/operation/orders/create", {
-            method: "POST",
-            body: formData
-        });
+        const response = await fetch("/api/public/operation/orders/create",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
 
 
         /*
