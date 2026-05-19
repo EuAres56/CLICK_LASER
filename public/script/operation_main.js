@@ -856,12 +856,12 @@ async function saveOrder() {
         printOrder({
             job_uid: result.uid,
             date: result.order_created_at,
-            client_name: client,
-            product_title: product,
-            text_title: text,
-            font_name: result.font_name || "Nenhuma",
-            vector_name: result.figure_name || "Nenhuma",
-            figure_url: result.figure_url || null,
+            client_name: result.client_name,
+            product_title: result.product_title,
+            text_title: result.text,
+            font_name: result.font_name,
+            vector_name: result.figure_name,
+            figure_url: result.figure_url,
             obs: result.obs
         });
 
