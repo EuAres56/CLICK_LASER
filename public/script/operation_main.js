@@ -1197,7 +1197,7 @@ function printOrder(data) {
                         center;
 
                     background:
-                        #101010;
+                        rgba(222, 59, 255, 0.5);
 
                     border:
                         1px solid #2a2a2a;
@@ -1241,21 +1241,11 @@ function printOrder(data) {
                         #999;
                 }
 
-                .vector-image{
-                    max-width:
-                        100%;
-
-                    max-height:
-                        85px;
-
-                    object-fit:
-                        contain;
-
-                    cursor:
-                        pointer;
-
-                    transition:
-                        .2s;
+                .vector-image {
+                    width: 64mm;
+                    object-fit: contain;
+                    cursor: pointer;
+                    transition: .2s;
                 }
 
                 .vector-image:hover{
@@ -1586,9 +1576,9 @@ function printOrder(data) {
                             </div>
                             <div class="vector-box">
                                 ${data.vector_url ? `<img id="vectorImage" src="${data.vector_url}" class="vector-image">` : `<div class="vector-empty">Nenhum vetor selecionado</div>`}
-                                <div class="value" style="margin-top:12px; text-align:center;" onclick="copyImage()">
-                                    ${data.vector_name || "Nenhum"}
-                                </div>
+                            </div>
+                            <div class="value" onclick="copyImage()">
+                                ${data.vector_name || "Nenhum"}
                             </div>
 
                         </div>
