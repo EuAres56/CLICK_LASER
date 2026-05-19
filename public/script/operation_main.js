@@ -1078,7 +1078,7 @@ function printOrder(data) {
 
                 .os-id{
                     background:
-                        rgba(222, 59, 255, 0.12)
+                        rgba(222, 59, 255, 0.12);
                     color:
                         #ae25ee;
 
@@ -1360,16 +1360,23 @@ function printOrder(data) {
                             0;
                     }
 
-                    html,
-                    body{
-                        width:
-                            80mm;
-
+                    * {
                         background:
                             white !important;
 
                         color:
                             black !important;
+                    }
+
+                    .print-btn{
+                        display:
+                            none !important;
+                    }
+
+                    html,
+                    body{
+                        width:
+                            80mm;
 
                         padding:
                             0 !important;
@@ -1577,10 +1584,11 @@ function printOrder(data) {
                             <div class="label">
                                 Vetor
                             </div>
-
-                            ${data.vector_url ? `<img id="vectorImage" src="${data.vector_url}" class="vector-image">` : `<div class="vector-empty">Nenhum vetor selecionado</div>`}
-                            <div class="value" style="margin-top:12px; text-align:center;" onclick="copyImage()">
-                                ${data.vector_name || "Nenhum"}
+                            <div class="vector-box">
+                                ${data.vector_url ? `<img id="vectorImage" src="${data.vector_url}" class="vector-image">` : `<div class="vector-empty">Nenhum vetor selecionado</div>`}
+                                <div class="value" style="margin-top:12px; text-align:center;" onclick="copyImage()">
+                                    ${data.vector_name || "Nenhum"}
+                                </div>
                             </div>
 
                         </div>
