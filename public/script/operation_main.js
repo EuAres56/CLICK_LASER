@@ -2416,6 +2416,8 @@ SELECT FONT
 
             const cardFontName = (card.querySelector(".font-name")?.textContent || "");
 
+            console.log("CARD FONT NAME:", cardFontName);
+            console.log("FONT NAME:", fontName);
             if (
                 cardFontName.trim() === fontName.trim()
             ) {
