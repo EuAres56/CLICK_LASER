@@ -630,6 +630,9 @@ function renderOrders(orders) {
 
         card.innerHTML = `
             <div class="os-header">
+                <div class="os-id">
+                    #${order.job_uid || "--"}
+                </div>
                 <div class="os-client-area">
                     <div class="os-client-name">
                         ${order.client_name || "Sem nome"}
@@ -638,10 +641,6 @@ function renderOrders(orders) {
                         ${order.client_phone || "-"}
                     </div>
                 </div>
-                <div class="os-id">
-                    #${order.job_uid || "--"}
-                </div>
-
             </div>
 
 
@@ -667,10 +666,10 @@ function renderOrders(orders) {
                         ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
                     </div>
                     <div class="os-value">${order.figure_name || "Nenhum"}</div>
-                </div>
-                <div class="os-field" name="obs">
-                    <div class="os-label">Observações</div>
-                    <div class="os-value">${order.obs || "Nenhuma"}</div>
+                    <div class="os-field" name="obs">
+                        <div class="os-label">Observações</div>
+                        <div class="os-value">${order.obs || "Nenhuma"}</div>
+                    </div>
                 </div>
             </div>
             <div class="os-actions">

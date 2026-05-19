@@ -274,7 +274,7 @@
         .os-header {
 
             display: flex;
-
+            flex-direction: row;
             align-items: flex-start;
 
             justify-content: space-between;
@@ -287,9 +287,10 @@
 
             display: flex;
 
-            flex-direction: column;
+            flex-direction: row;
 
             gap: 6px;
+            border-bottom: 1px solid #2a303b;
 
         }
 
