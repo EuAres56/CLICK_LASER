@@ -678,7 +678,7 @@ function renderOrders(orders) {
                 <div class="os-value">${order.obs || "Nenhuma"}</div>
             </div>
             <div class="os-actions">
-                <button class="os-btn view-btn" onclick="reprintOS('${order.job_uid}')">Imprimir</button>
+                <button class="os-btn view-btn" onclick="reprintOS('${order.job_uid}')">Visualizar</button>
                 <button class="os-btn edit-btn" onclick="openOSModal('${order.job_uid}')">Editar</button>
                 <button class="os-btn delete-btn" onclick="deleteOrder('${order.job_uid}')">Deletar</button>
             </div>
