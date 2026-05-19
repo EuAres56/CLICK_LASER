@@ -1054,6 +1054,9 @@ function printOrder(data) {
                     display:
                         flex;
 
+                    flex-direction:
+                        row;
+
                     justify-content:
                         space-between;
 
@@ -1447,13 +1450,12 @@ function printOrder(data) {
                     <div class="header">
 
                         <div class="header-top">
+                            <div class="os-id">
+                                #${data.job_uid}
+                            </div>
 
                             <div class="title">
                                 ORDEM DE SERVIÇO
-                            </div>
-
-                            <div class="os-id">
-                                #${data.job_uid}
                             </div>
 
                         </div>
