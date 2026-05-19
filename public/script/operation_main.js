@@ -919,7 +919,7 @@ function reprintOS(id) {
         date: card.getAttribute("data-date") || "Data desconhecida",
         client_name: card.querySelector(".os-client-name")?.textContent || "Sem nome",
         product_title: card.querySelector(".os-field[name='item'] .os-value")?.textContent || "Nenhum",
-        text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent || "Nenhuma",
+        text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent.trim() || "Nenhuma",
         font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
         vector_name: card.querySelector(".os-value[name='vector']")?.textContent || "Nenhuma",
         vector_url: card.querySelector(".os-preview-image")?.src || null,
@@ -1550,7 +1550,7 @@ function printOrder(data) {
                             </div>
 
                             <div class="value copyable" style="font-family: '${data.font_name || "inherit"}';" onclick="copyText('${(data.text_title.trim() || "")}')">
-                                ${data.text_title.trim() || "Sem texto"}
+                                ${data.text_title || "Sem texto"}
                             </div>
 
                         </div>
