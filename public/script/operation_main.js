@@ -852,17 +852,18 @@ async function saveOrder() {
         PRINT
         =========================================
         */
-        const osData = result[0];
+
         printOrder({
-            job_uid: osData.uid,
-            date: osData.created_at,
-            client_name: osData.client_name,
-            product_title: osData.product_title,
-            text_title: osData.text,
-            font_name: osData.font_name,
-            vector_name: osData.figure_name,
-            figure_url: osData.figure_url,
-            obs: osData.observation
+            job_uid: result.uid,
+            date: result.created_at,
+            client_name: result.client_name,
+            client_phone: result.client_phone,
+            product_title: result.product_title,
+            text_title: result.text,
+            font_name: result.font_name,
+            vector_name: result.figure_name,
+            figure_url: result.figure_url,
+            obs: result.obs
         });
 
 
@@ -918,6 +919,7 @@ function reprintOS(id) {
         job_uid: id,
         date: card.getAttribute("data-date") || "Data desconhecida",
         client_name: card.querySelector(".os-client-name")?.textContent || "Sem nome",
+        client_phone: card.querySelector(".os-client-phone")?.textContent || "Sem contato",
         product_title: card.querySelector(".os-field[name='item'] .os-value")?.textContent || "Nenhum",
         text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent.trim() || "Nenhuma",
         font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
@@ -1525,6 +1527,11 @@ function printOrder(data) {
                             <div
                                 class="value highlight">
                                 ${data.client_name || "-"}
+                            </div>
+
+                            <div
+                                class="value">
+                                ${data.client_phone || "-"}
                             </div>
 
                         </div>
