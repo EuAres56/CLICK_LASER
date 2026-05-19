@@ -670,7 +670,7 @@ function renderOrders(orders) {
                     <div class="os-preview">
                         ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
                     </div>
-                    <div class="os-value">${order.figure_name || "Nenhum"}</div>
+                    <div class="os-value" name="vector">${order.figure_name || "Nenhum"}</div>
                 </div>
             </div>
             <div class="os-field" name="obs">
@@ -856,6 +856,7 @@ async function saveOrder() {
         printOrder({
             job_uid: result.job_uid,
             date: result.order_created_at,
+            client_name: client,
             product_title: product,
             text_title: text,
             font_name: selectedFont ? selectedFont.font_name : "Nenhuma",
@@ -915,6 +916,7 @@ function reprintOS(id) {
     printOrder({
         job_uid: id,
         date: card.getAttribute("data-date") || "Data desconhecida",
+        client_name: card.querySelector(".os-client-name")?.textContent || "Sem nome",
         product_title: card.querySelector(".os-field[name='item'] .os-value")?.textContent || "Nenhum",
         text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent || "Nenhuma",
         font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
