@@ -854,15 +854,15 @@ async function saveOrder() {
         */
 
         printOrder({
-            job_uid: result.job_uid,
+            job_uid: result.uid,
             date: result.order_created_at,
             client_name: client,
             product_title: product,
             text_title: text,
-            font_name: selectedFont ? selectedFont.font_name : "Nenhuma",
-            vector_name: selectedVector ? selectedVector.figure_name : "Nenhuma",
-            figure_url: selectedVector ? selectedVector.figure_url : null,
-            obs: `Vendedor: ${seller}:\n${obs}`.trim()
+            font_name: result.font_name || "Nenhuma",
+            vector_name: result.figure_name || "Nenhuma",
+            figure_url: result.figure_url || null,
+            obs: result.obs
         });
 
 
