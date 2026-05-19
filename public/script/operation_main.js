@@ -900,7 +900,7 @@ REPRINT OS
 */
 function reprintOS(id) {
 
-    const card = document.querySelector(`.os-card .os-id:contains("#${id}")`);
+    const card = document.querySelector(`.os-card .os-card-title .os-id:contains("#${id}")`);
 
     if (!card) {
 
