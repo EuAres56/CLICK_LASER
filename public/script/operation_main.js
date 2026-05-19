@@ -1360,7 +1360,13 @@ function printOrder(data) {
                 }
 
                 @media print {
+                    *{
+                        padding:
+                            0;
 
+                        margin:
+                            0;
+                    }
                     body{
                         background:
                             white;
