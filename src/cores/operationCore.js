@@ -8,81 +8,195 @@ export default async function operationCore(request, env) {
     // Prefixo da sua nova rota pública
     const publicServePrefix = "/api/public/assets/serve/";
 
-    // POST: Criar Ordem e Jobs simultaneamente
-    if (subPath.startsWith("/orders/create") && method === "POST") {
+    // POST: Criar Ordem e Job simultaneamente
+    if (
+        subPath.startsWith("/orders/create")
+        && method === "POST"
+    ) {
 
         try {
-            const formData = await request.formData();
-            const payloadStr = formData.get('payload');
-            if (!payloadStr) throw new Error("Payload não encontrado.");
 
-            const body = JSON.parse(payloadStr);
+            /*
+            =========================================
+            FORM DATA
+            =========================================
+            */
 
-            // 1. Criar a Ordem
-            const orderData = await dataBaseRequest("dashboard_orders", "POST", {
-                client_name: body.client_name,
-                client_phone: body.client_phone,
-                order_status: 1,
-                order_priority: 0,
-            }, env);
+            const formData =
+                await request.formData();
 
-            if (orderData instanceof Response) return orderData;
-            const order = orderData[0];
+            const payloadStr =
+                formData.get("payload");
 
-            // 2. Criar o Job
-            if (body.jobs && body.jobs.length > 0) {
+            if (!payloadStr) {
 
-                const job =
-                    body.jobs[0];
-
-                const insertedJob =
-                    await dataBaseRequest("dashboard_jobs", "POST", {
-                        order_uid: order.uid,
-                        order_num: order.id_num,
-
-                        product_title: job.product_title,
-
-                        job_text_title: job.text_title || null,
-                        job_text_font: job.text_font || null,
-                        job_font_uid: job.font_uid || null,
-
-                        job_figure_name: job.figure_name || null,
-                        job_figure_url: job.figure_url || null,
-
-                        job_observ: job.observation || null,
-                        job_status: 1,
-                        job_start_date: new Date().toISOString()
-                    },
-                        env
-                    );
-
-                if (insertedJob instanceof Response) {
-                    await dataBaseRequest(
-                        `dashboard_orders?uid=eq.${order.uid}`,
-                        "DELETE",
-                        null,
-                        env
-                    );
-
-                    return insertedJob;
-
-                }
-
-                await dataBaseRequest(
-                    `dashboard_orders?uid=eq.${order.uid}`,
-                    "PATCH",
-                    {
-                        order_list_jobs: [
-                            insertedJob[0].uid
-                        ]
-                    },
-                    env
+                throw new Error(
+                    "Payload não encontrado."
                 );
 
             }
 
+            const body =
+                JSON.parse(payloadStr);
+
+
+            /*
+            =========================================
+            CREATE ORDER
+            =========================================
+            */
+
+            const orderData =
+                await dataBaseRequest(
+                    "dashboard_orders",
+                    "POST",
+                    {
+                        client_name:
+                            body.client_name,
+
+                        client_phone:
+                            body.client_phone,
+
+                        order_status:
+                            1,
+
+                        order_priority:
+                            0
+                    },
+                    env
+                );
+
+            if (orderData instanceof Response) {
+
+                return orderData;
+
+            }
+
+            const order =
+                orderData[0];
+
+
+            /*
+            =========================================
+            VALIDATE JOB
+            =========================================
+            */
+
+            if (
+                !body.jobs
+                || !Array.isArray(body.jobs)
+                || body.jobs.length === 0
+            ) {
+
+                throw new Error(
+                    "Nenhum job enviado."
+                );
+
+            }
+
+            const job =
+                body.jobs[0];
+
+
+            /*
+            =========================================
+            CREATE JOB
+            =========================================
+            */
+
+            const insertedJobData =
+                await dataBaseRequest(
+                    "dashboard_jobs",
+                    "POST",
+                    {
+                        order_uid:
+                            order.uid,
+
+                        order_num:
+                            order.id_num,
+
+                        product_title:
+                            job.product_title,
+
+                        job_text_title:
+                            job.text_title || null,
+
+                        job_text_font:
+                            job.text_font || null,
+
+                        job_font_uid:
+                            job.font_uid || null,
+
+                        job_figure_name:
+                            job.figure_name || null,
+
+                        job_figure_url:
+                            job.figure_url || null,
+
+                        job_observ:
+                            job.observation || null,
+
+                        job_status:
+                            1,
+
+                        job_start_date:
+                            new Date().toISOString()
+                    },
+                    env
+                );
+
+            /*
+            =========================================
+            JOB ERROR
+            =========================================
+            */
+
+            if (
+                insertedJobData instanceof Response
+            ) {
+
+                await dataBaseRequest(
+                    `dashboard_orders?uid=eq.${order.uid}`,
+                    "DELETE",
+                    null,
+                    env
+                );
+
+                return insertedJobData;
+
+            }
+
+            const insertedJob =
+                insertedJobData[0];
+
+
+            /*
+            =========================================
+            UPDATE ORDER JOB LIST
+            =========================================
+            */
+
+            await dataBaseRequest(
+                `dashboard_orders?uid=eq.${order.uid}`,
+                "PATCH",
+                {
+                    order_list_jobs: [
+                        insertedJob.uid
+                    ]
+                },
+                env
+            );
+
+
+            /*
+            =========================================
+            SUCCESS RESPONSE
+            =========================================
+            */
+
             return new Response(
                 JSON.stringify({
+
                     success: true,
 
                     order_id:
@@ -92,10 +206,10 @@ export default async function operationCore(request, env) {
                         order.uid,
 
                     created_at:
-                        insertedJob[0].created_at,
+                        insertedJob.created_at,
 
                     job_uid:
-                        insertedJob[0].uid,
+                        insertedJob.uid,
 
                     client_name:
                         order.client_name,
@@ -104,36 +218,57 @@ export default async function operationCore(request, env) {
                         order.client_phone,
 
                     product_title:
-                        insertedJob[0].product_title,
+                        insertedJob.product_title,
 
                     text:
-                        insertedJob[0].job_text_title,
+                        insertedJob.job_text_title,
 
                     font_name:
-                        insertedJob[0].job_text_font,
+                        insertedJob.job_text_font,
 
                     figure_name:
-                        insertedJob[0].job_figure_name,
+                        insertedJob.job_figure_name,
 
                     figure_url:
-                        insertedJob[0].job_figure_url,
+                        insertedJob.job_figure_url,
 
                     observation:
-                        insertedJob[0].job_observ
+                        insertedJob.job_observ
+
                 }),
                 {
                     status: 201,
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type":
+                            "application/json"
                     }
                 }
             );
 
         } catch (error) {
-            console.error("[CREATE ERROR]:", error.message);
 
-            return new Response(JSON.stringify({ error: "Erro interno: " + error.message }), { status: 500 });
+            console.error(
+                "[CREATE ERROR]:",
+                error
+            );
+
+            return new Response(
+                JSON.stringify({
+                    error:
+                        "Erro interno: "
+                        + error.message
+                }),
+                {
+                    status: 500,
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
         }
+
     }
 
     // PATCH: Atualizar Ordem e Jobs (Com Sincronização, Cancelamento e Reativação)
