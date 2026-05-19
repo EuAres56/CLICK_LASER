@@ -2412,21 +2412,12 @@ SELECT FONT
         .querySelectorAll(".font-card")
         .forEach(card => {
 
-            card.classList.remove(
-                "active"
-            );
+            card.classList.remove("active");
 
-            const cardFontName =
-                (
-                    card.dataset.fontName ||
-                    card.querySelector(".font-name")
-                        ?.textContent ||
-                    ""
-                )
-                    .trim();
+            const cardFontName = (card.querySelector(".font-name")?.textContent || "");
 
             if (
-                cardFontName === fontName
+                cardFontName.trim() === fontName.trim()
             ) {
 
                 card.classList.add(
@@ -2434,13 +2425,7 @@ SELECT FONT
                 );
 
                 selectedFont = {
-
-                    font_uid:
-                        card.dataset.fontUid || null,
-
-                    font_name:
-                        cardFontName
-
+                    font_name: cardFontName
                 };
 
             }
@@ -2461,124 +2446,107 @@ SELECT FONT
         .forEach(vectorCard => {
 
             const currentVectorName =
-                (
-                    vectorCard.dataset.figureName
-                    || vectorCard.querySelector(".vector-title")
-                        ?.textContent
-                    || ""
-                ).trim();
+                (vectorCard.querySelector(".vector-title")?.textContent);
 
             if (
                 currentVectorName.trim() === vectorName.trim()
             ) {
-
                 targetVectorCard = vectorCard;
-
             }
 
         });
 
 
     /*
-    =========================================
-    OPEN VECTOR CATEGORY
-    =========================================
-    */
+=====================================
+ACTIVATE TAB
+=====================================
+*/
 
-    if (targetVectorCard) {
+    document
+        .querySelectorAll(".catalog-tab")
+        .forEach(tab => {
 
-        const categoryUid =
-            targetVectorCard.dataset.category;
+            tab.classList.remove("active");
 
-        /*
-        =====================================
-        ACTIVATE TAB
-        =====================================
-        */
+        });
 
-        document
-            .querySelectorAll(".catalog-tab")
-            .forEach(tab => {
+    const parentTab =
+        targetVectorCard.closest(".catalog-tab");
 
-                tab.classList.remove("active");
+    if (parentTab) {
 
-                if (
-                    tab.dataset.category === categoryUid
-                ) {
-
-                    tab.classList.add("active");
-
-                }
-
-            });
-
-
-        /*
-        =====================================
-        FILTER VECTORS
-        =====================================
-        */
-
-        document
-            .querySelectorAll(".vector-card")
-            .forEach(card => {
-
-                const currentCategory =
-                    card.dataset.category;
-
-                card.style.display =
-                    currentCategory === categoryUid
-                        ? ""
-                        : "none";
-
-            });
-
-
-        /*
-        =====================================
-        ACTIVATE VECTOR
-        =====================================
-        */
-
-        targetVectorCard.classList.add("active");
-
-        selectedVector = {
-
-            figure_uid:
-                targetVectorCard.dataset.figureUid || null,
-
-            figure_name:
-                targetVectorCard.dataset.figureName || "",
-
-            figure_url:
-                targetVectorCard.dataset.figureUrl || null
-
-        };
-
-        /*
-        =====================================
-        SCROLL
-        =====================================
-        */
-
-        setTimeout(() => {
-
-            targetVectorCard.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
-            });
-
-        }, 150);
+        parentTab.classList.add("active");
 
     }
 
 
     /*
-    =========================================
-    UPDATE PREVIEWS
-    =========================================
+    =====================================
+    FILTER VECTORS
+    =====================================
     */
 
-    updateFontPreviews();
+    document
+        .querySelectorAll(".vector-card")
+        .forEach(card => {
+
+            const currentCategory =
+                card.dataset.category;
+
+            card.style.display =
+                currentCategory === categoryUid
+                    ? ""
+                    : "none";
+
+        });
+
+
+    /*
+    =====================================
+    ACTIVATE VECTOR
+    =====================================
+    */
+
+    targetVectorCard.classList.add("active");
+
+    selectedVector = {
+
+        figure_uid:
+            targetVectorCard.dataset.figureUid || null,
+
+        figure_name:
+            targetVectorCard.dataset.figureName || "",
+
+        figure_url:
+            targetVectorCard.dataset.figureUrl || null
+
+    };
+
+    /*
+    =====================================
+    SCROLL
+    =====================================
+    */
+
+    setTimeout(() => {
+
+        targetVectorCard.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+    }, 150);
+
+}
+
+
+/*
+=========================================
+UPDATE PREVIEWS
+=========================================
+*/
+
+updateFontPreviews();
 
 }
