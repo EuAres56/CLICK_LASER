@@ -1242,7 +1242,7 @@ function printOrder(data) {
                 }
 
                 .vector-image {
-                    width: 64mm;
+                    width: 60mm;
                     object-fit: contain;
                     cursor: pointer;
                     transition: .2s;
@@ -1391,7 +1391,7 @@ function printOrder(data) {
                             0;
 
                         padding:
-                            0;
+                            2mm;
                     }
 
                     .ticket{
