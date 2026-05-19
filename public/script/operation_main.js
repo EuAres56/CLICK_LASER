@@ -854,15 +854,15 @@ async function saveOrder() {
         */
 
         printOrder({
-            job_uid: result.uid,
-            date: result.created_at,
-            client_name: result.client_name,
-            product_title: result.product_title,
-            text_title: result.text,
-            font_name: result.font_name,
-            vector_name: result.figure_name,
-            figure_url: result.figure_url,
-            obs: result.obs
+            job_uid: result[0].uid,
+            date: result[0].created_at,
+            client_name: result[0].client_name,
+            product_title: result[0].product_title,
+            text_title: result[0].text,
+            font_name: result[0].font_name,
+            vector_name: result[0].figure_name,
+            figure_url: result[0].figure_url,
+            obs: result[0].observation
         });
 
 
