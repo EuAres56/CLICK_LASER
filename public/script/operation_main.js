@@ -704,6 +704,24 @@ async function saveOrder() {
 
         /*
         =========================================
+        MODAL UID
+        =========================================
+        */
+
+        const modal =
+            document.getElementById(
+                "osModal"
+            );
+
+        const editUid =
+            currentOSUid;
+
+        const isEdit =
+            !!editUid;
+
+
+        /*
+        =========================================
         FORM DATA
         =========================================
         */
@@ -769,19 +787,50 @@ async function saveOrder() {
         */
 
         const payload = {
-            client_name: client,
-            client_phone: contact,
+
+            client_name:
+                client,
+
+            client_phone:
+                contact,
+
             jobs: [
+
                 {
-                    product_title: product,
-                    text_title: text || null,
-                    text_font: selectedFont ? selectedFont.font_name : null,
-                    font_uid: selectedFont ? selectedFont.font_uid : null,
-                    figure_name: selectedVector ? selectedVector.figure_name : null,
-                    figure_url: selectedVector ? selectedVector.figure_url : null,
-                    observation: `${seller} => ${obs}`.trim()
+
+                    product_title:
+                        product,
+
+                    text_title:
+                        text || null,
+
+                    text_font:
+                        selectedFont
+                            ? selectedFont.font_name
+                            : null,
+
+                    font_uid:
+                        selectedFont
+                            ? selectedFont.font_uid
+                            : null,
+
+                    figure_name:
+                        selectedVector
+                            ? selectedVector.figure_name
+                            : null,
+
+                    figure_url:
+                        selectedVector
+                            ? selectedVector.figure_url
+                            : null,
+
+                    observation:
+                        `${seller} => ${obs}`.trim()
+
                 }
+
             ]
+
         };
 
 
@@ -797,8 +846,49 @@ async function saveOrder() {
         =========================================
         */
 
-        const formData = new FormData();
-        formData.append("payload", JSON.stringify(payload));
+        const formData =
+            new FormData();
+
+        formData.append(
+            "payload",
+            JSON.stringify(payload)
+        );
+
+        /*
+        =========================================
+        UID EDIT
+        =========================================
+        */
+
+        if (isEdit) {
+
+            formData.append(
+                "uid",
+                editUid
+            );
+
+        }
+
+
+        /*
+        =========================================
+        REQUEST CONFIG
+        =========================================
+        */
+
+        const requestUrl =
+            isEdit
+
+                ? "/api/public/operation/orders/update"
+
+                : "/api/public/operation/orders/create";
+
+        const requestMethod =
+            isEdit
+
+                ? "PATCH"
+
+                : "POST";
 
 
         /*
@@ -807,12 +897,18 @@ async function saveOrder() {
         =========================================
         */
 
-        const response = await fetch("/api/public/operation/orders/create",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
+        const response =
+            await fetch(
+                requestUrl,
+                {
+                    method:
+                        requestMethod,
+
+                    body:
+                        formData
+                }
+            );
+
 
         /*
         =========================================
@@ -820,7 +916,8 @@ async function saveOrder() {
         =========================================
         */
 
-        const result = await response.json();
+        const result =
+            await response.json();
 
         console.log(
             "[SAVE ORDER RESPONSE]",
@@ -841,8 +938,16 @@ async function saveOrder() {
         }
 
 
+        /*
+        =========================================
+        SUCCESS
+        =========================================
+        */
+
         console.log(
-            "[ORDER CREATED]",
+            isEdit
+                ? "[ORDER UPDATED]"
+                : "[ORDER CREATED]",
             result
         );
 
@@ -854,17 +959,47 @@ async function saveOrder() {
         */
 
         printOrder({
-            job_uid: result.uid,
-            date: result.created_at,
-            client_name: result.client_name,
-            client_phone: result.client_phone,
-            product_title: result.product_title,
-            text_title: result.text,
-            font_name: result.font_name,
-            vector_name: result.figure_name,
-            vector_url: result.figure_url,
-            obs: result.obs
+
+            job_uid:
+                result.uid,
+
+            date:
+                result.created_at,
+
+            client_name:
+                result.client_name,
+
+            client_phone:
+                result.client_phone,
+
+            product_title:
+                result.product_title,
+
+            text_title:
+                result.text,
+
+            font_name:
+                result.font_name,
+
+            vector_name:
+                result.figure_name,
+
+            vector_url:
+                result.figure_url,
+
+            obs:
+                result.obs
+
         });
+
+
+        /*
+        =========================================
+        RESET MODAL UID
+        =========================================
+        */
+
+        delete modal.dataset.uid;
 
 
         /*
@@ -2018,21 +2153,105 @@ DELETE ORDER
 =========================================================
 */
 
-function deleteOrder(uid) {
+async function deleteOrder(uid) {
 
     const confirmDelete =
         confirm(
             "Deseja deletar esta OS?"
         );
 
-    if (!confirmDelete)
+    if (!confirmDelete) {
+
         return;
 
+    }
 
-    console.log(
-        "DELETE:",
-        uid
-    );
+    try {
+
+        /*
+        =========================================
+        REQUEST
+        =========================================
+        */
+
+        const response =
+            await fetch(
+                `/api/public/operation/orders/delete?uid=${uid}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        /*
+        =========================================
+        RESPONSE
+        =========================================
+        */
+
+        const result =
+            await response.json();
+
+        console.log(
+            "[DELETE RESPONSE]",
+            result
+        );
+
+
+        /*
+        =========================================
+        ERROR
+        =========================================
+        */
+
+        if (!response.ok) {
+
+            alert(
+                result.error ||
+                "Erro ao deletar OS."
+            );
+
+            return;
+
+        }
+
+
+        /*
+        =========================================
+        SUCCESS
+        =========================================
+        */
+
+        console.log(
+            "[ORDER DELETED]",
+            result
+        );
+
+        alert(
+            "OS deletada com sucesso."
+        );
+
+
+        /*
+        =========================================
+        RELOAD
+        =========================================
+        */
+
+        await loadOrders();
+
+    } catch (error) {
+
+        console.error(
+            "[DELETE ORDER ERROR]",
+            error
+        );
+
+        alert(
+            "Erro ao deletar ordem."
+        );
+
+    }
 
 }
 
@@ -2241,10 +2460,9 @@ async function loadOrderData(uid) {
                 (
                     card.dataset.figureName ||
                     card.querySelector(".vector-title")
-                        ?.textContent ||
+                        ?.textContent.trim() ||
                     ""
-                )
-                    .trim();
+                );
 
             if (
                 currentVectorName === vectorName
