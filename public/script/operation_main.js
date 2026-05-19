@@ -2040,25 +2040,99 @@ async function loadOrderData(uid) {
 
     /*
     =========================================
-    MOCK
+    FIND CARD
     =========================================
     */
 
-    const mock = {
+    const card =
+        document.querySelector(
+            `.os-card[data-uid="${uid}"]`
+        );
 
-        seller_name: "Ares",
+    if (!card) {
 
-        client_name: "João",
+        alert(
+            "OS não encontrada."
+        );
 
-        client_contact: "74999999999",
+        return;
 
-        engraving_text: "Pai",
+    }
 
-        font_uid: null,
 
-        vector_uid: null
+    /*
+    =========================================
+    EXTRACT DATA
+    =========================================
+    */
 
-    };
+    const clientName =
+        card.querySelector(
+            ".os-client-name"
+        )?.textContent.trim() || "";
+
+    const clientPhone =
+        card.querySelector(
+            ".os-client-phone"
+        )?.textContent.trim() || "";
+
+    const productTitle =
+        card.querySelector(
+            '.os-field[name="item"] .os-value'
+        )?.textContent.trim() || "";
+
+    const engravingText =
+        card.querySelector(
+            '.os-field[name="text"] .os-value'
+        )?.textContent.trim() || "";
+
+    const fontName =
+        card.querySelector(
+            '.os-field[name="font"] .os-value'
+        )?.textContent.trim() || "";
+
+    const vectorName =
+        card.querySelector(
+            '.os-value[name="vector"]'
+        )?.textContent.trim() || "";
+
+    const obs =
+        card.querySelector(
+            '.os-field[name="obs"] .os-value'
+        )?.textContent.trim() || "";
+
+
+    /*
+    =========================================
+    SELLER + OBS SPLIT
+    =========================================
+    */
+
+    let sellerName = "";
+    let finalObs = obs;
+
+    if (
+        obs.includes("Vendedor:")
+    ) {
+
+        const split =
+            obs.split("\n");
+
+        const sellerLine =
+            split[0];
+
+        sellerName =
+            sellerLine
+                .replace("Vendedor:", "")
+                .trim();
+
+        finalObs =
+            split
+                .slice(1)
+                .join("\n")
+                .trim();
+
+    }
 
 
     /*
@@ -2067,27 +2141,156 @@ async function loadOrderData(uid) {
     =========================================
     */
 
-    document
-        .getElementById("sellerName")
-        .value =
-        mock.seller_name;
+    document.getElementById(
+        "osSeller"
+    ).value = sellerName;
+
+    document.getElementById(
+        "osClient"
+    ).value = clientName;
+
+    document.getElementById(
+        "osContact"
+    ).value = clientPhone;
+
+    document.getElementById(
+        "osProduct"
+    ).value = productTitle;
+
+    document.getElementById(
+        "osText"
+    ).value = engravingText;
+
+    document.getElementById(
+        "obsText"
+    ).value = finalObs;
+
+
+    /*
+    =========================================
+    SELECT FONT
+    =========================================
+    */
+
+    selectedFont = null;
 
     document
-        .getElementById("clientName")
-        .value =
-        mock.client_name;
+        .querySelectorAll(".font-card")
+        .forEach(card => {
+
+            card.classList.remove(
+                "active"
+            );
+
+            const cardFontName =
+                (
+                    card.dataset.fontName ||
+                    card.querySelector(".font-name")
+                        ?.textContent ||
+                    ""
+                )
+                    .trim();
+
+            if (
+                cardFontName === fontName
+            ) {
+
+                card.classList.add(
+                    "active"
+                );
+
+                selectedFont = {
+
+                    font_uid:
+                        card.dataset.fontUid || null,
+
+                    font_name:
+                        cardFontName
+
+                };
+
+            }
+
+        });
+
+
+    /*
+    =========================================
+    SELECT VECTOR
+    =========================================
+    */
+
+    selectedVector = null;
 
     document
-        .getElementById("clientContact")
-        .value =
-        mock.client_contact;
+        .querySelectorAll(".vector-card")
+        .forEach(card => {
 
-    document
-        .getElementById("engravingText")
-        .value =
-        mock.engraving_text;
+            card.classList.remove(
+                "active"
+            );
 
+            const currentVectorName =
+                (
+                    card.dataset.figureName ||
+                    card.querySelector(".vector-title")
+                        ?.textContent ||
+                    ""
+                )
+                    .trim();
+
+            if (
+                currentVectorName === vectorName
+            ) {
+
+                card.classList.add(
+                    "active"
+                );
+
+                selectedVector = {
+
+                    figure_uid:
+                        card.dataset.figureUid || null,
+
+                    figure_name:
+                        currentVectorName,
+
+                    figure_url:
+                        card.dataset.figureUrl || null
+
+                };
+
+                /*
+                ================================
+                AUTO SCROLL
+                ================================
+                */
+
+                card.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+            }
+
+        });
+
+
+    /*
+    =========================================
+    UPDATE PREVIEWS
+    =========================================
+    */
 
     updateFontPreviews();
+
+
+    /*
+    =========================================
+    OPEN MODAL
+    =========================================
+    */
+
+    openOSModal(uid);
 
 }
