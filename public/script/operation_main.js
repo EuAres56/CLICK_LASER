@@ -855,7 +855,7 @@ async function saveOrder() {
 
         printOrder({
             job_uid: result.uid,
-            date: result.order_created,
+            date: result.created_at,
             client_name: result.client_name,
             product_title: result.product_title,
             text_title: result.text,
