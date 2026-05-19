@@ -994,7 +994,7 @@ function printOrder(data) {
                         sans-serif;
 
                     background:
-                        #111;
+                        #efefef;
 
                     padding:
                         12px;
@@ -1006,7 +1006,7 @@ function printOrder(data) {
                         center;
 
                     color:
-                        #fff;
+                        #2d2d2d;
                 }
 
                 .page{
@@ -1052,6 +1052,9 @@ function printOrder(data) {
                     display:
                         flex;
 
+                    flex-direction:
+                        column;
+
                     justify-content:
                         space-between;
 
@@ -1075,10 +1078,9 @@ function printOrder(data) {
 
                 .os-id{
                     background:
-                        #ff3b3b;
-
+                        rgba(222, 59, 255, 0.12)
                     color:
-                        #fff;
+                        #ae25ee;
 
                     padding:
                         4px 10px;
@@ -1175,7 +1177,7 @@ function printOrder(data) {
 
                 .copyable:hover{
                     color:
-                        #ff4d4d;
+                        #ae25ee;
                 }
 
                 /*
@@ -1321,10 +1323,10 @@ function printOrder(data) {
                         none;
 
                     background:
-                        #ff3b3b;
+                        rgba(174, 37, 238, 0.12);
 
                     color:
-                        #fff;
+                        #ae25ee;
 
                     padding:
                         12px;
