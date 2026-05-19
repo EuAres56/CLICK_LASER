@@ -1171,7 +1171,7 @@ function printOrder(data) {
                         absolute;
 
                     top:
-                        -24px;
+                        -18px;
 
                     left:
                         0;
@@ -1490,13 +1490,8 @@ function printOrder(data) {
                                 Texto da gravação
                             </div>
 
-                            <div
-                                class="value copyable"
-                                style="
-                                    font-family:
-                                    '${data.font_name || "inherit"}';
-                                "
-                                onclick="copyText('${(data.text_title || '')}')"
+                            <div class="value copyable" style="font-family: '${data.font_name || "inherit"}';"
+                                onclick="copyText('${(data.text_title || "")}')"
                             >
                                 ${data.text_title || "Sem texto"}
                             </div>
@@ -1571,19 +1566,12 @@ function printOrder(data) {
             <script>
 
                 async function copyText(text){
-
                     try{
-
                         await navigator.clipboard.writeText(text);
-
                     }catch(e){
-
                         console.error(e);
-
                     }
-
                 }
-
 
                 async function copyImage(){
 
