@@ -2412,15 +2412,10 @@ SELECT FONT
         .querySelectorAll(".font-card")
         .forEach(card => {
 
-            const cardFontName = (card.querySelector(".font-name").textContent);
-            if (!cardFontName) return;
+            card.classList.remove("active");
 
-            console.log(
-                "Comparing:",
-                cardFontName.trim(),
-                "with",
-                fontName.trim()
-            );
+            const cardFontName = (card.querySelector(".font-name")?.textContent || "");
+
             if (
                 cardFontName.trim() === fontName.trim()
             ) {
@@ -2453,12 +2448,6 @@ SELECT FONT
             const currentVectorName =
                 (vectorCard.querySelector(".vector-title")?.textContent);
 
-            console.log(
-                "Comparing:",
-                currentVectorName.trim(),
-                "with",
-                vectorName.trim()
-            );
             if (
                 currentVectorName.trim() === vectorName.trim()
             ) {
@@ -2469,10 +2458,10 @@ SELECT FONT
 
 
     /*
-=====================================
-ACTIVATE TAB
-=====================================
-*/
+    =====================================
+    ACTIVATE TAB
+    =====================================
+    */
 
     document
         .querySelectorAll(".catalog-tab")
@@ -2549,15 +2538,15 @@ ACTIVATE TAB
 
     }, 150);
 
-}
 
 
-/*
-=========================================
-UPDATE PREVIEWS
-=========================================
-*/
 
-updateFontPreviews();
+    /*
+    =========================================
+    UPDATE PREVIEWS
+    =========================================
+    */
+
+    updateFontPreviews();
 
 }
