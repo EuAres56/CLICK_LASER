@@ -1566,16 +1566,211 @@ function printOrder(data) {
                     }
                 }
 
-                async function copyImage(){
+                async function copyImage() {
 
-                    try{
+                    try {
 
-                        const img = document.getElementById("vectorImage");
-                        if(!img) return;
+                        const img =
+                            document.getElementById("vectorImage");
 
-                        const response = await fetch(img.src);
+                        if (!img) return;
 
-                        const blob = await response.blob();
+
+                        /*
+                        =========================================
+                        FETCH ORIGINAL FILE
+                        =========================================
+                        */
+
+                        const response =
+                            await fetch(img.src);
+
+                        const blob =
+                            await response.blob();
+
+
+                        /*
+                        =========================================
+                        SVG HANDLING
+                        =========================================
+                        */
+
+                        const isSvg =
+                            blob.type.includes("svg") ||
+                            img.src.toLowerCase().includes(".svg");
+
+
+                        /*
+                        =========================================
+                        SVG -> PNG CONVERSION
+                        =========================================
+                        */
+
+                        if (isSvg) {
+
+                            const svgText =
+                                await blob.text();
+
+
+                            /*
+                            =====================================
+                            CREATE SVG IMAGE
+                            =====================================
+                            */
+
+                            const svgBlob =
+                                new Blob(
+                                    [svgText],
+                                    {
+                                        type:
+                                            "image/svg+xml"
+                                    }
+                                );
+
+                            const svgUrl =
+                                URL.createObjectURL(svgBlob);
+
+                            const tempImg =
+                                new Image();
+
+                            tempImg.src =
+                                svgUrl;
+
+
+                            await new Promise((resolve, reject) => {
+
+                                tempImg.onload =
+                                    resolve;
+
+                                tempImg.onerror =
+                                    reject;
+
+                            });
+
+
+                            /*
+                            =====================================
+                            CREATE CANVAS
+                            =====================================
+                            */
+
+                            const canvas =
+                                document.createElement("canvas");
+
+                            const size =
+                                1200;
+
+                            canvas.width =
+                                size;
+
+                            canvas.height =
+                                size;
+
+
+                            const ctx =
+                                canvas.getContext("2d");
+
+
+                            /*
+                            =====================================
+                            WHITE BACKGROUND
+                            =====================================
+                            */
+
+                            ctx.fillStyle =
+                                "#ffffff";
+
+                            ctx.fillRect(
+                                0,
+                                0,
+                                size,
+                                size
+                            );
+
+
+                            /*
+                            =====================================
+                            FIT IMAGE
+                            =====================================
+                            */
+
+                            const ratio =
+                                Math.min(
+                                    size / tempImg.width,
+                                    size / tempImg.height
+                                );
+
+                            const drawWidth =
+                                tempImg.width * ratio;
+
+                            const drawHeight =
+                                tempImg.height * ratio;
+
+                            const x =
+                                (size - drawWidth) / 2;
+
+                            const y =
+                                (size - drawHeight) / 2;
+
+
+                            ctx.drawImage(
+                                tempImg,
+                                x,
+                                y,
+                                drawWidth,
+                                drawHeight
+                            );
+
+
+                            /*
+                            =====================================
+                            CONVERT TO PNG
+                            =====================================
+                            */
+
+                            const pngBlob =
+                                await new Promise(resolve =>
+                                    canvas.toBlob(
+                                        resolve,
+                                        "image/png",
+                                        1
+                                    )
+                                );
+
+
+                            /*
+                            =====================================
+                            COPY PNG
+                            =====================================
+                            */
+
+                            await navigator.clipboard.write([
+                                new ClipboardItem({
+                                    "image/png":
+                                        pngBlob
+                                })
+                            ]);
+
+
+                            URL.revokeObjectURL(
+                                svgUrl
+                            );
+
+
+                            console.log(
+                                "[SVG COPIED AS PNG]"
+                            );
+
+                            return;
+
+                        }
+
+
+                        /*
+                        =========================================
+                        NORMAL IMAGE COPY
+                        =========================================
+                        */
 
                         await navigator.clipboard.write([
                             new ClipboardItem({
@@ -1583,7 +1778,12 @@ function printOrder(data) {
                             })
                         ]);
 
-                    }catch(error){
+
+                        console.log(
+                            "[IMAGE COPIED]"
+                        );
+
+                    } catch (error) {
 
                         console.error(
                             "Erro ao copiar imagem:",
