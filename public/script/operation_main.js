@@ -627,7 +627,7 @@ function renderOrders(orders) {
         card.className =
             "os-card";
         card.dataset.uid = order.uid;
-        card.dataset.date = order.order_created_at;
+        card.dataset.date = order.created_at.split("T")[0];
 
         card.innerHTML = `
         <div class="os-card-title">
@@ -920,7 +920,7 @@ function reprintOS(id) {
         product_title: card.querySelector(".os-field[name='item'] .os-value")?.textContent || "Nenhum",
         text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent || "Nenhuma",
         font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
-        vector_name: card.querySelector(".os-field[name='vector'] .os-value")?.textContent || "Nenhuma",
+        vector_name: card.querySelector(".os-value[name='vector']")?.textContent || "Nenhuma",
         obs: card.querySelector(".os-field[name='obs'] .os-value")?.textContent || "Nenhuma"
     });
 }
