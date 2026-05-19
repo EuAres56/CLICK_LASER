@@ -626,7 +626,7 @@ function renderOrders(orders) {
 
         card.className =
             "os-card";
-
+        card.dataset.date = order.order_created_at;
 
         card.innerHTML = `
             <div class="os-header">
@@ -647,11 +647,15 @@ function renderOrders(orders) {
 
             <div class="os-body">
                 <div class="os-content">
-                    <div class="os-field">
+                    <div class="os-field" name="item">
+                        <div class="os-label">Item</div>
+                        <div class="os-value">${order.product_title || "Nenhum"}</div>
+                    </div>
+                    <div class="os-field" name="font">
                         <div class="os-label">Fonte</div>
                         <div class="os-value">${order.font_name || "Nenhuma"}</div>
                     </div>
-                    <div class="os-field">
+                    <div class="os-field" name="text">
                         <div class="os-label">Texto</div>
                         <div class="os-value os-engraving-text" style="font-family: '${order.font_name || "Arial"}', sans-serif;">
                             ${order.text || "Sem texto"}
@@ -663,6 +667,10 @@ function renderOrders(orders) {
                         ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
                     </div>
                     <div class="os-value">${order.figure_name || "Nenhum"}</div>
+                </div>
+                <div class="os-field" name="obs">
+                    <div class="os-label">Observações</div>
+                    <div class="os-value">${order.obs || "Nenhuma"}</div>
                 </div>
             </div>
             <div class="os-actions">
@@ -842,40 +850,13 @@ async function saveOrder() {
         */
 
         printOrder({
-
-            seller_name:
-                seller,
-
-            client_name:
-                client,
-
-            client_contact:
-                contact,
-
-            engraving_text:
-                text,
-
-            font_name:
-                selectedFont
-                    ? selectedFont.font_name
-                    : null,
-
-            vector_name:
-                selectedVector
-                    ? selectedVector.figure_name
-                    : null,
-
-            vector_url:
-                selectedVector
-                    ? selectedVector.figure_url
-                    : null,
-
-            obs:
-                obs,
-
-            order_id:
-                result.order_id
-
+            job_uid: result.job_uid,
+            date: result.order_created_at,
+            product_title: product,
+            text_title: text,
+            font_name: selectedFont ? selectedFont.font_name : "Nenhuma",
+            vector_name: selectedVector ? selectedVector.figure_name : "Nenhuma",
+            obs: `Vendedor: ${seller}:\n${obs}`.trim()
         });
 
 
@@ -907,6 +888,38 @@ async function saveOrder() {
 }
 
 
+
+
+/*
+=========================================================
+REPRINT OS
+=========================================================
+*/
+function reprintOS(id) {
+
+    const card = document.querySelector(`.os-card .os-id:contains("#${id}")`);
+
+    if (!card) {
+
+        alert(
+            "OS não encontrada para reimpressão."
+        );
+
+        return;
+
+    }
+    printOrder({
+        job_uid: id,
+        date: card.getAttribute("data-date") || "Data desconhecida",
+        product_title: card.querySelector(".os-field[name='item'] .os-value")?.textContent || "Nenhum",
+        text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent || "Nenhuma",
+        font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
+        vector_name: card.querySelector(".os-field[name='vector'] .os-value")?.textContent || "Nenhuma",
+        obs: card.querySelector(".os-field[name='obs'] .os-value")?.textContent || "Nenhuma"
+    });
+}
+
+
 /*
 =========================================================
 PRINT ORDER
@@ -922,67 +935,39 @@ function printOrder(data) {
         <html>
 
         <head>
-            <title>OS</title>
-
+            <title>Visualizar OS - ${data.job_uid}</title>
             <style>
-
-                body{
-                    font-family:Arial;
-                    padding:20px;
-                }
-
-                h2{
-                    margin-bottom:20px;
-                }
-
-                p{
-                    margin-bottom:10px;
-                }
-
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
+                .cupom { background: white; width: 350px; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+                .linha { border-bottom: 1px dashed #ccc; margin: 15px 0; }
+                .divisor-item { text-align: center; font-weight: bold; margin: 20px 0; border: 1px solid #000; padding: 5px; background: #eee; }
+                .item-bloco p { margin: 8px 0; font-size: 14px; line-height: 1.4; }
+                strong { color: #333; }
+                .btn-print { margin-top: 20px; padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+                @media print { .btn-print { display: none; } }
             </style>
-
         </head>
 
         <body>
+            <div class="cupom">
+                <h2 style="text-align:center; margin-bottom:0;">DETALHES DA OS</h2>
+                <p style="text-align:center; font-size:11px; color: #666;">ID: ${data.job_uid}</p>
+                <div class="linha"></div>
 
-            <h2>ORDEM DE SERVIÇO</h2>
+                <div class="item-bloco">
+                    <p><strong>DATA/HORA:</strong> ${data.date}</p>
+                    <div class="linha"></div>
+                    <p><strong>ITEM:</strong> ${data.product_title} </p>
+                    <p><strong>NOME:</strong> <span style="font-size:18px; font-weight:bold;">${data.client_name}</span></p>
+                    <p><strong>FONTE:</strong> ${data.font_name}</p>
+                    <p><strong>FIGURA:</strong> ${data.vector_name}</p>
+                    <p><strong>OBS:</strong> ${data.obs}</p>
+                </div>
 
-            <p><b>Vendedor:</b> ${data.seller_name}</p>
-
-            <p><b>Cliente:</b> ${data.client_name}</p>
-
-            <p><b>Contato:</b> ${data.client_contact}</p>
-
-            <p><b>Texto:</b> ${data.engraving_text || "-"}</p>
-
-            <p><b>Fonte:</b> ${selectedFont
-            ? selectedFont.font_name
-            : "-"
-        }</p>
-
-            <p><b>Vetor:</b> ${selectedVector
-            ? selectedVector.figure_name
-            : "-"
-        }</p>
-
-            ${selectedVector
-            ? `
-                    <img
-                        src="${selectedVector.figure_url}"
-                        style="
-                            width:180px;
-                            margin-top:20px;
-                        "
-                    >
-                `
-            : ""
-        }
-
-            <script>
-                window.print();
-                window.close();
-            <\/script>
-
+                <div class="linha"></div>
+                <p style="text-align:center; font-size:10px;">OS Click Laser - Produção</p>
+            </div>
+            <button class="btn-print" onclick="window.print()">Imprimir Via de Produção</button>
         </body>
 
         </html>
