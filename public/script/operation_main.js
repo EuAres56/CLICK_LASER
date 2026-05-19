@@ -2416,8 +2416,6 @@ SELECT FONT
 
             const cardFontName = (card.querySelector(".font-name")?.textContent || "");
 
-            console.log("CARD FONT NAME:", cardFontName);
-            console.log("FONT NAME:", fontName);
             if (
                 cardFontName.trim() === fontName.trim()
             ) {
@@ -2448,8 +2446,14 @@ SELECT FONT
         .forEach(vectorCard => {
 
             const currentVectorName =
-                (vectorCard.querySelector(".vector-title")?.textContent);
+                (vectorCard.querySelector(".vector-title")?.textContent || "");
 
+            console.log(
+                "Comparando:",
+                currentVectorName.trim(),
+                "==",
+                vectorName.trim()
+            );
             if (
                 currentVectorName.trim() === vectorName.trim()
             ) {
