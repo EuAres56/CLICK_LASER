@@ -36,10 +36,11 @@
 
             <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por ID...">
             <input type="date" class="date-input" id="filterDate" onchange="loadOrders()">
-            <button class="create-btn" onclick="openOSModal()">
-                <i class="fa-solid fa-plus"></i>
-                Nova OS
-            </button>
+            <div class="create-btns">
+                <button class="create-btn" onclick="copyLinkClient()">
+                    <i class="fa-brands fa-whatsapp"></i>WhatsApp</button>
+                <button class="create-btn" onclick="openOSModal()"><i class="fa-solid fa-plus"></i>Nova OS</button>
+            </div>
 
         </div>
 

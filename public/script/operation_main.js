@@ -1070,7 +1070,14 @@ function reprintOS(id) {
 PRINT ORDER
 =========================================================
 */
-
+async function copyLinkClient() {
+    try {
+        const link = window.location.href.replace("operation", "dilog");
+        await navigator.clipboard.writeText(link);
+    } catch (e) {
+        console.error(e);
+    }
+}
 /*
 =========================================================
 PRINT ORDER
