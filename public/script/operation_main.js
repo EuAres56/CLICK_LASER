@@ -2434,114 +2434,170 @@ SELECT FONT
 
 
     /*
+ =========================================
+ SELECT VECTOR + CATEGORY
+ =========================================
+ */
+
+    selectedVector = null;
+
+    /*
     =========================================
-    FIND VECTOR CARD
+    FIND VECTOR CATEGORY
     =========================================
     */
 
-    let targetVectorCard = null;
+    let targetCategory = null;
+    let targetFigure = null;
 
-    document
-        .querySelectorAll(".vector-card")
-        .forEach(vectorCard => {
+    Object.entries(loadedVectors)
+        .forEach(([category, figures]) => {
 
-            const currentVectorName = vectorCard.querySelector(".vector-name")?.textContent || "";
-            if (!currentVectorName) return;
-            console.log(
-                "Comparando:",
-                currentVectorName,
-                "==",
-                vectorName
-            );
-            if (
-                currentVectorName.trim() === vectorName.trim()
-            ) {
-                targetVectorCard = vectorCard;
+            const foundFigure =
+                figures.find(fig =>
+                    fig.figure_name.trim() === vectorName.trim()
+                );
+
+            if (foundFigure) {
+
+                targetCategory = category;
+                targetFigure = foundFigure;
+
             }
 
         });
 
 
     /*
-    =====================================
-    ACTIVATE TAB
-    =====================================
+    =========================================
+    CATEGORY FOUND
+    =========================================
     */
 
-    document
-        .querySelectorAll(".catalog-tab")
-        .forEach(tab => {
+    if (
+        targetCategory
+        && targetFigure
+    ) {
 
-            tab.classList.remove("active");
+        /*
+        =====================================
+        ACTIVATE TAB
+        =====================================
+        */
 
-        });
+        document
+            .querySelectorAll(".catalog-tab")
+            .forEach(tab => {
 
-    const parentTab =
-        targetVectorCard.closest(".catalog-tab");
+                tab.classList.remove("active");
 
-    if (parentTab) {
+                if (
+                    tab.innerText.trim()
+                    === targetCategory.trim()
+                ) {
 
-        parentTab.classList.add("active");
+                    tab.classList.add("active");
+
+                }
+
+            });
+
+
+        /*
+        =====================================
+        RENDER CATEGORY
+        =====================================
+        */
+
+        const grid =
+            document.getElementById(
+                "osVectorsGrid"
+            );
+
+        grid.innerHTML = "";
+
+
+        loadedVectors[targetCategory]
+            .forEach(fig => {
+
+                const card =
+                    document.createElement("div");
+
+                card.className =
+                    "vector-card";
+
+                card.innerHTML = `
+                <img
+                    src="${fig.figure_url}"
+                    alt="${fig.figure_name}"
+                >
+
+                <div class="vector-name">
+                    ${fig.figure_name}
+                </div>
+            `;
+
+
+                /*
+                =================================
+                VECTOR MATCH
+                =================================
+                */
+
+                if (
+                    fig.figure_name.trim()
+                    === vectorName.trim()
+                ) {
+
+                    card.classList.add(
+                        "active"
+                    );
+
+                    selectedVector = fig;
+
+                    setTimeout(() => {
+
+                        card.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center"
+                        });
+
+                    }, 100);
+
+                }
+
+
+                /*
+                =================================
+                CLICK
+                =================================
+                */
+
+                card.onclick = () => {
+
+                    document
+                        .querySelectorAll(".vector-card")
+                        .forEach(el => {
+
+                            el.classList.remove(
+                                "active"
+                            );
+
+                        });
+
+                    card.classList.add(
+                        "active"
+                    );
+
+                    selectedVector = fig;
+
+                };
+
+                grid.appendChild(card);
+
+            });
 
     }
-
-
-    /*
-    =====================================
-    FILTER VECTORS
-    =====================================
-    */
-
-    document
-        .querySelectorAll(".vector-card")
-        .forEach(card => {
-
-            const currentCategory =
-                card.dataset.category;
-
-            card.style.display =
-                currentCategory === categoryUid
-                    ? ""
-                    : "none";
-
-        });
-
-
-    /*
-    =====================================
-    ACTIVATE VECTOR
-    =====================================
-    */
-
-    targetVectorCard.classList.add("active");
-
-    selectedVector = {
-
-        figure_uid:
-            targetVectorCard.dataset.figureUid || null,
-
-        figure_name:
-            targetVectorCard.dataset.figureName || "",
-
-        figure_url:
-            targetVectorCard.dataset.figureUrl || null
-
-    };
-
-    /*
-    =====================================
-    SCROLL
-    =====================================
-    */
-
-    setTimeout(() => {
-
-        targetVectorCard.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
-
-    }, 150);
 
 
 
