@@ -627,7 +627,7 @@ function renderOrders(orders) {
         card.className =
             "os-card";
         card.dataset.uid = order.uid;
-        card.dataset.date = order.created_at.split("T")[0];
+        card.dataset.date = order.created_at;
 
         card.innerHTML = `
         <div class="os-card-title">
