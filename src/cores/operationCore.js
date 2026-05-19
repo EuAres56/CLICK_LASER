@@ -464,7 +464,9 @@ export default async function operationCore(request, env) {
                             job?.job_figure_url || "",
 
                         job_uid:
-                            job?.uid || null
+                            job?.uid || null,
+
+                        obs: job?.job_observ || null
 
                     };
 
