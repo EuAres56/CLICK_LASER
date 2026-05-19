@@ -1518,15 +1518,8 @@ function printOrder(data) {
                                 Vetor
                             </div>
 
-                            ${data.vector_url ? `<img src="${data.vector_url}" class="vector-image">` : `<div class="vector-empty">Nenhum vetor selecionado</div>`}
-
-                            <div
-                                class="value"
-                                style="
-                                    margin-top:12px;
-                                    text-align:center;
-                                "
-                            >
+                            ${data.vector_url ? `<img id="vectorImage" src="${data.vector_url}" class="vector-image">` : `<div class="vector-empty">Nenhum vetor selecionado</div>`}
+                            <div class="value" style="margin-top:12px; text-align:center;" onclick="copyImage()">
                                 ${data.vector_name || "Nenhum"}
                             </div>
 
@@ -1577,16 +1570,12 @@ function printOrder(data) {
 
                     try{
 
-                        const img =
-                            document.getElementById("vectorImage");
-
+                        const img = document.getElementById("vectorImage");
                         if(!img) return;
 
-                        const response =
-                            await fetch(img.src);
+                        const response = await fetch(img.src);
 
-                        const blob =
-                            await response.blob();
+                        const blob = await response.blob();
 
                         await navigator.clipboard.write([
                             new ClipboardItem({
