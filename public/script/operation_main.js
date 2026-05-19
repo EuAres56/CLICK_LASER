@@ -1055,7 +1055,7 @@ function printOrder(data) {
                         flex;
 
                     flex-direction:
-                        row;
+                        column;
 
                     justify-content:
                         space-between;
@@ -1382,6 +1382,9 @@ function printOrder(data) {
                             1px solid #000;
 
                         border-radius:
+                            0;
+
+                        margin:
                             0;
 
                         padding:
