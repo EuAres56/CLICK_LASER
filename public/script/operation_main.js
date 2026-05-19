@@ -779,7 +779,7 @@ async function saveOrder() {
                     font_uid: selectedFont ? selectedFont.font_uid : null,
                     figure_name: selectedVector ? selectedVector.figure_name : null,
                     figure_url: selectedVector ? selectedVector.figure_url : null,
-                    observation: `${seller} => {obs}`.trim()
+                    observation: `${seller} => ${obs}`.trim()
                 }
             ]
         };
