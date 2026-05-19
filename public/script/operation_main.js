@@ -644,17 +644,16 @@ function renderOrders(orders) {
                         ${order.client_phone || "-"}
                     </div>
                 </div>
-
+                <div class="os-field" name="item">
+                    <div class="os-label">Item</div>
+                    <div class="os-value">${order.product_title || "Nenhum"}</div>
+                </div>
 
             </div>
 
 
             <div class="os-body">
                 <div class="os-content">
-                    <div class="os-field" name="item">
-                        <div class="os-label">Item</div>
-                        <div class="os-value">${order.product_title || "Nenhum"}</div>
-                    </div>
                     <div class="os-field" name="font">
                         <div class="os-label">Fonte</div>
                         <div class="os-value">${order.font_name || "Nenhuma"}</div>
