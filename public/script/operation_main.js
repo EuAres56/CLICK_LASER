@@ -932,52 +932,720 @@ PRINT ORDER
 =========================================================
 */
 
+/*
+=========================================================
+PRINT ORDER
+=========================================================
+*/
+
 function printOrder(data) {
+
+    const vectorHtml =
+        data.vector_url
+
+            ? `
+                <div class="vector-box">
+
+                    <div class="copy-tag">
+                        Clique para copiar
+                    </div>
+
+                    <img
+                        src="${data.vector_url}"
+                        class="vector-image"
+                        id="vectorImage"
+                    >
+
+                </div>
+            `
+
+            : `
+                <div class="vector-empty">
+                    Nenhum vetor selecionado
+                </div>
+            `;
+
 
     const printWindow =
         window.open("", "_blank");
+
 
     printWindow.document.write(`
         <html>
 
         <head>
-            <title>Visualizar OS - ${data.job_uid}</title>
+
+            <title>
+                OS #${data.job_uid}
+            </title>
+
             <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
-                .cupom { background: white; width: 350px; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
-                .linha { border-bottom: 1px dashed #ccc; margin: 15px 0; }
-                .divisor-item { text-align: center; font-weight: bold; margin: 20px 0; border: 1px solid #000; padding: 5px; background: #eee; }
-                .item-bloco p { margin: 8px 0; font-size: 14px; line-height: 1.4; }
-                strong { color: #333; }
-                .btn-print { margin-top: 20px; padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
-                @media print { .btn-print { display: none; } }
+
+                *{
+                    margin:0;
+                    padding:0;
+                    box-sizing:border-box;
+                }
+
+                body{
+                    font-family:
+                        "Segoe UI",
+                        sans-serif;
+
+                    background:
+                        #111;
+
+                    padding:
+                        30px;
+
+                    display:
+                        flex;
+
+                    justify-content:
+                        center;
+
+                    color:
+                        #fff;
+                }
+
+                .page{
+                    width:
+                        100%;
+
+                    max-width:
+                        420px;
+                }
+
+                .ticket{
+                    background:
+                        #181818;
+
+                    border:
+                        1px solid #2a2a2a;
+
+                    border-radius:
+                        20px;
+
+                    overflow:
+                        hidden;
+
+                    box-shadow:
+                        0 20px 50px rgba(0,0,0,.45);
+                }
+
+                .header{
+                    padding:
+                        24px;
+
+                    border-bottom:
+                        1px solid #262626;
+
+                    background:
+                        linear-gradient(
+                            180deg,
+                            #1e1e1e,
+                            #141414
+                        );
+                }
+
+                .header-top{
+                    display:
+                        flex;
+
+                    justify-content:
+                        space-between;
+
+                    align-items:
+                        center;
+
+                    margin-bottom:
+                        10px;
+                }
+
+                .title{
+                    font-size:
+                        24px;
+
+                    font-weight:
+                        700;
+
+                    letter-spacing:
+                        1px;
+                }
+
+                .os-id{
+                    background:
+                        #ff3b3b;
+
+                    color:
+                        #fff;
+
+                    padding:
+                        6px 12px;
+
+                    border-radius:
+                        999px;
+
+                    font-size:
+                        13px;
+
+                    font-weight:
+                        700;
+                }
+
+                .date{
+                    color:
+                        #9a9a9a;
+
+                    font-size:
+                        13px;
+                }
+
+                .content{
+                    padding:
+                        24px;
+                }
+
+                .block{
+                    margin-bottom:
+                        24px;
+                }
+
+                .label{
+                    font-size:
+                        11px;
+
+                    letter-spacing:
+                        1px;
+
+                    text-transform:
+                        uppercase;
+
+                    color:
+                        #777;
+
+                    margin-bottom:
+                        8px;
+                }
+
+                .value{
+                    font-size:
+                        16px;
+
+                    color:
+                        #fff;
+
+                    line-height:
+                        1.5;
+                }
+
+                .highlight{
+                    font-size:
+                        28px;
+
+                    font-weight:
+                        700;
+                }
+
+                .copyable{
+                    cursor:
+                        pointer;
+
+                    position:
+                        relative;
+
+                    transition:
+                        .2s;
+                }
+
+                .copyable:hover{
+                    color:
+                        #ff4d4d;
+                }
+
+                .copyable::after{
+                    content:
+                        "Clique para copiar";
+
+                    position:
+                        absolute;
+
+                    top:
+                        -24px;
+
+                    left:
+                        0;
+
+                    font-size:
+                        11px;
+
+                    color:
+                        #888;
+
+                    opacity:
+                        0;
+
+                    transition:
+                        .2s;
+                }
+
+                .copyable:hover::after{
+                    opacity:
+                        1;
+                }
+
+                .vector-box{
+                    background:
+                        #101010;
+
+                    border:
+                        1px solid #2b2b2b;
+
+                    border-radius:
+                        16px;
+
+                    padding:
+                        16px;
+
+                    display:
+                        flex;
+
+                    align-items:
+                        center;
+
+                    justify-content:
+                        center;
+
+                    position:
+                        relative;
+
+                    min-height:
+                        180px;
+
+                    overflow:
+                        hidden;
+                }
+
+                .copy-tag{
+                    position:
+                        absolute;
+
+                    top:
+                        12px;
+
+                    right:
+                        12px;
+
+                    background:
+                        rgba(255,255,255,.08);
+
+                    border:
+                        1px solid rgba(255,255,255,.08);
+
+                    padding:
+                        5px 10px;
+
+                    border-radius:
+                        999px;
+
+                    font-size:
+                        11px;
+
+                    color:
+                        #aaa;
+                }
+
+                .vector-image{
+                    max-width:
+                        100%;
+
+                    max-height:
+                        150px;
+
+                    object-fit:
+                        contain;
+
+                    cursor:
+                        pointer;
+
+                    transition:
+                        .25s;
+                }
+
+                .vector-image:hover{
+                    transform:
+                        scale(1.04);
+                }
+
+                .vector-empty{
+                    border:
+                        1px dashed #444;
+
+                    border-radius:
+                        14px;
+
+                    padding:
+                        30px;
+
+                    text-align:
+                        center;
+
+                    color:
+                        #777;
+                }
+
+                .footer{
+                    padding:
+                        20px;
+
+                    border-top:
+                        1px solid #262626;
+
+                    text-align:
+                        center;
+
+                    color:
+                        #666;
+
+                    font-size:
+                        11px;
+                }
+
+                .print-btn{
+                    width:
+                        100%;
+
+                    margin-top:
+                        20px;
+
+                    border:
+                        none;
+
+                    background:
+                        #ff3b3b;
+
+                    color:
+                        white;
+
+                    padding:
+                        14px;
+
+                    border-radius:
+                        14px;
+
+                    font-size:
+                        15px;
+
+                    font-weight:
+                        700;
+
+                    cursor:
+                        pointer;
+
+                    transition:
+                        .2s;
+                }
+
+                .print-btn:hover{
+                    transform:
+                        translateY(-2px);
+
+                    filter:
+                        brightness(1.05);
+                }
+
+                @media print {
+
+                    body{
+                        background:
+                            white;
+
+                        padding:
+                            0;
+
+                        color:
+                            black;
+                    }
+
+                    .ticket{
+                        box-shadow:
+                            none;
+
+                        border:
+                            1px solid #000;
+
+                        background:
+                            white;
+                    }
+
+                    .header{
+                        background:
+                            white;
+
+                        border-color:
+                            #000;
+                    }
+
+                    .title,
+                    .value,
+                    .highlight,
+                    .label,
+                    .date,
+                    .footer,
+                    .copy-tag,
+                    .vector-empty{
+                        color:
+                            black !important;
+                    }
+
+                    .vector-box{
+                        border:
+                            1px solid #000;
+
+                        background:
+                            white;
+                    }
+
+                    .os-id{
+                        background:
+                            black;
+
+                        color:
+                            white;
+                    }
+
+                    .print-btn{
+                        display:
+                            none;
+                    }
+
+                    .copyable::after{
+                        display:
+                            none;
+                    }
+                }
+
             </style>
+
         </head>
 
         <body>
-            <div class="cupom">
-                <h2 style="text-align:center; margin-bottom:0;">DETALHES DA OS</h2>
-                <p style="text-align:center; font-size:11px; color: #666;">ID: ${data.job_uid}</p>
-                <div class="linha"></div>
 
-                <div class="item-bloco">
-                    <p><strong>DATA/HORA:</strong> ${data.date}</p>
-                    <div class="linha"></div>
-                    <p><strong>ITEM:</strong> ${data.product_title} </p>
-                    <p><strong>NOME:</strong> <span style="font-size:18px; font-weight:bold;">${data.client_name}</span></p>
-                    <p><strong>FONTE:</strong> ${data.font_name}</p>
-                    <p><strong>FIGURA:</strong> ${data.vector_name}</p>
-                    <p><strong>OBS:</strong> ${data.obs}</p>
+            <div class="page">
+
+                <div class="ticket">
+
+                    <div class="header">
+
+                        <div class="header-top">
+
+                            <div class="title">
+                                ORDEM DE SERVIÇO
+                            </div>
+
+                            <div class="os-id">
+                                #${data.job_uid}
+                            </div>
+
+                        </div>
+
+                        <div class="date">
+                            ${data.date || ""}
+                        </div>
+
+                    </div>
+
+                    <div class="content">
+
+                        <div class="block">
+
+                            <div class="label">
+                                Cliente
+                            </div>
+
+                            <div
+                                class="value highlight copyable"
+                                onclick="copyText('${(data.client_name || '').replace(/'/g, "\\'")}')"
+                            >
+                                ${data.client_name || "-"}
+                            </div>
+
+                        </div>
+
+
+                        <div class="block">
+
+                            <div class="label">
+                                Produto
+                            </div>
+
+                            <div class="value">
+                                ${data.product_title || "-"}
+                            </div>
+
+                        </div>
+
+
+                        <div class="block">
+
+                            <div class="label">
+                                Texto da gravação
+                            </div>
+
+                            <div
+                                class="value copyable"
+                                style="
+                                    font-family:
+                                    '${data.font_name || "inherit"}';
+                                "
+                                onclick="copyText('${(data.text_title || '').replace(/'/g, "\\'")}')"
+                            >
+                                ${data.text_title || "Sem texto"}
+                            </div>
+
+                        </div>
+
+
+                        <div class="block">
+
+                            <div class="label">
+                                Fonte
+                            </div>
+
+                            <div class="value">
+                                ${data.font_name || "Nenhuma"}
+                            </div>
+
+                        </div>
+
+
+                        <div class="block">
+
+                            <div class="label">
+                                Vetor
+                            </div>
+
+                            ${vectorHtml}
+
+                            <div
+                                class="value"
+                                style="
+                                    margin-top:12px;
+                                    text-align:center;
+                                "
+                            >
+                                ${data.vector_name || "Nenhum"}
+                            </div>
+
+                        </div>
+
+
+                        <div class="block">
+
+                            <div class="label">
+                                Observações
+                            </div>
+
+                            <div
+                                class="value copyable"
+                                style="
+                                    white-space:pre-line;
+                                "
+                                onclick="copyText(\`${(data.obs || '').replace(/`/g, "\\`")}\`)"
+                            >
+                                ${data.obs || "Nenhuma"}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="footer">
+                        Click Laser • Produção
+                    </div>
+
                 </div>
 
-                <div class="linha"></div>
-                <p style="text-align:center; font-size:10px;">OS Click Laser - Produção</p>
+                <button
+                    class="print-btn"
+                    onclick="window.print()"
+                >
+                    Imprimir Via de Produção
+                </button>
+
             </div>
-            <button class="btn-print" onclick="window.print()">Imprimir Via de Produção</button>
+
+
+            <script>
+
+                async function copyText(text){
+
+                    try{
+
+                        await navigator.clipboard.writeText(text);
+
+                    }catch(e){
+
+                        console.error(e);
+
+                    }
+
+                }
+
+
+                async function copyImage(){
+
+                    try{
+
+                        const img =
+                            document.getElementById("vectorImage");
+
+                        if(!img) return;
+
+                        const response =
+                            await fetch(img.src);
+
+                        const blob =
+                            await response.blob();
+
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                [blob.type]: blob
+                            })
+                        ]);
+
+                    }catch(error){
+
+                        console.error(
+                            "Erro ao copiar imagem:",
+                            error
+                        );
+
+                    }
+
+                }
+
+
+                const vectorImage =
+                    document.getElementById("vectorImage");
+
+                if(vectorImage){
+
+                    vectorImage.addEventListener(
+                        "click",
+                        copyImage
+                    );
+
+                }
+
+            </script>
+
         </body>
 
         </html>
     `);
+
+    printWindow.document.close();
 
 }
 
