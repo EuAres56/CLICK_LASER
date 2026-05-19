@@ -1490,7 +1490,7 @@ function printOrder(data) {
                                 Texto da gravação
                             </div>
 
-                            <div class="value copyable" style="font-family: '${data.font_name || "inherit"}';" onclick="copyText('${(data.text_title || "")}')">
+                            <div class="value copyable" style="font-family: '${data.font_name || "inherit"}';" onclick="copyText('${(data.text_title.trim() || "")}')">
                                 ${data.text_title.trim() || "Sem texto"}
                             </div>
 
