@@ -1071,12 +1071,86 @@ PRINT ORDER
 =========================================================
 */
 async function copyLinkClient() {
+
+    const button =
+        document.getElementById(
+            "copyClientBtn"
+        );
+
     try {
-        const link = window.location.href.replace("operation", "dilog");
-        await navigator.clipboard.writeText(link);
-    } catch (e) {
-        console.error(e);
+
+        const link =
+            window.location.href
+                .replace("operation", "dialog");
+
+        await navigator.clipboard.writeText(
+            link
+        );
+
+        /*
+        =========================================
+        SUCCESS FEEDBACK
+        =========================================
+        */
+
+        const originalHTML =
+            button.innerHTML;
+
+        button.innerHTML = `
+            <i class="fa-solid fa-check"></i>
+            Copiado
+        `;
+
+        button.classList.add(
+            "copied"
+        );
+
+        setTimeout(() => {
+
+            button.innerHTML =
+                originalHTML;
+
+            button.classList.remove(
+                "copied"
+            );
+
+        }, 1800);
+
+    } catch (error) {
+
+        console.error(error);
+
+        /*
+        =========================================
+        ERROR FEEDBACK
+        =========================================
+        */
+
+        const originalHTML =
+            button.innerHTML;
+
+        button.innerHTML = `
+            <i class="fa-solid fa-xmark"></i>
+            Erro
+        `;
+
+        button.classList.add(
+            "error"
+        );
+
+        setTimeout(() => {
+
+            button.innerHTML =
+                originalHTML;
+
+            button.classList.remove(
+                "error"
+            );
+
+        }, 1800);
+
     }
+
 }
 /*
 =========================================================

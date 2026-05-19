@@ -37,9 +37,11 @@
             <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por ID...">
             <input type="date" class="date-input" id="filterDate" onchange="loadOrders()">
             <div class="header-btns">
-                <button class="create-btn" onclick="copyLinkClient()">
-                    <i class="fa-brands fa-whatsapp"></i>Cliente</button>
-                <button class="whatsapp-btn" onclick="openOSModal()"><i class="fa-solid fa-plus"></i>Nova OS</button>
+                <button class="whatsapp-btn" id="copyClientBtn" onclick="copyLinkClient()">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    Cliente
+                </button>
+                <button class="create-btn" onclick="openOSModal()"><i class="fa-solid fa-plus"></i>Nova OS</button>
             </div>
 
         </div>
