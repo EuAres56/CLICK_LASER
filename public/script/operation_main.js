@@ -626,6 +626,7 @@ function renderOrders(orders) {
 
         card.className =
             "os-card";
+        card.dataset.uid = order.uid;
         card.dataset.date = order.order_created_at;
 
         card.innerHTML = `
@@ -900,7 +901,7 @@ REPRINT OS
 */
 function reprintOS(id) {
 
-    const card = document.querySelector(`.os-card .os-card-title .os-id:contains("#${id}")`);
+    const card = document.querySelector(`.os-card[data-uid="${id}"]`);
 
     if (!card) {
 
