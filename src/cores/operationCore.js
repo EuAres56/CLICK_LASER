@@ -81,10 +81,53 @@ export default async function operationCore(request, env) {
 
             }
 
-            return new Response(JSON.stringify({ success: true, order_id: order.id_num }), {
-                status: 201,
-                headers: { "Content-Type": "application/json" }
-            });
+            return new Response(
+                JSON.stringify({
+                    success: true,
+
+                    order_id:
+                        order.id_num,
+
+                    order_uid:
+                        order.uid,
+
+                    created_at:
+                        insertedJob[0].created_at,
+
+                    job_uid:
+                        insertedJob[0].uid,
+
+                    client_name:
+                        order.client_name,
+
+                    client_phone:
+                        order.client_phone,
+
+                    product_title:
+                        insertedJob[0].product_title,
+
+                    text:
+                        insertedJob[0].job_text_title,
+
+                    font_name:
+                        insertedJob[0].job_text_font,
+
+                    figure_name:
+                        insertedJob[0].job_figure_name,
+
+                    figure_url:
+                        insertedJob[0].job_figure_url,
+
+                    observation:
+                        insertedJob[0].job_observ
+                }),
+                {
+                    status: 201,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
 
         } catch (error) {
             console.error("[CREATE ERROR]:", error.message);

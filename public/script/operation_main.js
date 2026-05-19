@@ -852,17 +852,17 @@ async function saveOrder() {
         PRINT
         =========================================
         */
-
+        const osData = result[0];
         printOrder({
-            job_uid: result[0].uid,
-            date: result[0].created_at,
-            client_name: result[0].client_name,
-            product_title: result[0].product_title,
-            text_title: result[0].text,
-            font_name: result[0].font_name,
-            vector_name: result[0].figure_name,
-            figure_url: result[0].figure_url,
-            obs: result[0].observation
+            job_uid: osData.uid,
+            date: osData.created_at,
+            client_name: osData.client_name,
+            product_title: osData.product_title,
+            text_title: osData.text,
+            font_name: osData.font_name,
+            vector_name: osData.figure_name,
+            figure_url: osData.figure_url,
+            obs: osData.observation
         });
 
 
