@@ -2401,41 +2401,47 @@ async function loadOrderData(uid) {
 
 
     /*
-    =========================================
-    SELECT FONT
-    =========================================
-    */
+=========================================
+SELECT FONT
+=========================================
+*/
+
+    selectedFont = null;
 
     document
         .querySelectorAll(".font-card")
-        .forEach(fontCard => {
+        .forEach(card => {
 
-            const currentFontName =
+            card.classList.remove(
+                "active"
+            );
+
+            const cardFontName =
                 (
-                    fontCard.dataset.fontName
-                    || fontCard.querySelector(".font-name")
-                        ?.textContent
-                    || ""
-                ).trim();
+                    card.dataset.fontName ||
+                    card.querySelector(".font-name")
+                        ?.textContent ||
+                    ""
+                )
+                    .trim();
 
-            if (currentFontName === fontName) {
+            if (
+                cardFontName === fontName
+            ) {
 
-                fontCard.classList.add("active");
+                card.classList.add(
+                    "active"
+                );
 
                 selectedFont = {
 
                     font_uid:
-                        fontCard.dataset.fontUid || null,
+                        card.dataset.fontUid || null,
 
                     font_name:
-                        currentFontName
+                        cardFontName
 
                 };
-
-                fontCard.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
 
             }
 
@@ -2463,7 +2469,7 @@ async function loadOrderData(uid) {
                 ).trim();
 
             if (
-                currentVectorName === vectorName
+                currentVectorName.trim() === vectorName.trim()
             ) {
 
                 targetVectorCard = vectorCard;
