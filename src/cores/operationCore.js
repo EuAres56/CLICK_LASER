@@ -199,17 +199,11 @@ export default async function operationCore(request, env) {
 
                     success: true,
 
-                    order_id:
-                        order.id_num,
-
-                    order_uid:
-                        order.uid,
+                    uid:
+                        insertedJob.uid,
 
                     created_at:
                         insertedJob.created_at,
-
-                    job_uid:
-                        insertedJob.uid,
 
                     client_name:
                         order.client_name,
@@ -232,7 +226,7 @@ export default async function operationCore(request, env) {
                     figure_url:
                         insertedJob.job_figure_url,
 
-                    observation:
+                    obs:
                         insertedJob.job_observ
 
                 }),
