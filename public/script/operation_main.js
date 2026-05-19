@@ -861,6 +861,7 @@ async function saveOrder() {
             text_title: text,
             font_name: selectedFont ? selectedFont.font_name : "Nenhuma",
             vector_name: selectedVector ? selectedVector.figure_name : "Nenhuma",
+            figure_url: selectedVector ? selectedVector.figure_url : null,
             obs: `Vendedor: ${seller}:\n${obs}`.trim()
         });
 
@@ -921,6 +922,7 @@ function reprintOS(id) {
         text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent || "Nenhuma",
         font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
         vector_name: card.querySelector(".os-value[name='vector']")?.textContent || "Nenhuma",
+        vector_url: card.querySelector(".os-preview-image img")?.src || null,
         obs: card.querySelector(".os-field[name='obs'] .os-value")?.textContent || "Nenhuma"
     });
 }
