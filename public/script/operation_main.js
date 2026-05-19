@@ -2412,10 +2412,15 @@ SELECT FONT
         .querySelectorAll(".font-card")
         .forEach(card => {
 
-            card.classList.remove("active");
+            const cardFontName = (card.querySelector(".font-name").textContent);
+            if (!cardFontName) return;
 
-            const cardFontName = (card.querySelector(".font-name")?.textContent || "");
-
+            console.log(
+                "Comparing:",
+                cardFontName.trim(),
+                "with",
+                fontName.trim()
+            );
             if (
                 cardFontName.trim() === fontName.trim()
             ) {
@@ -2448,6 +2453,12 @@ SELECT FONT
             const currentVectorName =
                 (vectorCard.querySelector(".vector-title")?.textContent);
 
+            console.log(
+                "Comparing:",
+                currentVectorName.trim(),
+                "with",
+                vectorName.trim()
+            );
             if (
                 currentVectorName.trim() === vectorName.trim()
             ) {
