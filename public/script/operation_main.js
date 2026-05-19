@@ -1464,9 +1464,7 @@ function printOrder(data) {
                             </div>
 
                             <div
-                                class="value highlight copyable"
-                                onclick="copyText('${(data.client_name || '').replace(/'/g, "\\'")}')"
-                            >
+                                class="value highlight">
                                 ${data.client_name || "-"}
                             </div>
 
@@ -1498,7 +1496,7 @@ function printOrder(data) {
                                     font-family:
                                     '${data.font_name || "inherit"}';
                                 "
-                                onclick="copyText('${(data.text_title || '').replace(/'/g, "\\'")}')"
+                                onclick="copyText('${(data.text_title || '')}')"
                             >
                                 ${data.text_title || "Sem texto"}
                             </div>
@@ -1525,7 +1523,7 @@ function printOrder(data) {
                                 Vetor
                             </div>
 
-                            ${vectorHtml}
+                            ${data.vector_url ? `<img src="${data.vector_url}" class="vector-image">` : `<div class="vector-empty">Nenhum vetor selecionado</div>`}
 
                             <div
                                 class="value"
@@ -1546,13 +1544,7 @@ function printOrder(data) {
                                 Observações
                             </div>
 
-                            <div
-                                class="value copyable"
-                                style="
-                                    white-space:pre-line;
-                                "
-                                onclick="copyText(\`${(data.obs || '').replace(/`/g, "\\`")}\`)"
-                            >
+                            <div class="value">
                                 ${data.obs || "Nenhuma"}
                             </div>
 
