@@ -629,10 +629,13 @@ function renderOrders(orders) {
         card.dataset.date = order.order_created_at;
 
         card.innerHTML = `
+        <div class="os-card-title">
+            <div class="os-id">
+                #${order.job_uid || "--"}
+            </div>
+        </div>
+        <div class="os-card-body">
             <div class="os-header">
-                <div class="os-id">
-                    #${order.job_uid || "--"}
-                </div>
                 <div class="os-client-area">
                     <div class="os-client-name">
                         ${order.client_name || "Sem nome"}
@@ -641,6 +644,8 @@ function renderOrders(orders) {
                         ${order.client_phone || "-"}
                     </div>
                 </div>
+
+
             </div>
 
 
@@ -677,7 +682,7 @@ function renderOrders(orders) {
                 <button class="os-btn edit-btn" onclick="openOSModal('${order.uid}')">Editar</button>
                 <button class="os-btn delete-btn" onclick="deleteOrder('${order.uid}')">Deletar</button>
             </div>
-
+        </div>
         `;
 
         container.appendChild(card);
