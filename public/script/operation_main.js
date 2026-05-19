@@ -670,14 +670,14 @@ function renderOrders(orders) {
                         ${order.figure_url ? `<img src="${order.figure_url}" class="os-preview-image">` : `<div class="os-preview-placeholder">Sem Figura</div>`}
                     </div>
                     <div class="os-value">${order.figure_name || "Nenhum"}</div>
-                    <div class="os-field" name="obs">
-                        <div class="os-label">Observações</div>
-                        <div class="os-value">${order.obs || "Nenhuma"}</div>
-                    </div>
                 </div>
             </div>
+            <div class="os-field" name="obs">
+                <div class="os-label">Observações</div>
+                <div class="os-value">${order.obs || "Nenhuma"}</div>
+            </div>
             <div class="os-actions">
-                <button class="os-btn view-btn" onclick="printOrder('${order}')">Imprimir</button>
+                <button class="os-btn view-btn" onclick="reprintOS('${order.uid}')">Imprimir</button>
                 <button class="os-btn edit-btn" onclick="openOSModal('${order.uid}')">Editar</button>
                 <button class="os-btn delete-btn" onclick="deleteOrder('${order.uid}')">Deletar</button>
             </div>
