@@ -1364,6 +1364,8 @@ function printOrder(data) {
 
                         padding:
                             0;
+                        margin:
+                            0;
 
                         color:
                             black;
@@ -1376,6 +1378,11 @@ function printOrder(data) {
                         border:
                             1px solid #000;
 
+                        border-radius:
+                            0;
+
+                        padding:
+                            0;
                         background:
                             white;
                     }
