@@ -982,7 +982,6 @@ function printOrder(data) {
             </title>
 
             <style>
-
                 *{
                     margin:0;
                     padding:0;
@@ -991,14 +990,14 @@ function printOrder(data) {
 
                 body{
                     font-family:
-                        "Segoe UI",
+                        Arial,
                         sans-serif;
 
                     background:
                         #111;
 
                     padding:
-                        30px;
+                        12px;
 
                     display:
                         flex;
@@ -1015,7 +1014,7 @@ function printOrder(data) {
                         100%;
 
                     max-width:
-                        420px;
+                        360px;
                 }
 
                 .ticket{
@@ -1023,39 +1022,35 @@ function printOrder(data) {
                         #181818;
 
                     border:
-                        1px solid #2a2a2a;
+                        1px solid #262626;
 
                     border-radius:
-                        20px;
+                        14px;
 
                     overflow:
                         hidden;
-
-                    box-shadow:
-                        0 20px 50px rgba(0,0,0,.45);
                 }
+
+                /*
+                =========================================================
+                HEADER
+                =========================================================
+                */
 
                 .header{
                     padding:
-                        24px;
+                        14px 16px;
 
                     border-bottom:
-                        1px solid #262626;
+                        1px dashed #333;
 
                     background:
-                        linear-gradient(
-                            180deg,
-                            #1e1e1e,
-                            #141414
-                        );
+                        #151515;
                 }
 
                 .header-top{
                     display:
                         flex;
-
-                    flex-direction:
-                        column;
 
                     justify-content:
                         space-between;
@@ -1063,19 +1058,19 @@ function printOrder(data) {
                     align-items:
                         center;
 
-                    margin-bottom:
+                    gap:
                         10px;
                 }
 
                 .title{
                     font-size:
-                        24px;
+                        16px;
 
                     font-weight:
                         700;
 
                     letter-spacing:
-                        1px;
+                        .5px;
                 }
 
                 .os-id{
@@ -1086,78 +1081,93 @@ function printOrder(data) {
                         #fff;
 
                     padding:
-                        6px 12px;
+                        4px 10px;
 
                     border-radius:
                         999px;
 
                     font-size:
-                        13px;
+                        11px;
 
                     font-weight:
                         700;
                 }
 
                 .date{
+                    margin-top:
+                        6px;
+
                     color:
-                        #9a9a9a;
+                        #8c8c8c;
 
                     font-size:
-                        13px;
+                        11px;
                 }
+
+                /*
+                =========================================================
+                CONTENT
+                =========================================================
+                */
 
                 .content{
                     padding:
-                        24px;
+                        14px 16px;
                 }
 
                 .block{
                     margin-bottom:
-                        24px;
+                        14px;
                 }
 
                 .label{
                     font-size:
-                        11px;
-
-                    letter-spacing:
-                        1px;
+                        9px;
 
                     text-transform:
                         uppercase;
+
+                    letter-spacing:
+                        1px;
 
                     color:
                         #777;
 
                     margin-bottom:
-                        8px;
+                        4px;
                 }
 
                 .value{
                     font-size:
-                        16px;
+                        14px;
+
+                    line-height:
+                        1.35;
 
                     color:
                         #fff;
 
-                    line-height:
-                        1.5;
+                    word-break:
+                        break-word;
                 }
 
                 .highlight{
                     font-size:
-                        28px;
+                        20px;
 
                     font-weight:
                         700;
                 }
 
+                /*
+                =========================================================
+                COPYABLE
+                =========================================================
+                */
+
                 .copyable{
                     cursor:
                         pointer;
-
-                    position:
-                        relative;
 
                     transition:
                         .2s;
@@ -1168,50 +1178,13 @@ function printOrder(data) {
                         #ff4d4d;
                 }
 
-                .copyable::after{
-                    content:
-                        "Clique para copiar";
-
-                    position:
-                        absolute;
-
-                    top:
-                        -18px;
-
-                    left:
-                        0;
-
-                    font-size:
-                        11px;
-
-                    color:
-                        #888;
-
-                    opacity:
-                        0;
-
-                    transition:
-                        .2s;
-                }
-
-                .copyable:hover::after{
-                    opacity:
-                        1;
-                }
+                /*
+                =========================================================
+                VECTOR
+                =========================================================
+                */
 
                 .vector-box{
-                    background:
-                        #101010;
-
-                    border:
-                        1px solid #2b2b2b;
-
-                    border-radius:
-                        16px;
-
-                    padding:
-                        16px;
-
                     display:
                         flex;
 
@@ -1221,14 +1194,23 @@ function printOrder(data) {
                     justify-content:
                         center;
 
-                    position:
-                        relative;
+                    background:
+                        #101010;
+
+                    border:
+                        1px solid #2a2a2a;
+
+                    border-radius:
+                        10px;
+
+                    padding:
+                        10px;
 
                     min-height:
-                        180px;
+                        110px;
 
-                    overflow:
-                        hidden;
+                    position:
+                        relative;
                 }
 
                 .copy-tag{
@@ -1236,28 +1218,25 @@ function printOrder(data) {
                         absolute;
 
                     top:
-                        12px;
+                        6px;
 
                     right:
-                        12px;
+                        6px;
+
+                    font-size:
+                        9px;
 
                     background:
                         rgba(255,255,255,.08);
 
-                    border:
-                        1px solid rgba(255,255,255,.08);
-
                     padding:
-                        5px 10px;
+                        3px 7px;
 
                     border-radius:
                         999px;
 
-                    font-size:
-                        11px;
-
                     color:
-                        #aaa;
+                        #999;
                 }
 
                 .vector-image{
@@ -1265,7 +1244,7 @@ function printOrder(data) {
                         100%;
 
                     max-height:
-                        150px;
+                        85px;
 
                     object-fit:
                         contain;
@@ -1274,12 +1253,12 @@ function printOrder(data) {
                         pointer;
 
                     transition:
-                        .25s;
+                        .2s;
                 }
 
                 .vector-image:hover{
                     transform:
-                        scale(1.04);
+                        scale(1.03);
                 }
 
                 .vector-empty{
@@ -1287,41 +1266,56 @@ function printOrder(data) {
                         1px dashed #444;
 
                     border-radius:
-                        14px;
+                        8px;
 
                     padding:
-                        30px;
+                        16px;
 
                     text-align:
                         center;
+
+                    font-size:
+                        12px;
 
                     color:
                         #777;
                 }
 
-                .footer{
-                    padding:
-                        20px;
+                /*
+                =========================================================
+                FOOTER
+                =========================================================
+                */
 
+                .footer{
                     border-top:
-                        1px solid #262626;
+                        1px dashed #333;
+
+                    padding:
+                        10px;
 
                     text-align:
                         center;
 
-                    color:
-                        #666;
-
                     font-size:
-                        11px;
+                        9px;
+
+                    color:
+                        #777;
                 }
+
+                /*
+                =========================================================
+                BUTTON
+                =========================================================
+                */
 
                 .print-btn{
                     width:
                         100%;
 
                     margin-top:
-                        20px;
+                        12px;
 
                     border:
                         none;
@@ -1330,120 +1324,166 @@ function printOrder(data) {
                         #ff3b3b;
 
                     color:
-                        white;
+                        #fff;
 
                     padding:
-                        14px;
+                        12px;
 
                     border-radius:
-                        14px;
+                        10px;
 
                     font-size:
-                        15px;
+                        13px;
 
                     font-weight:
                         700;
 
                     cursor:
                         pointer;
-
-                    transition:
-                        .2s;
                 }
 
-                .print-btn:hover{
-                    transform:
-                        translateY(-2px);
+                /*
+                =========================================================
+                PRINT
+                =========================================================
+                */
 
-                    filter:
-                        brightness(1.05);
-                }
+                @media print{
 
-                @media print {
-                    *{
-                        padding:
-                            0;
+                    @page{
+                        size:
+                            80mm auto;
 
                         margin:
                             0;
                     }
+
+                    html,
                     body{
+                        width:
+                            80mm;
+
                         background:
-                            white;
+                            white !important;
+
+                        color:
+                            black !important;
 
                         padding:
-                            0;
+                            0 !important;
+
+                        margin:
+                            0 !important;
+                    }
+
+                    body{
+                        display:
+                            block;
+                    }
+
+                    .page{
+                        width:
+                            100%;
+
+                        max-width:
+                            100%;
+
                         margin:
                             0;
 
-                        color:
-                            black;
+                        padding:
+                            0;
                     }
 
                     .ticket{
-                        box-shadow:
-                            none;
-
                         border:
-                            1px solid #000;
+                            none !important;
 
                         border-radius:
-                            0;
+                            0 !important;
 
-                        margin:
-                            0;
+                        box-shadow:
+                            none !important;
 
-                        padding:
-                            0;
                         background:
-                            white;
+                            white !important;
                     }
 
                     .header{
                         background:
-                            white;
+                            white !important;
 
-                        border-color:
-                            #000;
+                        border-bottom:
+                            1px dashed black;
+
+                        padding:
+                            8px 10px;
+                    }
+
+                    .content{
+                        padding:
+                            8px 10px;
+                    }
+
+                    .block{
+                        margin-bottom:
+                            10px;
+                    }
+
+                    .footer{
+                        border-top:
+                            1px dashed black;
+
+                        padding:
+                            6px;
+
+                        color:
+                            black !important;
                     }
 
                     .title,
+                    .label,
                     .value,
                     .highlight,
-                    .label,
                     .date,
-                    .footer,
                     .copy-tag,
                     .vector-empty{
                         color:
                             black !important;
                     }
 
-                    .vector-box{
-                        border:
-                            1px solid #000;
-
-                        background:
-                            white;
-                    }
-
                     .os-id{
                         background:
-                            black;
+                            black !important;
 
                         color:
-                            white;
+                            white !important;
+                    }
+
+                    .vector-box{
+                        background:
+                            white !important;
+
+                        border:
+                            1px solid black;
                     }
 
                     .print-btn{
                         display:
-                            none;
+                            none !important;
                     }
 
-                    .copyable::after{
-                        display:
-                            none;
+                    .copyable:hover{
+                        color:
+                            black !important;
                     }
+
+                    .vector-image{
+                        filter:
+                            grayscale(1)
+                            contrast(1.2);
+                    }
+
                 }
 
             </style>
