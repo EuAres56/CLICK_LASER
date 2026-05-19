@@ -2270,16 +2270,14 @@ async function loadOrderData(uid) {
     =========================================
     */
 
-    const card =
+    const orderCard =
         document.querySelector(
             `.os-card[data-uid="${uid}"]`
         );
 
-    if (!card) {
+    if (!orderCard) {
 
-        alert(
-            "OS não encontrada."
-        );
+        alert("OS não encontrada.");
 
         return;
 
@@ -2293,37 +2291,37 @@ async function loadOrderData(uid) {
     */
 
     const clientName =
-        card.querySelector(
+        orderCard.querySelector(
             ".os-client-name"
         )?.textContent.trim() || "";
 
     const clientPhone =
-        card.querySelector(
+        orderCard.querySelector(
             ".os-client-phone"
         )?.textContent.trim() || "";
 
     const productTitle =
-        card.querySelector(
+        orderCard.querySelector(
             '.os-field[name="item"] .os-value'
         )?.textContent.trim() || "";
 
     const engravingText =
-        card.querySelector(
+        orderCard.querySelector(
             '.os-field[name="text"] .os-value'
         )?.textContent.trim() || "";
 
     const fontName =
-        card.querySelector(
+        orderCard.querySelector(
             '.os-field[name="font"] .os-value'
         )?.textContent.trim() || "";
 
     const vectorName =
-        card.querySelector(
+        orderCard.querySelector(
             '.os-value[name="vector"]'
         )?.textContent.trim() || "";
 
     const obs =
-        card.querySelector(
+        orderCard.querySelector(
             '.os-field[name="obs"] .os-value'
         )?.textContent.trim() || "";
 
@@ -2337,26 +2335,16 @@ async function loadOrderData(uid) {
     let sellerName = "";
     let finalObs = obs;
 
-    if (
-        obs.includes("Vendedor:")
-    ) {
+    if (obs.includes("=>")) {
 
         const split =
-            obs.split("\n");
-
-        const sellerLine =
-            split[0];
+            obs.split("=>");
 
         sellerName =
-            sellerLine
-                .replace("Vendedor:", "")
-                .trim();
+            split[0]?.trim() || "";
 
         finalObs =
-            split
-                .slice(1)
-                .join("\n")
-                .trim();
+            split.slice(1).join("=>").trim();
 
     }
 
@@ -2367,29 +2355,49 @@ async function loadOrderData(uid) {
     =========================================
     */
 
-    document.getElementById(
-        "osSeller"
-    ).value = sellerName;
+    document.getElementById("osSeller").value =
+        sellerName;
 
-    document.getElementById(
-        "osClient"
-    ).value = clientName;
+    document.getElementById("osClient").value =
+        clientName;
 
-    document.getElementById(
-        "osContact"
-    ).value = clientPhone;
+    document.getElementById("osContact").value =
+        clientPhone;
 
-    document.getElementById(
-        "osProduct"
-    ).value = productTitle;
+    document.getElementById("osProduct").value =
+        productTitle;
 
-    document.getElementById(
-        "osText"
-    ).value = engravingText;
+    document.getElementById("osText").value =
+        engravingText;
 
-    document.getElementById(
-        "obsText"
-    ).value = finalObs;
+    document.getElementById("obsText").value =
+        finalObs;
+
+
+    /*
+    =========================================
+    RESET SELECTS
+    =========================================
+    */
+
+    selectedFont = null;
+    selectedVector = null;
+
+    document
+        .querySelectorAll(".font-card")
+        .forEach(card => {
+
+            card.classList.remove("active");
+
+        });
+
+    document
+        .querySelectorAll(".vector-card")
+        .forEach(card => {
+
+            card.classList.remove("active");
+
+        });
 
 
     /*
@@ -2398,100 +2406,33 @@ async function loadOrderData(uid) {
     =========================================
     */
 
-    selectedFont = null;
-
     document
         .querySelectorAll(".font-card")
-        .forEach(card => {
+        .forEach(fontCard => {
 
-            card.classList.remove(
-                "active"
-            );
-
-            const cardFontName =
+            const currentFontName =
                 (
-                    card.dataset.fontName ||
-                    card.querySelector(".font-name")
-                        ?.textContent ||
-                    ""
-                )
-                    .trim();
+                    fontCard.dataset.fontName
+                    || fontCard.querySelector(".font-name")
+                        ?.textContent
+                    || ""
+                ).trim();
 
-            if (
-                cardFontName === fontName
-            ) {
+            if (currentFontName === fontName) {
 
-                card.classList.add(
-                    "active"
-                );
+                fontCard.classList.add("active");
 
                 selectedFont = {
 
                     font_uid:
-                        card.dataset.fontUid || null,
+                        fontCard.dataset.fontUid || null,
 
                     font_name:
-                        cardFontName
+                        currentFontName
 
                 };
 
-            }
-
-        });
-
-
-    /*
-    =========================================
-    SELECT VECTOR
-    =========================================
-    */
-
-    selectedVector = null;
-
-    document
-        .querySelectorAll(".vector-card")
-        .forEach(card => {
-
-            card.classList.remove(
-                "active"
-            );
-
-            const currentVectorName =
-                (
-                    card.dataset.figureName ||
-                    card.querySelector(".vector-title")
-                        ?.textContent.trim() ||
-                    ""
-                );
-
-            if (
-                currentVectorName === vectorName
-            ) {
-
-                card.classList.add(
-                    "active"
-                );
-
-                selectedVector = {
-
-                    figure_uid:
-                        card.dataset.figureUid || null,
-
-                    figure_name:
-                        currentVectorName,
-
-                    figure_url:
-                        card.dataset.figureUrl || null
-
-                };
-
-                /*
-                ================================
-                AUTO SCROLL
-                ================================
-                */
-
-                card.scrollIntoView({
+                fontCard.scrollIntoView({
                     behavior: "smooth",
                     block: "center"
                 });
@@ -2503,19 +2444,135 @@ async function loadOrderData(uid) {
 
     /*
     =========================================
+    FIND VECTOR CARD
+    =========================================
+    */
+
+    let targetVectorCard = null;
+
+    document
+        .querySelectorAll(".vector-card")
+        .forEach(vectorCard => {
+
+            const currentVectorName =
+                (
+                    vectorCard.dataset.figureName
+                    || vectorCard.querySelector(".vector-title")
+                        ?.textContent
+                    || ""
+                ).trim();
+
+            if (
+                currentVectorName === vectorName
+            ) {
+
+                targetVectorCard = vectorCard;
+
+            }
+
+        });
+
+
+    /*
+    =========================================
+    OPEN VECTOR CATEGORY
+    =========================================
+    */
+
+    if (targetVectorCard) {
+
+        const categoryUid =
+            targetVectorCard.dataset.category;
+
+        /*
+        =====================================
+        ACTIVATE TAB
+        =====================================
+        */
+
+        document
+            .querySelectorAll(".catalog-tab")
+            .forEach(tab => {
+
+                tab.classList.remove("active");
+
+                if (
+                    tab.dataset.category === categoryUid
+                ) {
+
+                    tab.classList.add("active");
+
+                }
+
+            });
+
+
+        /*
+        =====================================
+        FILTER VECTORS
+        =====================================
+        */
+
+        document
+            .querySelectorAll(".vector-card")
+            .forEach(card => {
+
+                const currentCategory =
+                    card.dataset.category;
+
+                card.style.display =
+                    currentCategory === categoryUid
+                        ? ""
+                        : "none";
+
+            });
+
+
+        /*
+        =====================================
+        ACTIVATE VECTOR
+        =====================================
+        */
+
+        targetVectorCard.classList.add("active");
+
+        selectedVector = {
+
+            figure_uid:
+                targetVectorCard.dataset.figureUid || null,
+
+            figure_name:
+                targetVectorCard.dataset.figureName || "",
+
+            figure_url:
+                targetVectorCard.dataset.figureUrl || null
+
+        };
+
+        /*
+        =====================================
+        SCROLL
+        =====================================
+        */
+
+        setTimeout(() => {
+
+            targetVectorCard.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+        }, 150);
+
+    }
+
+
+    /*
+    =========================================
     UPDATE PREVIEWS
     =========================================
     */
 
     updateFontPreviews();
-
-
-    /*
-    =========================================
-    OPEN MODAL
-    =========================================
-    */
-
-    openOSModal(uid);
 
 }
