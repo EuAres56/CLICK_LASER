@@ -922,7 +922,7 @@ function reprintOS(id) {
         text_title: card.querySelector(".os-field[name='text'] .os-value")?.textContent || "Nenhuma",
         font_name: card.querySelector(".os-field[name='font'] .os-value")?.textContent || "Nenhuma",
         vector_name: card.querySelector(".os-value[name='vector']")?.textContent || "Nenhuma",
-        vector_url: card.querySelector(".os-preview-image img")?.src || null,
+        vector_url: card.querySelector(".os-preview-image")?.src || null,
         obs: card.querySelector(".os-field[name='obs'] .os-value")?.textContent || "Nenhuma"
     });
 }
