@@ -2445,14 +2445,13 @@ SELECT FONT
         .querySelectorAll(".vector-card")
         .forEach(vectorCard => {
 
-            const currentVectorName =
-                (vectorCard.querySelector(".vector-title")?.textContent || "");
+            const currentVectorName = (vectorCard.querySelector(".vector-title")?.textContent || "");
 
             console.log(
                 "Comparando:",
-                currentVectorName.trim(),
+                currentVectorName,
                 "==",
-                vectorName.trim()
+                vectorName
             );
             if (
                 currentVectorName.trim() === vectorName.trim()
