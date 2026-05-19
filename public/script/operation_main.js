@@ -862,7 +862,7 @@ async function saveOrder() {
             text_title: result.text,
             font_name: result.font_name,
             vector_name: result.figure_name,
-            figure_url: result.figure_url,
+            vector_url: result.figure_url,
             obs: result.obs
         });
 
