@@ -1051,43 +1051,15 @@ function sendWhatsApp(orderData) {
     */
 
     let message =
-        `*Nova Ordem de Serviço*
-
+        `
 ID da OS: ${jobUid}
 
 Cliente: ${client}
 Contato: ${contact}
 
-Texto:
-"${text}"
+Acabei de escolher minha gravação no sistema da Click Phone.
 
-Fonte:
-${font}
-
-Figura:
-${figure}
-
-Observações:
-${obs}
-
-Data:
-${formattedDate}`;
-
-
-    /*
-    =========================================
-    IMAGE LINK
-    =========================================
-    */
-
-    if (figureUrl) {
-
-        message +=
-            `\n\n*Imagem Selecionada:*
-${figureUrl}`;
-
-    }
-
+Data: ${formattedDate}`;
 
     /*
     =========================================
