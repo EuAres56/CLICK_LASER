@@ -813,7 +813,7 @@ SAVE LOADING
         4px solid #2b2b2b;
 
     border-top:
-        4px solid #ff3b3b;
+        4px solid var(--primary-hover);
 
     animation:
         saveSpin .8s linear infinite;
