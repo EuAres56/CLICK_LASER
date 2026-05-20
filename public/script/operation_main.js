@@ -700,6 +700,17 @@ SAVE ORDER
 
 async function saveOrder() {
 
+    /*
+    =========================================
+    PREVENT DOUBLE CLICK
+    =========================================
+    */
+
+    if (window.orderSaving)
+        return;
+
+    window.orderSaving = true;
+
     try {
 
         /*
@@ -718,6 +729,20 @@ async function saveOrder() {
 
         const isEdit =
             !!editUid;
+
+
+        /*
+        =========================================
+        LOCK UI
+        =========================================
+        */
+
+        setModalLoading(
+            true,
+            isEdit
+                ? "Atualizando ordem..."
+                : "Criando ordem..."
+        );
 
 
         /*
@@ -770,6 +795,10 @@ async function saveOrder() {
         */
 
         if (!seller || !client || !contact) {
+
+            setModalLoading(false);
+
+            window.orderSaving = false;
 
             alert(
                 "Preencha vendedor, cliente e contato."
@@ -854,6 +883,7 @@ async function saveOrder() {
             JSON.stringify(payload)
         );
 
+
         /*
         =========================================
         UID EDIT
@@ -924,9 +954,20 @@ async function saveOrder() {
             result
         );
 
+
+        /*
+        =========================================
+        ERROR RESPONSE
+        =========================================
+        */
+
         if (!response.ok) {
 
             console.error(result);
+
+            setModalLoading(false);
+
+            window.orderSaving = false;
 
             alert(
                 result.error ||
@@ -999,7 +1040,20 @@ async function saveOrder() {
         =========================================
         */
 
+        currentOSUid = null;
+
         delete modal.dataset.uid;
+
+
+        /*
+        =========================================
+        UNLOCK UI
+        =========================================
+        */
+
+        setModalLoading(false);
+
+        window.orderSaving = false;
 
 
         /*
@@ -1021,6 +1075,24 @@ async function saveOrder() {
             error
         );
 
+
+        /*
+        =========================================
+        UNLOCK UI
+        =========================================
+        */
+
+        setModalLoading(false);
+
+        window.orderSaving = false;
+
+
+        /*
+        =========================================
+        ALERT
+        =========================================
+        */
+
         alert(
             "Erro ao salvar ordem."
         );
@@ -1028,8 +1100,6 @@ async function saveOrder() {
     }
 
 }
-
-
 
 
 /*
@@ -2690,5 +2760,44 @@ SELECT FONT
     */
 
     updateFontPreviews();
+
+}
+
+
+/*
+=========================================================
+MODAL LOADING
+=========================================================
+*/
+
+function setModalLoading(state, text = "Salvando ordem...") {
+
+    const modal =
+        document.querySelector(".os-modal");
+
+    const overlay =
+        document.getElementById("osLoadingOverlay");
+
+    const loadingText =
+        overlay.querySelector(".os-loading-text");
+
+    if (!modal || !overlay)
+        return;
+
+    loadingText.textContent = text;
+
+    if (state) {
+
+        modal.classList.add("loading");
+
+        overlay.classList.add("active");
+
+    } else {
+
+        modal.classList.remove("loading");
+
+        overlay.classList.remove("active");
+
+    }
 
 }
