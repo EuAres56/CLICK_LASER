@@ -692,6 +692,57 @@ function updateResume() {
 
 }
 
+/*
+=========================================================
+SAVE LOADING
+=========================================================
+*/
+
+function setSaveLoading(state, title = "Enviando pedido") {
+
+    const overlay =
+        document.getElementById(
+            "saveLoadingOverlay"
+        );
+
+    if (!overlay)
+        return;
+
+    const titleElement =
+        overlay.querySelector(
+            ".save-loading-title"
+        );
+
+    if (titleElement) {
+
+        titleElement.textContent =
+            title;
+
+    }
+
+    if (state) {
+
+        document.body.classList.add(
+            "loading"
+        );
+
+        overlay.classList.add(
+            "active"
+        );
+
+    } else {
+
+        document.body.classList.remove(
+            "loading"
+        );
+
+        overlay.classList.remove(
+            "active"
+        );
+
+    }
+
+}
 
 /*
 =========================================================
@@ -701,7 +752,30 @@ SAVE ORDER
 
 async function saveOrder() {
 
+    /*
+    =========================================
+    PREVENT MULTIPLE REQUESTS
+    =========================================
+    */
+
+    if (window.orderSending)
+        return;
+
+    window.orderSending = true;
+
     try {
+
+        /*
+        =========================================
+        LOADING
+        =========================================
+        */
+
+        setSaveLoading(
+            true,
+            "Enviando pedido"
+        );
+
 
         /*
         =========================================
@@ -741,6 +815,10 @@ async function saveOrder() {
         */
 
         if (!client || !contact) {
+
+            setSaveLoading(false);
+
+            window.orderSending = false;
 
             alert(
                 "Preencha cliente e contato."
@@ -881,6 +959,10 @@ async function saveOrder() {
 
         if (!response.ok) {
 
+            setSaveLoading(false);
+
+            window.orderSending = false;
+
             console.error(result);
 
             alert(
@@ -916,17 +998,29 @@ async function saveOrder() {
 
         /*
         =========================================
-        FINISH SCREEN
+        FINISH
         =========================================
         */
+
+        setSaveLoading(false);
+
+        window.orderSending = false;
 
         showFinishScreen(
             true,
             result
         );
 
-
     } catch (error) {
+
+        console.error(
+            "[SAVE ORDER ERROR]",
+            error
+        );
+
+        setSaveLoading(false);
+
+        window.orderSending = false;
 
         showFinishScreen(
             false,
