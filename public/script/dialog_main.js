@@ -468,7 +468,9 @@ STEPS
 function showStep(index) {
 
     steps.forEach(step => {
+
         step.classList.remove("active");
+
     });
 
     steps[index].classList.add("active");
@@ -484,8 +486,19 @@ function showStep(index) {
     */
 
     if (index === 4) {
+
         updateResume();
+
     }
+
+
+    /*
+    =========================================
+    SCROLL TOP
+    =========================================
+    */
+
+    scrollToTopStep();
 
 }
 
@@ -585,6 +598,25 @@ function prevStep() {
 
 }
 
+/*
+=========================================================
+SCROLL TOP
+=========================================================
+*/
+
+function scrollToTopStep() {
+
+    window.scrollTo({
+
+        top:
+            0,
+
+        behavior:
+            "smooth"
+
+    });
+
+}
 
 /*
 =========================================================
