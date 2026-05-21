@@ -1251,6 +1251,10 @@ HEADER
     justify-content: space-between;
 
     gap: 20px;
+
+    border-bottom:
+        1px solid rgba(0, 0, 0, .06);
+    margin-bottom: 12px;
 }
 
 .os-client-area {
@@ -1264,9 +1268,6 @@ HEADER
     gap: 6px;
 
     padding-bottom: 14px;
-
-    border-bottom:
-        1px solid rgba(0, 0, 0, .06);
 }
 
 .os-client-name {
@@ -1389,6 +1390,8 @@ CONTENT
     display: flex;
 
     flex-direction: column;
+
+    min-width: 40%;
 
     gap: 6px;
 }
