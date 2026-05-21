@@ -1259,18 +1259,14 @@ HEADER
 
     flex-direction: column;
 
+    width: 60%;
+
     gap: 6px;
 
     padding-bottom: 14px;
 
     border-bottom:
         1px solid rgba(0, 0, 0, .06);
-}
-
-body.dark .os-client-area {
-
-    border-bottom:
-        1px solid rgba(255, 255, 255, .06);
 }
 
 .os-client-name {
@@ -1288,6 +1284,14 @@ body.dark .os-client-area {
 
     font-size: 14px;
 }
+
+body.dark .os-client-area {
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, .06);
+}
+
+
 
 /*
 =========================================================
@@ -1554,35 +1558,6 @@ ACTIONS
 
 }
 
-.os-client-area {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 6px;
-    border-bottom: 1px solid #2a303b;
-
-}
-
-.os-client-name {
-
-    font-size: 20px;
-
-    font-weight: 700;
-
-    color: white;
-
-}
-
-.os-client-phone {
-
-    color: #8f97aa;
-
-    font-size: 14px;
-
-}
-
 .os-id {
 
     background:
@@ -1672,61 +1647,6 @@ ACTIONS
     text-align: center;
 
 }
-
-/*
-        =========================================================
-        CONTENT
-        =========================================================
-        */
-
-.os-content {
-
-    flex: 1;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 14px;
-
-}
-
-.os-row {
-
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 14px;
-
-}
-
-.os-field {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 6px;
-
-}
-
-.os-label {
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.08em;
-
-    color: #70798d;
-
-}
-
-
-
 
 
 /*
