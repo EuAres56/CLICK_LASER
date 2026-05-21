@@ -614,8 +614,8 @@ function renderOrders(orders) {
 
     orders.forEach(order => {
         const status = {
-            0: { class: "status-pending", label: "Pendente" },
-            1: { class: "status-done", label: "Concluído" },
+            1: { class: "status-pending", label: "Pendente" },
+            3: { class: "status-done", label: "Concluído" },
             99: { class: "status-cancelled", label: "Cancelado" }
         }
 
