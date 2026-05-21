@@ -1411,6 +1411,10 @@ CONTENT
     line-height: 1.4;
 
     word-break: break-word;
+
+    height: 35px;
+
+    overflow-y: auto;
 }
 
 /*
