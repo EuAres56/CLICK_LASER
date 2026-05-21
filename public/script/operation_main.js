@@ -155,6 +155,469 @@ function updateFontPreviews() {
 
 }
 
+
+
+/*
+=========================================================
+GLOBAL CACHE
+=========================================================
+*/
+
+let loadedFonts = [];
+let loadedVectors = {};
+
+let selectedFont = null;
+let selectedVector = null;
+
+
+/*
+=========================================================
+LOAD FONTS
+=========================================================
+*/
+
+async function loadFonts() {
+
+    try {
+
+        /*
+        =========================================================
+        REQUEST
+        =========================================================
+        */
+
+        const response =
+            await fetch(
+                "/api/public/dialog/fonts/load"
+            );
+
+        const fonts =
+            await response.json();
+
+        loadedFonts = fonts;
+
+
+        /*
+        =========================================================
+        LOAD FONT FILES
+        =========================================================
+        */
+
+        await Promise.all(
+
+            fonts.map(async font => {
+
+                if (!font.font_url)
+                    return;
+
+                try {
+
+                    const fontFace =
+                        new FontFace(
+                            font.font_name,
+                            `url(${font.font_url})`
+                        );
+
+                    const loaded =
+                        await fontFace.load();
+
+                    document.fonts.add(loaded);
+
+                } catch (error) {
+
+                    console.error(
+                        "Erro ao carregar fonte:",
+                        font.font_name,
+                        error
+                    );
+
+                }
+
+            })
+
+        );
+
+
+        /*
+        =========================================================
+        POPULATE MODAL
+        =========================================================
+        */
+
+        populateOSFonts(fonts);
+
+
+        /*
+        =========================================================
+        POPULATE GALLERY
+        =========================================================
+        */
+
+        populateFontsGallery(fonts);
+
+
+        /*
+        =========================================================
+        UPDATE PREVIEWS
+        =========================================================
+        */
+
+        updateFontPreviews();
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao carregar fontes:",
+            error
+        );
+
+    }
+
+}
+
+
+/*
+=========================================================
+POPULATE OS MODAL FONTS
+=========================================================
+*/
+
+function populateOSFonts(fonts) {
+
+    const container =
+        document.getElementById(
+            "osFontsContainer"
+        );
+
+    if (!container)
+        return;
+
+
+    container.innerHTML = "";
+
+
+    fonts.forEach(font => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "font-card";
+
+
+        card.innerHTML = `
+            <div
+                class="font-preview"
+                style="
+                    font-family:'${font.font_name}'
+                "
+            >
+                ABC
+            </div>
+
+            <div class="font-name">
+                ${font.font_name}
+            </div>
+        `;
+
+
+        card.onclick = () => {
+
+            document
+                .querySelectorAll(".font-card")
+                .forEach(el => {
+
+                    el.classList.remove("active");
+
+                });
+
+            card.classList.add("active");
+
+            selectedFont = font;
+
+        };
+
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/*
+=========================================================
+POPULATE FONTS GALLERY
+=========================================================
+*/
+
+function populateFontsGallery(fonts) {
+
+    const grid =
+        document.getElementById(
+            "fontsGrid"
+        );
+
+    const tabs =
+        document.getElementById(
+            "fontsTabs"
+        );
+
+    const searchInput =
+        document.getElementById(
+            "fontsSearch"
+        );
+
+    if (!grid || !tabs)
+        return;
+
+
+    /*
+    =========================================================
+    CREATE CATEGORIES
+    =========================================================
+    */
+
+    const categories =
+        ["Todos"];
+
+
+    fonts.forEach(font => {
+
+        const category =
+            font.category || "Sem categoria";
+
+        if (!categories.includes(category)) {
+
+            categories.push(category);
+
+        }
+
+    });
+
+
+    let activeCategory =
+        "Todos";
+
+    let searchText =
+        "";
+
+
+    /*
+    =========================================================
+    RENDER TABS
+    =========================================================
+    */
+
+    tabs.innerHTML = "";
+
+
+    categories.forEach(category => {
+
+        const tab =
+            document.createElement("button");
+
+        tab.className =
+            `
+                catalog-tab
+                ${category === activeCategory ? "active" : ""}
+            `;
+
+        tab.innerText =
+            category;
+
+
+        tab.onclick = () => {
+
+            activeCategory =
+                category;
+
+            tabs
+                .querySelectorAll(".catalog-tab")
+                .forEach(el => {
+
+                    el.classList.remove("active");
+
+                });
+
+            tab.classList.add("active");
+
+            renderFonts();
+
+        };
+
+
+        tabs.appendChild(tab);
+
+    });
+
+
+    /*
+    =========================================================
+    RENDER
+    =========================================================
+    */
+
+    function renderFonts() {
+
+        grid.innerHTML = "";
+
+
+        const filteredFonts =
+            fonts.filter(font => {
+
+                const category =
+                    font.category || "Sem categoria";
+
+                const matchCategory =
+                    activeCategory === "Todos"
+                    ||
+                    category === activeCategory;
+
+                const matchSearch =
+                    font.font_name
+                        .toLowerCase()
+                        .includes(
+                            searchText.toLowerCase()
+                        );
+
+                return (
+                    matchCategory
+                    &&
+                    matchSearch
+                );
+
+            });
+
+
+        /*
+        =========================================================
+        EMPTY
+        =========================================================
+        */
+
+        if (filteredFonts.length === 0) {
+
+            grid.innerHTML = `
+                <div class="empty-state">
+
+                    <i class="fa-solid fa-font"></i>
+
+                    <span>
+                        Nenhuma fonte encontrada
+                    </span>
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        /*
+        =========================================================
+        CARDS
+        =========================================================
+        */
+
+        filteredFonts.forEach(font => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "font-item";
+
+
+            card.innerHTML = `
+                <div class="font-preview-area">
+
+                    <div
+                        class="font-preview-text"
+                        style="
+                            font-family:'${font.font_name}'
+                        "
+                    >
+                        Amanda
+                    </div>
+
+                </div>
+
+                <div class="font-info">
+
+                    <div>
+
+                        <div class="font-title">
+                            ${font.font_name}
+                        </div>
+
+                        <div class="font-category-name">
+                            ${font.category || "Sem categoria"}
+                        </div>
+
+                    </div>
+
+                    <div class="font-actions">
+
+                        <button
+                            class="font-action-btn edit"
+                            onclick="editFont('${font.uid}')"
+                        >
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button
+                            class="font-action-btn delete"
+                            onclick="deleteFont('${font.uid}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+
+            grid.appendChild(card);
+
+        });
+
+    }
+
+
+    /*
+    =========================================================
+    SEARCH
+    =========================================================
+    */
+
+    if (searchInput) {
+
+        searchInput.oninput = e => {
+
+            searchText =
+                e.target.value;
+
+            renderFonts();
+
+        };
+
+    }
+
+
+    /*
+    =========================================================
+    INITIAL RENDER
+    =========================================================
+    */
+
+    renderFonts();
+
+}
+
+
 /*
 =========================================================
 LOAD VECTORS
@@ -375,7 +838,7 @@ function populateVectorsGallery(categoriesData) {
 
     const tabs =
         document.getElementById(
-            "vectorsCategories"
+            "vectorsTabs"
         );
 
     const searchInput =
@@ -639,290 +1102,6 @@ function populateVectorsGallery(categoriesData) {
     */
 
     renderVectors();
-
-}
-
-/*
-=========================================================
-LOAD VECTORS
-=========================================================
-*/
-
-async function loadVectors() {
-
-    try {
-
-        const response =
-            await fetch(
-                "/api/public/dialog/vectors/load"
-            );
-
-        const categories =
-            await response.json();
-
-        loadedVectors = categories;
-
-
-        /*
-        =================================================
-        POPULATE OS MODAL
-        =================================================
-        */
-
-        populateOSVectors(categories);
-
-
-        /*
-        =================================================
-        POPULATE GALLERY
-        =================================================
-        */
-
-        populateVectorsGallery(categories);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar vetores:",
-            error
-        );
-
-    }
-
-}
-
-
-/*
-=========================================================
-POPULATE OS MODAL VECTORS
-=========================================================
-*/
-
-function populateOSVectors(categories) {
-
-    const tabs =
-        document.getElementById(
-            "osCatalogTabs"
-        );
-
-    const grid =
-        document.getElementById(
-            "osVectorsGrid"
-        );
-
-    if (!tabs || !grid)
-        return;
-
-
-    tabs.innerHTML = "";
-
-
-    const categoryNames =
-        Object.keys(categories);
-
-
-    if (categoryNames.length === 0)
-        return;
-
-
-    /*
-    =================================================
-    RENDER CATEGORY
-    =================================================
-    */
-
-    function renderCategory(category) {
-
-        grid.innerHTML = "";
-
-
-        categories[category]
-            .forEach(fig => {
-
-                const card =
-                    document.createElement("div");
-
-                card.className =
-                    "vector-card";
-
-
-                card.innerHTML = `
-                    <img
-                        src="${fig.figure_url}"
-                        alt="${fig.figure_name}"
-                    >
-
-                    <div class="vector-name">
-                        ${fig.figure_name}
-                    </div>
-                `;
-
-
-                card.onclick = () => {
-
-                    document
-                        .querySelectorAll(".vector-card")
-                        .forEach(el => {
-
-                            el.classList.remove("active");
-
-                        });
-
-                    card.classList.add("active");
-
-                    selectedVector = fig;
-
-                };
-
-
-                grid.appendChild(card);
-
-            });
-
-    }
-
-
-    /*
-    =================================================
-    CREATE TABS
-    =================================================
-    */
-
-    categoryNames
-        .forEach((category, index) => {
-
-            const tab =
-                document.createElement("button");
-
-            tab.className =
-                "catalog-tab";
-
-            tab.innerText =
-                category;
-
-
-            if (index === 0) {
-
-                tab.classList.add("active");
-
-            }
-
-
-            tab.onclick = () => {
-
-                document
-                    .querySelectorAll(".catalog-tab")
-                    .forEach(el => {
-
-                        el.classList.remove("active");
-
-                    });
-
-                tab.classList.add("active");
-
-                renderCategory(category);
-
-            };
-
-
-            tabs.appendChild(tab);
-
-        });
-
-
-    /*
-    =================================================
-    INITIAL CATEGORY
-    =================================================
-    */
-
-    renderCategory(categoryNames[0]);
-
-}
-
-
-/*
-=========================================================
-POPULATE VECTORS GALLERY
-=========================================================
-*/
-
-function populateVectorsGallery(categories) {
-
-    const grid =
-        document.getElementById(
-            "vectorsGrid"
-        );
-
-    if (!grid)
-        return;
-
-    grid.innerHTML = "";
-
-
-    Object.entries(categories)
-        .forEach(([category, vectors]) => {
-
-            vectors.forEach(fig => {
-
-                const card =
-                    document.createElement("div");
-
-                card.className =
-                    "vector-item";
-
-
-                card.innerHTML = `
-                    <div class="vector-preview">
-
-                        <img
-                            src="${fig.figure_url}"
-                            alt="${fig.figure_name}"
-                        >
-
-                    </div>
-
-                    <div class="vector-info">
-
-                        <div>
-
-                            <div class="vector-title">
-                                ${fig.figure_name}
-                            </div>
-
-                            <div class="vector-category-name">
-                                ${category}
-                            </div>
-
-                        </div>
-
-                        <div class="vector-actions">
-
-                            <button
-                                class="vector-action-btn edit"
-                                onclick="editVector('${fig.uid}')"
-                            >
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-
-                            <button
-                                class="vector-action-btn delete"
-                                onclick="deleteVector('${fig.uid}')"
-                            >
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-
-                        </div>
-
-                    </div>
-                `;
-
-
-                grid.appendChild(card);
-
-            });
-
-        });
 
 }
 
