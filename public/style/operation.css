@@ -1542,17 +1542,15 @@ ACTIONS
 
 .os-card {
 
-    background:
-        linear-gradient(180deg,
-            #1b1f27 0%,
-            #15181f 100%);
+    background: var(--page-bg);
 
     border:
-        1px solid #2a303b;
+        1px solid rgba(0, 0, 0, .06);
 
     border-radius: 24px;
 
     padding: 22px;
+    padding-top: 50px;
 
     display: flex;
 
@@ -1560,12 +1558,14 @@ ACTIONS
 
     gap: 20px;
 
-    transition: 0.25s;
+    transition: .25s;
 
     position: relative;
 
     overflow: hidden;
 
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, .04);
 }
 
 .os-card:hover {
@@ -2023,6 +2023,7 @@ ACTIONS
     opacity:
         .7;
 }
+
 /*
         =====================================================
         MODAL
