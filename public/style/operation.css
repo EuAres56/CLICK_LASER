@@ -801,10 +801,10 @@ GRID
 }
 
 /*
-=========================================================
-CARD
-=========================================================
-*/
+        =========================================================
+        CARD
+        =========================================================
+        */
 
 .os-card {
 
@@ -834,21 +834,17 @@ CARD
         0 10px 25px rgba(0, 0, 0, .04);
 }
 
-body.dark .os-card {
-
-    border:
-        1px solid rgba(255, 255, 255, .05);
-}
-
 .os-card:hover {
 
-    transform: translateY(-4px);
+    transform:
+        translateY(-4px);
 
     border-color:
-        rgba(125, 18, 120, .25);
+        rgba(255, 59, 222, 0.4);
 
     box-shadow:
-        0 20px 40px rgba(0, 0, 0, .08);
+        0 20px 40px rgba(0, 0, 0, 0.35);
+
 }
 
 /* RIGHT STATUS LINE */
@@ -1534,52 +1530,7 @@ ACTIONS
 }
 
 
-/*
-        =========================================================
-        CARD
-        =========================================================
-        */
 
-.os-card {
-
-    background: var(--page-bg);
-
-    border:
-        1px solid rgba(0, 0, 0, .06);
-
-    border-radius: 24px;
-
-    padding: 22px;
-    padding-top: 50px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 20px;
-
-    transition: .25s;
-
-    position: relative;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 10px 25px rgba(0, 0, 0, .04);
-}
-
-.os-card:hover {
-
-    transform:
-        translateY(-4px);
-
-    border-color:
-        rgba(255, 59, 222, 0.4);
-
-    box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.35);
-
-}
 
 
 /*
@@ -1770,17 +1721,6 @@ ACTIONS
 
 }
 
-.os-value {
-
-    font-size: 15px;
-
-    color: white;
-
-    line-height: 1.4;
-
-    word-break: break-word;
-
-}
 
 
 /*
