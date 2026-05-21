@@ -397,7 +397,6 @@ function populateVectorsGallery(categoriesData) {
         [
             "Todos",
             ...Object.keys(categoriesData)
-            Object.keys(categories)
         ];
 
 
@@ -1047,6 +1046,7 @@ async function loadOrders() {
     }
 
 }
+
 /*
 =========================================================
 RENDER ORDERS
