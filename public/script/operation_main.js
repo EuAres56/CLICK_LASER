@@ -157,18 +157,6 @@ function updateFontPreviews() {
 
 
 
-/*
-=========================================================
-GLOBAL CACHE
-=========================================================
-*/
-
-let loadedFonts = [];
-let loadedVectors = {};
-
-let selectedFont = null;
-let selectedVector = null;
-
 
 /*
 =========================================================
@@ -360,7 +348,7 @@ function populateFontsGallery(fonts) {
 
     const tabs =
         document.getElementById(
-            "fontsTabs"
+            "fontsCategories"
         );
 
     const searchInput =
@@ -838,7 +826,7 @@ function populateVectorsGallery(categoriesData) {
 
     const tabs =
         document.getElementById(
-            "vectorsTabs"
+            "vectorsCategories"
         );
 
     const searchInput =
