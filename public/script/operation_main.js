@@ -1,6 +1,6 @@
 /*
 =========================================================
-OS SYSTEM
+OS SYSTEM - GLOBAL CACHE
 =========================================================
 */
 
@@ -155,7 +155,6 @@ function updateFontPreviews() {
 
 }
 
-
 /*
 =========================================================
 LOAD FONTS
@@ -176,91 +175,71 @@ async function loadFonts() {
 
         loadedFonts = fonts;
 
-        const container =
-            document.getElementById(
-                "osFontsContainer"
-            );
 
-        container.innerHTML = "";
+        /*
+        =================================================
+        LOAD FONT FILES
+        =================================================
+        */
+
+        await Promise.all(
+
+            fonts.map(async font => {
+
+                if (!font.font_url)
+                    return;
+
+                try {
+
+                    const fontFace =
+                        new FontFace(
+                            font.font_name,
+                            `url(${font.font_url})`
+                        );
+
+                    const loaded =
+                        await fontFace.load();
+
+                    document.fonts.add(loaded);
+
+                } catch (error) {
+
+                    console.error(
+                        "Erro ao carregar fonte:",
+                        font.font_name,
+                        error
+                    );
+
+                }
+
+            })
+
+        );
 
 
         /*
-        =========================================
-        CREATE FONT CARDS
-        =========================================
+        =================================================
+        POPULATE MODAL
+        =================================================
         */
 
-        fonts.forEach(font => {
-
-            /*
-            =========================================
-            LOAD FONT FACE
-            =========================================
-            */
-
-            if (font.font_url) {
-
-                const fontFace =
-                    new FontFace(
-                        font.font_name,
-                        `url(${font.font_url})`
-                    );
-
-                fontFace
-                    .load()
-                    .then(f => {
-                        document.fonts.add(f);
-                    });
-
-            }
+        populateOSFonts(fonts);
 
 
-            /*
-            =========================================
-            CARD
-            =========================================
-            */
+        /*
+        =================================================
+        POPULATE GALLERY
+        =================================================
+        */
 
-            const card =
-                document.createElement("div");
-
-            card.className =
-                "font-card";
+        populateFontsGallery(fonts);
 
 
-            card.innerHTML = `
-                <div
-                    class="font-preview"
-                    style="font-family:'${font.font_name}'"
-                >
-                    ABC
-                </div>
-
-                <div class="font-name">
-                    ${font.font_name}
-                </div>
-            `;
-
-
-            card.onclick = () => {
-
-                document
-                    .querySelectorAll(".font-card")
-                    .forEach(el => {
-                        el.classList.remove("active");
-                    });
-
-                card.classList.add("active");
-
-                selectedFont = font;
-
-            };
-
-
-            container.appendChild(card);
-
-        });
-
+        /*
+        =================================================
+        UPDATE PREVIEW
+        =================================================
+        */
 
         updateFontPreviews();
 
@@ -272,6 +251,159 @@ async function loadFonts() {
         );
 
     }
+
+}
+
+
+/*
+=========================================================
+POPULATE OS MODAL FONTS
+=========================================================
+*/
+
+function populateOSFonts(fonts) {
+
+    const container =
+        document.getElementById(
+            "osFontsContainer"
+        );
+
+    if (!container)
+        return;
+
+    container.innerHTML = "";
+
+
+    fonts.forEach(font => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "font-card";
+
+
+        card.innerHTML = `
+            <div
+                class="font-preview"
+                style="
+                    font-family:'${font.font_name}'
+                "
+            >
+                ABC
+            </div>
+
+            <div class="font-name">
+                ${font.font_name}
+            </div>
+        `;
+
+
+        card.onclick = () => {
+
+            document
+                .querySelectorAll(".font-card")
+                .forEach(el => {
+
+                    el.classList.remove("active");
+
+                });
+
+            card.classList.add("active");
+
+            selectedFont = font;
+
+        };
+
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/*
+=========================================================
+POPULATE FONTS GALLERY
+=========================================================
+*/
+
+function populateFontsGallery(fonts) {
+
+    const grid =
+        document.getElementById(
+            "fontsGrid"
+        );
+
+    if (!grid)
+        return;
+
+    grid.innerHTML = "";
+
+
+    fonts.forEach(font => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "font-item";
+
+
+        card.innerHTML = `
+            <div class="font-preview-area">
+
+                <div
+                    class="font-preview-text"
+                    style="
+                        font-family:'${font.font_name}'
+                    "
+                >
+                    Amanda
+                </div>
+
+            </div>
+
+            <div class="font-info">
+
+                <div>
+
+                    <div class="font-title">
+                        ${font.font_name}
+                    </div>
+
+                    <div class="font-category-name">
+                        ${font.category || "Sem categoria"}
+                    </div>
+
+                </div>
+
+                <div class="font-actions">
+
+                    <button
+                        class="font-action-btn edit"
+                        onclick="editFont('${font.uid}')"
+                    >
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+
+                    <button
+                        class="font-action-btn delete"
+                        onclick="deleteFont('${font.uid}')"
+                    >
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+
+        grid.appendChild(card);
+
+    });
 
 }
 
@@ -297,135 +429,22 @@ async function loadVectors() {
         loadedVectors = categories;
 
 
-        const tabs =
-            document.getElementById(
-                "osCatalogTabs"
-            );
+        /*
+        =================================================
+        POPULATE OS MODAL
+        =================================================
+        */
 
-        const grid =
-            document.getElementById(
-                "osVectorsGrid"
-            );
-
-
-        tabs.innerHTML = "";
-
-        const categoryNames =
-            Object.keys(categories);
-
-
-        if (categoryNames.length === 0)
-            return;
+        populateOSVectors(categories);
 
 
         /*
-        =========================================
-        RENDER CATEGORY
-        =========================================
+        =================================================
+        POPULATE GALLERY
+        =================================================
         */
 
-        function renderCategory(category) {
-
-            grid.innerHTML = "";
-
-
-            categories[category]
-                .forEach(fig => {
-
-                    const card =
-                        document.createElement("div");
-
-                    card.className =
-                        "vector-card";
-
-
-                    card.innerHTML = `
-                        <img
-                            src="${fig.figure_url}"
-                            alt="${fig.figure_name}"
-                        >
-
-                        <div class="vector-name">
-                            ${fig.figure_name}
-                        </div>
-                    `;
-
-
-                    card.onclick = () => {
-
-                        document
-                            .querySelectorAll(".vector-card")
-                            .forEach(el => {
-                                el.classList.remove("active");
-                            });
-
-                        card.classList.add("active");
-
-                        selectedVector = fig;
-
-                    };
-
-
-                    grid.appendChild(card);
-
-                });
-
-        }
-
-
-        /*
-        =========================================
-        CREATE TABS
-        =========================================
-        */
-
-        categoryNames
-            .forEach((category, index) => {
-
-                const tab =
-                    document.createElement("button");
-
-                tab.className =
-                    "catalog-tab";
-
-                tab.innerText =
-                    category;
-
-
-                if (index === 0) {
-
-                    tab.classList.add("active");
-
-                }
-
-
-                tab.onclick = () => {
-
-                    document
-                        .querySelectorAll(".catalog-tab")
-                        .forEach(el => {
-                            el.classList.remove("active");
-                        });
-
-                    tab.classList.add("active");
-
-                    renderCategory(category);
-
-                };
-
-
-                tabs.appendChild(tab);
-
-            });
-
-
-        /*
-        =========================================
-        FIRST CATEGORY
-        =========================================
-        */
-
-        renderCategory(categoryNames[0]);
+        populateVectorsGallery(categories);
 
     } catch (error) {
 
@@ -435,6 +454,241 @@ async function loadVectors() {
         );
 
     }
+
+}
+
+
+/*
+=========================================================
+POPULATE OS MODAL VECTORS
+=========================================================
+*/
+
+function populateOSVectors(categories) {
+
+    const tabs =
+        document.getElementById(
+            "osCatalogTabs"
+        );
+
+    const grid =
+        document.getElementById(
+            "osVectorsGrid"
+        );
+
+    if (!tabs || !grid)
+        return;
+
+
+    tabs.innerHTML = "";
+
+
+    const categoryNames =
+        Object.keys(categories);
+
+
+    if (categoryNames.length === 0)
+        return;
+
+
+    /*
+    =================================================
+    RENDER CATEGORY
+    =================================================
+    */
+
+    function renderCategory(category) {
+
+        grid.innerHTML = "";
+
+
+        categories[category]
+            .forEach(fig => {
+
+                const card =
+                    document.createElement("div");
+
+                card.className =
+                    "vector-card";
+
+
+                card.innerHTML = `
+                    <img
+                        src="${fig.figure_url}"
+                        alt="${fig.figure_name}"
+                    >
+
+                    <div class="vector-name">
+                        ${fig.figure_name}
+                    </div>
+                `;
+
+
+                card.onclick = () => {
+
+                    document
+                        .querySelectorAll(".vector-card")
+                        .forEach(el => {
+
+                            el.classList.remove("active");
+
+                        });
+
+                    card.classList.add("active");
+
+                    selectedVector = fig;
+
+                };
+
+
+                grid.appendChild(card);
+
+            });
+
+    }
+
+
+    /*
+    =================================================
+    CREATE TABS
+    =================================================
+    */
+
+    categoryNames
+        .forEach((category, index) => {
+
+            const tab =
+                document.createElement("button");
+
+            tab.className =
+                "catalog-tab";
+
+            tab.innerText =
+                category;
+
+
+            if (index === 0) {
+
+                tab.classList.add("active");
+
+            }
+
+
+            tab.onclick = () => {
+
+                document
+                    .querySelectorAll(".catalog-tab")
+                    .forEach(el => {
+
+                        el.classList.remove("active");
+
+                    });
+
+                tab.classList.add("active");
+
+                renderCategory(category);
+
+            };
+
+
+            tabs.appendChild(tab);
+
+        });
+
+
+    /*
+    =================================================
+    INITIAL CATEGORY
+    =================================================
+    */
+
+    renderCategory(categoryNames[0]);
+
+}
+
+
+/*
+=========================================================
+POPULATE VECTORS GALLERY
+=========================================================
+*/
+
+function populateVectorsGallery(categories) {
+
+    const grid =
+        document.getElementById(
+            "vectorsGrid"
+        );
+
+    if (!grid)
+        return;
+
+    grid.innerHTML = "";
+
+
+    Object.entries(categories)
+        .forEach(([category, vectors]) => {
+
+            vectors.forEach(fig => {
+
+                const card =
+                    document.createElement("div");
+
+                card.className =
+                    "vector-item";
+
+
+                card.innerHTML = `
+                    <div class="vector-preview">
+
+                        <img
+                            src="${fig.figure_url}"
+                            alt="${fig.figure_name}"
+                        >
+
+                    </div>
+
+                    <div class="vector-info">
+
+                        <div>
+
+                            <div class="vector-title">
+                                ${fig.figure_name}
+                            </div>
+
+                            <div class="vector-category-name">
+                                ${category}
+                            </div>
+
+                        </div>
+
+                        <div class="vector-actions">
+
+                            <button
+                                class="vector-action-btn edit"
+                                onclick="editVector('${fig.uid}')"
+                            >
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+
+                            <button
+                                class="vector-action-btn delete"
+                                onclick="deleteVector('${fig.uid}')"
+                            >
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+
+
+                grid.appendChild(card);
+
+            });
+
+        });
 
 }
 
