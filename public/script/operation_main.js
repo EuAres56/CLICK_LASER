@@ -155,6 +155,10 @@ function updateFontPreviews() {
 
 }
 
+ = null;
+let selectedVector = null;
+
+
 /*
 =========================================================
 LOAD FONTS
@@ -164,6 +168,12 @@ LOAD FONTS
 async function loadFonts() {
 
     try {
+
+        /*
+        =========================================================
+        REQUEST
+        =========================================================
+        */
 
         const response =
             await fetch(
@@ -177,9 +187,9 @@ async function loadFonts() {
 
 
         /*
-        =================================================
+        =========================================================
         LOAD FONT FILES
-        =================================================
+        =========================================================
         */
 
         await Promise.all(
@@ -218,27 +228,27 @@ async function loadFonts() {
 
 
         /*
-        =================================================
+        =========================================================
         POPULATE MODAL
-        =================================================
+        =========================================================
         */
 
         populateOSFonts(fonts);
 
 
         /*
-        =================================================
+        =========================================================
         POPULATE GALLERY
-        =================================================
+        =========================================================
         */
 
         populateFontsGallery(fonts);
 
 
         /*
-        =================================================
-        UPDATE PREVIEW
-        =================================================
+        =========================================================
+        UPDATE PREVIEWS
+        =========================================================
         */
 
         updateFontPreviews();
@@ -257,7 +267,76 @@ async function loadFonts() {
 
 /*
 =========================================================
-FONTS GALLERY
+POPULATE OS MODAL FONTS
+=========================================================
+*/
+
+function populateOSFonts(fonts) {
+
+    const container =
+        document.getElementById(
+            "osFontsContainer"
+        );
+
+    if (!container)
+        return;
+
+
+    container.innerHTML = "";
+
+
+    fonts.forEach(font => {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "font-card";
+
+
+        card.innerHTML = `
+            <div
+                class="font-preview"
+                style="
+                    font-family:'${font.font_name}'
+                "
+            >
+                ABC
+            </div>
+
+            <div class="font-name">
+                ${font.font_name}
+            </div>
+        `;
+
+
+        card.onclick = () => {
+
+            document
+                .querySelectorAll(".font-card")
+                .forEach(el => {
+
+                    el.classList.remove("active");
+
+                });
+
+            card.classList.add("active");
+
+            selectedFont = font;
+
+        };
+
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/*
+=========================================================
+POPULATE FONTS GALLERY
 =========================================================
 */
 
@@ -309,7 +388,8 @@ function populateFontsGallery(fonts) {
     let activeCategory =
         "Todos";
 
-    let searchText = "";
+    let searchText =
+        "";
 
 
     /*
@@ -363,7 +443,7 @@ function populateFontsGallery(fonts) {
 
     /*
     =========================================================
-    RENDER FONTS
+    RENDER
     =========================================================
     */
 
@@ -426,7 +506,7 @@ function populateFontsGallery(fonts) {
 
         /*
         =========================================================
-        CREATE CARDS
+        CARDS
         =========================================================
         */
 
@@ -529,7 +609,212 @@ function populateFontsGallery(fonts) {
 
 /*
 =========================================================
-VECTORS GALLERY
+LOAD VECTORS
+=========================================================
+*/
+
+async function loadVectors() {
+
+    try {
+
+        /*
+        =========================================================
+        REQUEST
+        =========================================================
+        */
+
+        const response =
+            await fetch(
+                "/api/public/dialog/vectors/load"
+            );
+
+        const categories =
+            await response.json();
+
+        loadedVectors = categories;
+
+
+        /*
+        =========================================================
+        POPULATE MODAL
+        =========================================================
+        */
+
+        populateOSVectors(categories);
+
+
+        /*
+        =========================================================
+        POPULATE GALLERY
+        =========================================================
+        */
+
+        populateVectorsGallery(categories);
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao carregar vetores:",
+            error
+        );
+
+    }
+
+}
+
+
+/*
+=========================================================
+POPULATE OS MODAL VECTORS
+=========================================================
+*/
+
+function populateOSVectors(categories) {
+
+    const tabs =
+        document.getElementById(
+            "osCatalogTabs"
+        );
+
+    const grid =
+        document.getElementById(
+            "osVectorsGrid"
+        );
+
+    if (!tabs || !grid)
+        return;
+
+
+    tabs.innerHTML = "";
+
+
+    const categoryNames =
+        Object.keys(categories);
+
+
+    if (categoryNames.length === 0)
+        return;
+
+
+    /*
+    =========================================================
+    RENDER CATEGORY
+    =========================================================
+    */
+
+    function renderCategory(category) {
+
+        grid.innerHTML = "";
+
+
+        categories[category]
+            .forEach(fig => {
+
+                const card =
+                    document.createElement("div");
+
+                card.className =
+                    "vector-card";
+
+
+                card.innerHTML = `
+                    <img
+                        src="${fig.figure_url}"
+                        alt="${fig.figure_name}"
+                    >
+
+                    <div class="vector-name">
+                        ${fig.figure_name}
+                    </div>
+                `;
+
+
+                card.onclick = () => {
+
+                    document
+                        .querySelectorAll(".vector-card")
+                        .forEach(el => {
+
+                            el.classList.remove("active");
+
+                        });
+
+                    card.classList.add("active");
+
+                    selectedVector = fig;
+
+                };
+
+
+                grid.appendChild(card);
+
+            });
+
+    }
+
+
+    /*
+    =========================================================
+    CREATE TABS
+    =========================================================
+    */
+
+    categoryNames
+        .forEach((category, index) => {
+
+            const tab =
+                document.createElement("button");
+
+            tab.className =
+                "catalog-tab";
+
+            tab.innerText =
+                category;
+
+
+            if (index === 0) {
+
+                tab.classList.add("active");
+
+            }
+
+
+            tab.onclick = () => {
+
+                document
+                    .querySelectorAll(".catalog-tab")
+                    .forEach(el => {
+
+                        el.classList.remove("active");
+
+                    });
+
+                tab.classList.add("active");
+
+                renderCategory(category);
+
+            };
+
+
+            tabs.appendChild(tab);
+
+        });
+
+
+    /*
+    =========================================================
+    INITIAL CATEGORY
+    =========================================================
+    */
+
+    renderCategory(categoryNames[0]);
+
+}
+
+
+/*
+=========================================================
+POPULATE VECTORS GALLERY
 =========================================================
 */
 
@@ -653,7 +938,7 @@ function populateVectorsGallery(categoriesData) {
 
     /*
     =========================================================
-    RENDER VECTORS
+    RENDER
     =========================================================
     */
 
@@ -713,7 +998,7 @@ function populateVectorsGallery(categoriesData) {
 
         /*
         =========================================================
-        CREATE CARDS
+        CARDS
         =========================================================
         */
 
