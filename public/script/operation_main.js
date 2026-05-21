@@ -373,7 +373,7 @@ function populateFontsGallery(fonts) {
     fonts.forEach(font => {
 
         const category =
-            font.category || "Sem categoria";
+            font.type || "Sem categoria";
 
         if (!categories.includes(category)) {
 
