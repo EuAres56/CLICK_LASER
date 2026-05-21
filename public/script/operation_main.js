@@ -257,75 +257,7 @@ async function loadFonts() {
 
 /*
 =========================================================
-POPULATE OS MODAL FONTS
-=========================================================
-*/
-
-function populateOSFonts(fonts) {
-
-    const container =
-        document.getElementById(
-            "osFontsContainer"
-        );
-
-    if (!container)
-        return;
-
-    container.innerHTML = "";
-
-
-    fonts.forEach(font => {
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "font-card";
-
-
-        card.innerHTML = `
-            <div
-                class="font-preview"
-                style="
-                    font-family:'${font.font_name}'
-                "
-            >
-                ABC
-            </div>
-
-            <div class="font-name">
-                ${font.font_name}
-            </div>
-        `;
-
-
-        card.onclick = () => {
-
-            document
-                .querySelectorAll(".font-card")
-                .forEach(el => {
-
-                    el.classList.remove("active");
-
-                });
-
-            card.classList.add("active");
-
-            selectedFont = font;
-
-        };
-
-
-        container.appendChild(card);
-
-    });
-
-}
-
-
-/*
-=========================================================
-POPULATE FONTS GALLERY
+FONTS GALLERY
 =========================================================
 */
 
@@ -336,77 +268,546 @@ function populateFontsGallery(fonts) {
             "fontsGrid"
         );
 
-    if (!grid)
+    const tabs =
+        document.getElementById(
+            "fontsTabs"
+        );
+
+    const searchInput =
+        document.getElementById(
+            "fontsSearch"
+        );
+
+    if (!grid || !tabs)
         return;
 
-    grid.innerHTML = "";
+
+    /*
+    =========================================================
+    CREATE CATEGORIES
+    =========================================================
+    */
+
+    const categories =
+        ["Todos"];
 
 
     fonts.forEach(font => {
 
-        const card =
-            document.createElement("div");
+        const category =
+            font.category || "Sem categoria";
 
-        card.className =
-            "font-item";
+        if (!categories.includes(category)) {
 
+            categories.push(category);
 
-        card.innerHTML = `
-            <div class="font-preview-area">
-
-                <div
-                    class="font-preview-text"
-                    style="
-                        font-family:'${font.font_name}'
-                    "
-                >
-                    Amanda
-                </div>
-
-            </div>
-
-            <div class="font-info">
-
-                <div>
-
-                    <div class="font-title">
-                        ${font.font_name}
-                    </div>
-
-                    <div class="font-category-name">
-                        ${font.category || "Sem categoria"}
-                    </div>
-
-                </div>
-
-                <div class="font-actions">
-
-                    <button
-                        class="font-action-btn edit"
-                        onclick="editFont('${font.uid}')"
-                    >
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
-
-                    <button
-                        class="font-action-btn delete"
-                        onclick="deleteFont('${font.uid}')"
-                    >
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-
-        grid.appendChild(card);
+        }
 
     });
 
+
+    let activeCategory =
+        "Todos";
+
+    let searchText = "";
+
+
+    /*
+    =========================================================
+    RENDER TABS
+    =========================================================
+    */
+
+    tabs.innerHTML = "";
+
+
+    categories.forEach(category => {
+
+        const tab =
+            document.createElement("button");
+
+        tab.className =
+            `
+                catalog-tab
+                ${category === activeCategory ? "active" : ""}
+            `;
+
+        tab.innerText =
+            category;
+
+
+        tab.onclick = () => {
+
+            activeCategory =
+                category;
+
+            tabs
+                .querySelectorAll(".catalog-tab")
+                .forEach(el => {
+
+                    el.classList.remove("active");
+
+                });
+
+            tab.classList.add("active");
+
+            renderFonts();
+
+        };
+
+
+        tabs.appendChild(tab);
+
+    });
+
+
+    /*
+    =========================================================
+    RENDER FONTS
+    =========================================================
+    */
+
+    function renderFonts() {
+
+        grid.innerHTML = "";
+
+
+        const filteredFonts =
+            fonts.filter(font => {
+
+                const category =
+                    font.category || "Sem categoria";
+
+                const matchCategory =
+                    activeCategory === "Todos"
+                    ||
+                    category === activeCategory;
+
+                const matchSearch =
+                    font.font_name
+                        .toLowerCase()
+                        .includes(
+                            searchText.toLowerCase()
+                        );
+
+                return (
+                    matchCategory
+                    &&
+                    matchSearch
+                );
+
+            });
+
+
+        /*
+        =========================================================
+        EMPTY
+        =========================================================
+        */
+
+        if (filteredFonts.length === 0) {
+
+            grid.innerHTML = `
+                <div class="empty-state">
+
+                    <i class="fa-solid fa-font"></i>
+
+                    <span>
+                        Nenhuma fonte encontrada
+                    </span>
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        /*
+        =========================================================
+        CREATE CARDS
+        =========================================================
+        */
+
+        filteredFonts.forEach(font => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "font-item";
+
+
+            card.innerHTML = `
+                <div class="font-preview-area">
+
+                    <div
+                        class="font-preview-text"
+                        style="
+                            font-family:'${font.font_name}'
+                        "
+                    >
+                        Amanda
+                    </div>
+
+                </div>
+
+                <div class="font-info">
+
+                    <div>
+
+                        <div class="font-title">
+                            ${font.font_name}
+                        </div>
+
+                        <div class="font-category-name">
+                            ${font.category || "Sem categoria"}
+                        </div>
+
+                    </div>
+
+                    <div class="font-actions">
+
+                        <button
+                            class="font-action-btn edit"
+                            onclick="editFont('${font.uid}')"
+                        >
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button
+                            class="font-action-btn delete"
+                            onclick="deleteFont('${font.uid}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+
+            grid.appendChild(card);
+
+        });
+
+    }
+
+
+    /*
+    =========================================================
+    SEARCH
+    =========================================================
+    */
+
+    if (searchInput) {
+
+        searchInput.oninput = e => {
+
+            searchText =
+                e.target.value;
+
+            renderFonts();
+
+        };
+
+    }
+
+
+    /*
+    =========================================================
+    INITIAL RENDER
+    =========================================================
+    */
+
+    renderFonts();
+
 }
 
+
+/*
+=========================================================
+VECTORS GALLERY
+=========================================================
+*/
+
+function populateVectorsGallery(categoriesData) {
+
+    const grid =
+        document.getElementById(
+            "vectorsGrid"
+        );
+
+    const tabs =
+        document.getElementById(
+            "vectorsTabs"
+        );
+
+    const searchInput =
+        document.getElementById(
+            "vectorsSearch"
+        );
+
+    if (!grid || !tabs)
+        return;
+
+
+    /*
+    =========================================================
+    CATEGORIES
+    =========================================================
+    */
+
+    const categories =
+        [
+            "Todos",
+            ...Object.keys(categoriesData)
+        ];
+
+
+    let activeCategory =
+        "Todos";
+
+    let searchText =
+        "";
+
+
+    /*
+    =========================================================
+    RENDER TABS
+    =========================================================
+    */
+
+    tabs.innerHTML = "";
+
+
+    categories.forEach(category => {
+
+        const tab =
+            document.createElement("button");
+
+        tab.className =
+            `
+                catalog-tab
+                ${category === activeCategory ? "active" : ""}
+            `;
+
+        tab.innerText =
+            category;
+
+
+        tab.onclick = () => {
+
+            activeCategory =
+                category;
+
+            tabs
+                .querySelectorAll(".catalog-tab")
+                .forEach(el => {
+
+                    el.classList.remove("active");
+
+                });
+
+            tab.classList.add("active");
+
+            renderVectors();
+
+        };
+
+
+        tabs.appendChild(tab);
+
+    });
+
+
+    /*
+    =========================================================
+    FLATTEN VECTORS
+    =========================================================
+    */
+
+    const allVectors =
+        [];
+
+
+    Object.entries(categoriesData)
+        .forEach(([category, vectors]) => {
+
+            vectors.forEach(fig => {
+
+                allVectors.push({
+
+                    ...fig,
+
+                    category
+
+                });
+
+            });
+
+        });
+
+
+    /*
+    =========================================================
+    RENDER VECTORS
+    =========================================================
+    */
+
+    function renderVectors() {
+
+        grid.innerHTML = "";
+
+
+        const filteredVectors =
+            allVectors.filter(fig => {
+
+                const matchCategory =
+                    activeCategory === "Todos"
+                    ||
+                    fig.category === activeCategory;
+
+                const matchSearch =
+                    fig.figure_name
+                        .toLowerCase()
+                        .includes(
+                            searchText.toLowerCase()
+                        );
+
+                return (
+                    matchCategory
+                    &&
+                    matchSearch
+                );
+
+            });
+
+
+        /*
+        =========================================================
+        EMPTY
+        =========================================================
+        */
+
+        if (filteredVectors.length === 0) {
+
+            grid.innerHTML = `
+                <div class="empty-state">
+
+                    <i class="fa-regular fa-image"></i>
+
+                    <span>
+                        Nenhum vetor encontrado
+                    </span>
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        /*
+        =========================================================
+        CREATE CARDS
+        =========================================================
+        */
+
+        filteredVectors.forEach(fig => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "vector-item";
+
+
+            card.innerHTML = `
+                <div class="vector-preview">
+
+                    <img
+                        src="${fig.figure_url}"
+                        alt="${fig.figure_name}"
+                    >
+
+                </div>
+
+                <div class="vector-info">
+
+                    <div>
+
+                        <div class="vector-title">
+                            ${fig.figure_name}
+                        </div>
+
+                        <div class="vector-category-name">
+                            ${fig.category}
+                        </div>
+
+                    </div>
+
+                    <div class="vector-actions">
+
+                        <button
+                            class="vector-action-btn edit"
+                            onclick="editVector('${fig.uid}')"
+                        >
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button
+                            class="vector-action-btn delete"
+                            onclick="deleteVector('${fig.uid}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+
+            grid.appendChild(card);
+
+        });
+
+    }
+
+
+    /*
+    =========================================================
+    SEARCH
+    =========================================================
+    */
+
+    if (searchInput) {
+
+        searchInput.oninput = e => {
+
+            searchText =
+                e.target.value;
+
+            renderVectors();
+
+        };
+
+    }
+
+
+    /*
+    =========================================================
+    INITIAL RENDER
+    =========================================================
+    */
+
+    renderVectors();
+
+}
 
 /*
 =========================================================
