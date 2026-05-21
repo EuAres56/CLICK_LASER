@@ -1155,7 +1155,7 @@ async function copyLinkClient() {
 
     const button =
         document.getElementById(
-            "copyClientBtn"
+            "orders_copyClientBtn"
         );
 
     try {
