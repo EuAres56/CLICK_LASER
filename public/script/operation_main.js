@@ -565,7 +565,7 @@ RENDER ORDERS
 */
 
 function renderOrders(orders) {
-
+    console.log(orders);
     const container =
         document.getElementById(
             "orders_osGrid"
