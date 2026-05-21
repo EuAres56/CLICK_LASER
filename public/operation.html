@@ -20,22 +20,17 @@
 
     <div class="page-header">
 
-        <div class="header-left">
-
-            <div class="title">
-                Ordens de Serviço
-            </div>
-
-            <div class="subtitle">
-                Controle de gravações e produção
-            </div>
-
+        <div class="title">
+            Ordens de Serviço
         </div>
 
         <div class="header-actions">
 
-            <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por ID...">
-            <input type="date" class="date-input" id="filterDate" onchange="loadOrders()">
+            <div class="filter-group">
+                <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por ID...">
+                <input type="date" class="date-input" id="filterDate" onchange="loadOrders()">
+            </div>
+
             <div class="header-btns">
                 <button class="whatsapp-btn" id="copyClientBtn" onclick="copyLinkClient()">
                     <i class="fa-brands fa-whatsapp"></i>
