@@ -457,7 +457,7 @@ async function loadOrders() {
 
         const dateInput =
             document.getElementById(
-                "filterDate"
+                "orders_filterDate"
             );
 
         let selectedDate =
@@ -564,17 +564,11 @@ RENDER ORDERS
 =========================================================
 */
 
-/*
-=========================================================
-RENDER ORDERS
-=========================================================
-*/
-
 function renderOrders(orders) {
 
     const container =
         document.getElementById(
-            "osGrid"
+            "orders_osGrid"
         );
 
     container.innerHTML = "";
@@ -612,7 +606,6 @@ function renderOrders(orders) {
 
     }
 
-
     /*
     =========================================
     CARDS
@@ -620,12 +613,18 @@ function renderOrders(orders) {
     */
 
     orders.forEach(order => {
+        const status = {
+            0: { class: "status-pending", label: "Pendente" },
+            1: { class: "status-done", label: "Concluído" },
+            99: { class: "status-cancelled", label: "Cancelado" }
+        }
 
         const card =
             document.createElement("div");
 
         card.className =
             "os-card";
+        card.classList.add(status[order.status].class);
         card.dataset.uid = order.job_uid;
         card.dataset.date = order.created_at.replace("T", " - ").split(".")[0];
 
@@ -633,6 +632,18 @@ function renderOrders(orders) {
         <div class="os-card-title">
             <div class="os-id">
                 #${order.job_uid || "--"}
+            </div>
+            <div class="os-status-wrapper">
+                <button class="os-status ${status[order.status].class}">${status[order.status].label}</button>
+
+                <div class="os-status-dropdown">
+                    <button class="os-status-option pending"><span class="dot"></span>Pendente</button>
+
+                    <button class="os-status-option done"><span class="dot"></span>Concluído</button>
+
+                    <button class="os-status-option cancelled"><span class="dot"></span>Cancelado</button>
+                </div>
+
             </div>
         </div>
         <div class="os-card-body">

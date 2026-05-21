@@ -2,56 +2,773 @@
 <html lang="pt-BR">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Moderno</title>
 
-    <meta charset="UTF-8" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Ordens de Serviço</title>
-
+    <!-- ICONS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <link rel="stylesheet" href="/style/operation.css" />
 
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- HEADER -->
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-    <div class="page-header">
+        <!-- THEME -->
+        <div class="theme-area">
 
-        <div class="title">
-            Ordens de Serviço
+            <div class="theme-switch" id="themeSwitch"></div>
+
         </div>
 
-        <div class="header-actions">
+        <!-- MENU -->
+        <nav class="menu">
 
-            <div class="filter-group">
-                <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por ID...">
-                <input type="date" class="date-input" id="filterDate" onchange="loadOrders()">
+            <div class="active-bg"></div>
+
+            <!-- ORDENS -->
+            <a href="#" class="menu-item active" data-page="orders">
+
+                <i class="fa-regular fa-bell"></i>
+
+                <span class="label">
+                    Ordens de Serviço
+                </span>
+
+            </a>
+
+            <!-- VETORES -->
+            <a href="#" class="menu-item" data-page="vectors">
+
+                <i class="fa-regular fa-image"></i>
+
+                <span class="label">
+                    Galeria de Vetores
+                </span>
+
+            </a>
+
+            <!-- FONTES -->
+            <a href="#" class="menu-item" data-page="fonts">
+
+                <i class="fa-solid fa-font"></i>
+
+                <span class="label">
+                    Galeria de Fontes
+                </span>
+
+            </a>
+
+            <!-- RELATORIOS -->
+            <a href="#" class="menu-item" data-page="reports">
+
+                <i class="fa-regular fa-chart-bar"></i>
+
+                <span class="label">
+                    Relatórios
+                </span>
+
+            </a>
+
+            <!-- EQUIPE -->
+            <a href="#" class="menu-item" data-page="team">
+
+                <i class="fa-solid fa-users"></i>
+
+                <span class="label">
+                    Equipe
+                </span>
+
+            </a>
+
+        </nav>
+
+        <!-- USER -->
+        <div class="sidebar-user">
+
+            <div class="user-avatar">
+
+                <img src="https://i.pravatar.cc/150?img=12" alt="User">
+
             </div>
 
-            <div class="header-btns">
-                <button class="whatsapp-btn" id="copyClientBtn" onclick="copyLinkClient()">
-                    <i class="fa-brands fa-whatsapp"></i>
-                    Cliente
+            <div class="user-actions">
+
+                <button class="user-btn">
+                    <i class="fa-solid fa-gear"></i>
                 </button>
-                <button class="create-btn" onclick="openOSModal()"><i class="fa-solid fa-plus"></i>Nova OS</button>
+
+                <button class="user-btn logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+
             </div>
 
         </div>
 
-    </div>
+    </aside>
 
+    <!-- PAGES -->
+    <main class="pages">
 
-    <!-- GRID -->
+        <!-- ORDERS -->
 
-    <div class="os-grid" id="osGrid"></div>
+        <section class="page active" id="orders">
 
+            <!-- HEADER -->
+
+            <div class="page-header">
+
+                <div>
+
+                    <div class="title">
+                        Ordens de Serviço
+                    </div>
+
+                    <div class="subtitle">
+                        Gerencie todas as ordens de serviço do sistema
+                    </div>
+
+                </div>
+
+                <div class="header-actions">
+
+                    <div class="filter-group">
+
+                        <input type="text" class="search-input" id="oreders_searchInput"
+                            placeholder="Pesquisar por ID...">
+
+                        <input type="date" class="date-input" id="orders_filterDate" onchange="loadOrders()">
+
+                    </div>
+
+                    <div class="header-btns">
+
+                        <button class="whatsapp-btn" id="orders_copyClientBtn" onclick="copyLinkClient()">
+
+                            <i class="fa-brands fa-whatsapp"></i>
+
+                            Cliente
+
+                        </button>
+
+                        <button class="create-btn" id="orders_createOSBtn" onclick="openOSModal()">
+
+                            <i class="fa-solid fa-plus"></i>
+
+                            Nova OS
+
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- GRID -->
+
+            <div class="os-grid" id="orders_osGrid">
+
+            </div>
+
+        </section>
+
+        <!-- VECTORS -->
+
+        <section class="page" id="vectors">
+
+            <!-- HEADER -->
+
+            <div class="vectors-header">
+
+                <div>
+
+                    <div class="title">
+                        Galeria de Vetores
+                    </div>
+
+                    <div class="subtitle">
+                        Organize e gerencie todos os vetores cadastrados
+                    </div>
+
+                </div>
+
+                <button class="create-btn" onclick="openVectorModal()">
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Novo Vetor
+
+                </button>
+
+            </div>
+
+            <!-- TOP BAR -->
+
+            <div class="vectors-topbar">
+
+                <!-- SEARCH -->
+
+                <div class="vectors-search">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input type="text" placeholder="Pesquisar vetor por nome..." id="vectorSearch">
+
+                </div>
+
+                <!-- CATEGORIES -->
+
+                <div class="vectors-categories">
+
+                    <button class="vector-category active">
+                        Todos
+                    </button>
+
+                    <button class="vector-category">
+                        Animais
+                    </button>
+
+                    <button class="vector-category">
+                        Logos
+                    </button>
+
+                    <button class="vector-category">
+                        Automotivo
+                    </button>
+
+                    <button class="vector-category">
+                        Datas
+                    </button>
+
+                    <button class="vector-category">
+                        Frases
+                    </button>
+
+                    <button class="vector-category">
+                        Religioso
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- GRID -->
+
+            <div class="vectors-grid">
+
+                <!-- CARD -->
+
+                <div class="vector-item">
+
+                    <div class="vector-preview">
+
+                        <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png">
+
+                    </div>
+
+                    <div class="vector-info">
+
+                        <div>
+
+                            <div class="vector-title">
+                                Cabeça de Leão
+                            </div>
+
+                            <div class="vector-category-name">
+                                Animais
+                            </div>
+
+                        </div>
+
+                        <!-- ACTIONS -->
+
+                        <div class="vector-actions">
+
+                            <!-- EDIT -->
+
+                            <button class="vector-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <!-- DELETE -->
+
+                            <button class="vector-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CARD -->
+
+                <div class="vector-item">
+
+                    <div class="vector-preview">
+
+                        <img src="https://cdn-icons-png.flaticon.com/512/741/741407.png">
+
+                    </div>
+
+                    <div class="vector-info">
+
+                        <div>
+
+                            <div class="vector-title">
+                                Carro
+                            </div>
+
+                            <div class="vector-category-name">
+                                Automotivo
+                            </div>
+
+                        </div>
+
+                        <!-- ACTIONS -->
+
+                        <div class="vector-actions">
+
+                            <!-- EDIT -->
+
+                            <button class="vector-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <!-- DELETE -->
+
+                            <button class="vector-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CARD -->
+
+                <div class="vector-item">
+
+                    <div class="vector-preview">
+
+                        <img src="https://cdn-icons-png.flaticon.com/512/2972/2972185.png">
+
+                    </div>
+
+                    <div class="vector-info">
+
+                        <div>
+
+                            <div class="vector-title">
+                                Bicicleta
+                            </div>
+
+                            <div class="vector-category-name">
+                                Automotivo
+                            </div>
+
+                        </div>
+
+                        <!-- ACTIONS -->
+
+                        <div class="vector-actions">
+
+                            <!-- EDIT -->
+
+                            <button class="vector-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <!-- DELETE -->
+
+                            <button class="vector-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CARD -->
+
+                <div class="vector-item">
+
+                    <div class="vector-preview">
+
+                        <img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png">
+
+                    </div>
+
+                    <div class="vector-info">
+
+                        <div>
+
+                            <div class="vector-title">
+                                Hamburger
+                            </div>
+
+                            <div class="vector-category-name">
+                                Comida
+                            </div>
+
+                        </div>
+
+                        <!-- ACTIONS -->
+
+                        <div class="vector-actions">
+
+                            <!-- EDIT -->
+
+                            <button class="vector-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <!-- DELETE -->
+
+                            <button class="vector-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- FONTS -->
+
+        <section class="page" id="fonts">
+
+            <!-- HEADER -->
+
+            <div class="fonts-header">
+
+                <div>
+
+                    <div class="title">
+                        Galeria de Fontes
+                    </div>
+
+                    <div class="subtitle">
+                        Gerencie todas as fontes disponíveis no sistema
+                    </div>
+
+                </div>
+
+                <button class="create-btn" onclick="openFontModal()">
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Nova Fonte
+
+                </button>
+
+            </div>
+
+            <!-- TOPBAR -->
+
+            <div class="fonts-topbar">
+
+                <!-- SEARCH -->
+
+                <div class="fonts-search">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input type="text" placeholder="Pesquisar fonte por nome..." id="fontSearch">
+
+                </div>
+
+                <!-- CATEGORIES -->
+
+                <div class="fonts-categories">
+
+                    <button class="font-category active">
+                        Todas
+                    </button>
+
+                    <button class="font-category">
+                        Script
+                    </button>
+
+                    <button class="font-category">
+                        Serif
+                    </button>
+
+                    <button class="font-category">
+                        Sans Serif
+                    </button>
+
+                    <button class="font-category">
+                        Decorativa
+                    </button>
+
+                    <button class="font-category">
+                        Assinatura
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- GRID -->
+
+            <div class="fonts-grid-page">
+
+                <!-- CARD -->
+
+                <div class="font-item">
+
+                    <!-- PREVIEW -->
+
+                    <div class="font-preview-area">
+
+                        <div class="font-preview-text" style="font-family: cursive;">
+
+                            Amanda
+                        </div>
+
+                    </div>
+
+                    <!-- INFO -->
+
+                    <div class="font-info">
+
+                        <div>
+
+                            <div class="font-title">
+                                Elegant Script
+                            </div>
+
+                            <div class="font-category-name">
+                                Script
+                            </div>
+
+                        </div>
+
+                        <!-- ACTIONS -->
+
+                        <div class="font-actions">
+
+                            <button class="font-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <button class="font-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CARD -->
+
+                <div class="font-item">
+
+                    <div class="font-preview-area">
+
+                        <div class="font-preview-text" style="font-family: Georgia;">
+
+                            Gravação
+                        </div>
+
+                    </div>
+
+                    <div class="font-info">
+
+                        <div>
+
+                            <div class="font-title">
+                                Classic Serif
+                            </div>
+
+                            <div class="font-category-name">
+                                Serif
+                            </div>
+
+                        </div>
+
+                        <div class="font-actions">
+
+                            <button class="font-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <button class="font-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CARD -->
+
+                <div class="font-item">
+
+                    <div class="font-preview-area">
+
+                        <div class="font-preview-text" style="font-family: Impact;">
+
+                            POWER
+                        </div>
+
+                    </div>
+
+                    <div class="font-info">
+
+                        <div>
+
+                            <div class="font-title">
+                                Impact Bold
+                            </div>
+
+                            <div class="font-category-name">
+                                Decorativa
+                            </div>
+
+                        </div>
+
+                        <div class="font-actions">
+
+                            <button class="font-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <button class="font-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CARD -->
+
+                <div class="font-item">
+
+                    <div class="font-preview-area">
+
+                        <div class="font-preview-text" style="font-family: Arial;">
+
+                            Minimal
+                        </div>
+
+                    </div>
+
+                    <div class="font-info">
+
+                        <div>
+
+                            <div class="font-title">
+                                Modern Sans
+                            </div>
+
+                            <div class="font-category-name">
+                                Sans Serif
+                            </div>
+
+                        </div>
+
+                        <div class="font-actions">
+
+                            <button class="font-action-btn edit">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+                            <button class="font-action-btn delete">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- REPORTS -->
+        <section class="page" id="reports">
+
+            <h1>Relatórios</h1>
+
+            <p>
+                Área reservada para relatórios e estatísticas.
+            </p>
+
+        </section>
+
+        <!-- TEAM -->
+        <section class="page" id="team">
+
+            <h1>Equipe</h1>
+
+            <p>
+                Área destinada ao gerenciamento da equipe.
+            </p>
+
+        </section>
+
+    </main>
 
     <!-- =========================================================
-MODAL - CRIAR / EDITAR OS
-========================================================= -->
+    MODAL - CRIAR / EDITAR OS
+    ========================================================= -->
 
     <div class="os-modal-overlay" id="osModal">
 
@@ -62,6 +779,7 @@ MODAL - CRIAR / EDITAR OS
             <div class="os-modal-header">
 
                 <div>
+
                     <h2 id="osModalTitle">
                         Nova Ordem de Serviço
                     </h2>
@@ -69,19 +787,20 @@ MODAL - CRIAR / EDITAR OS
                     <p>
                         Crie ou edite uma OS rapidamente
                     </p>
+
                 </div>
 
                 <button class="os-close-btn" onclick="closeOSModal()">
+
                     ✕
+
                 </button>
 
             </div>
 
-
             <!-- BODY -->
 
             <div class="os-modal-body">
-
 
                 <!-- VENDEDOR -->
 
@@ -98,7 +817,6 @@ MODAL - CRIAR / EDITAR OS
                     </div>
 
                 </div>
-
 
                 <!-- CLIENTE -->
 
@@ -130,12 +848,11 @@ MODAL - CRIAR / EDITAR OS
                             Produto / Item
                         </label>
 
-                        <input type="text" id="osProduct" placeholder="Produto / Item a ser gravado">
+                        <input type="text" id="osProduct" placeholder="Produto / Item">
 
                     </div>
 
                 </div>
-
 
                 <!-- TEXTO -->
 
@@ -149,7 +866,6 @@ MODAL - CRIAR / EDITAR OS
 
                 </div>
 
-
                 <!-- FONTES -->
 
                 <div class="os-section">
@@ -162,7 +878,6 @@ MODAL - CRIAR / EDITAR OS
 
                 </div>
 
-
                 <!-- VETORES -->
 
                 <div class="os-section">
@@ -171,17 +886,13 @@ MODAL - CRIAR / EDITAR OS
                         Vetores / Figuras
                     </div>
 
-
-                    <!-- TABS -->
-
                     <div class="os-catalog-tabs" id="osCatalogTabs"></div>
-
-
-                    <!-- GRID -->
 
                     <div class="os-vectors-grid" id="osVectorsGrid"></div>
 
                 </div>
+
+                <!-- OBS -->
 
                 <div class="os-input-group">
 
@@ -195,17 +906,20 @@ MODAL - CRIAR / EDITAR OS
 
             </div>
 
-
             <!-- FOOTER -->
 
             <div class="os-modal-footer">
 
                 <button class="os-cancel-btn" onclick="closeOSModal()">
+
                     Cancelar
+
                 </button>
 
                 <button class="os-save-btn" onclick="saveOrder()">
+
                     Salvar OS
+
                 </button>
 
             </div>
@@ -213,7 +927,6 @@ MODAL - CRIAR / EDITAR OS
         </div>
 
     </div>
-
 
     <!-- DELETE -->
 
@@ -232,11 +945,15 @@ MODAL - CRIAR / EDITAR OS
             <div class="confirm-actions">
 
                 <button class="secondary-btn" onclick="closeDeleteModal()">
+
                     Cancelar
+
                 </button>
 
                 <button class="danger-btn" onclick="confirmDelete()">
+
                     Deletar
+
                 </button>
 
             </div>
@@ -246,6 +963,7 @@ MODAL - CRIAR / EDITAR OS
     </div>
 
     <!-- LOADING -->
+
     <div class="os-loading-overlay" id="osLoadingOverlay">
 
         <div class="os-loading-box">
@@ -260,7 +978,7 @@ MODAL - CRIAR / EDITAR OS
 
     </div>
 
-    <script src="script/operation_main.js"></script>
+    <script src="script.js"></script>
 
 </body>
 
