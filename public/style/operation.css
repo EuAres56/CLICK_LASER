@@ -2044,9 +2044,9 @@ textarea {
 
 .catalog-tab.active {
 
-    background: var(--primary);
+    background: var(--primary-1);
 
-    color: white;
+    color: var(--tooltip-bg);
 
     border-color: var(--primary);
 }
