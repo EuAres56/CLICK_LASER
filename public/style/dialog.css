@@ -382,7 +382,7 @@ CATALOG TABS
 
 .catalog-tab {
 
-    background: var(--text-soft);
+    background: var(--text-soft) !important;
 
     border: 1px solid var(--border);
 
@@ -410,9 +410,7 @@ CATALOG TABS
 
     background: var(--primary);
 
-    border-color: var(--primary);
-
-    color: white;
+    color: var(--bg);
 }
 
 
