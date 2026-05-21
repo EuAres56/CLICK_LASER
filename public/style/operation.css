@@ -1485,6 +1485,964 @@ ACTIONS
     color: #d83030;
 }
 
+/*
+        =========================================================
+        EMPTY
+        =========================================================
+        */
+
+.os-empty {
+
+    grid-column: 1 / -1;
+
+    background: #1a1d24;
+
+    border: 1px solid #2b303b;
+
+    border-radius: 24px;
+
+    padding: 60px 30px;
+
+    text-align: center;
+
+}
+
+.os-empty-icon {
+
+    font-size: 48px;
+
+    margin-bottom: 20px;
+
+}
+
+.os-empty-title {
+
+    font-size: 22px;
+
+    font-weight: 700;
+
+    margin-bottom: 10px;
+
+}
+
+.os-empty-text {
+
+    color: #8b93a7;
+
+    font-size: 15px;
+
+}
+
+
+/*
+        =========================================================
+        CARD
+        =========================================================
+        */
+
+.os-card {
+
+    background:
+        linear-gradient(180deg,
+            #1b1f27 0%,
+            #15181f 100%);
+
+    border:
+        1px solid #2a303b;
+
+    border-radius: 24px;
+
+    padding: 22px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 20px;
+
+    transition: 0.25s;
+
+    position: relative;
+
+    overflow: hidden;
+
+}
+
+.os-card:hover {
+
+    transform:
+        translateY(-4px);
+
+    border-color:
+        rgba(255, 59, 222, 0.4);
+
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.35);
+
+}
+
+
+/*
+        =========================================================
+        HEADER
+        =========================================================
+        */
+
+.os-header {
+
+    display: flex;
+    flex-direction: row;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+}
+
+.os-client-area {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+    border-bottom: 1px solid #2a303b;
+
+}
+
+.os-client-name {
+
+    font-size: 20px;
+
+    font-weight: 700;
+
+    color: white;
+
+}
+
+.os-client-phone {
+
+    color: #8f97aa;
+
+    font-size: 14px;
+
+}
+
+.os-id {
+
+    background:
+        rgba(222, 59, 255, 0.12);
+
+    color: #ae25ee;
+
+    border:
+        1px solid rgba(209, 59, 255, 0.2);
+
+    border-radius: 999px;
+
+    padding: 8px 14px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+
+/*
+        =========================================================
+        BODY
+        =========================================================
+        */
+
+.os-body {
+
+    display: flex;
+
+    gap: 18px;
+
+    align-items: stretch;
+
+}
+
+
+/*
+        =========================================================
+        PREVIEW
+        =========================================================
+        */
+
+.os-preview {
+
+    width: 120px;
+
+    min-width: 120px;
+
+    height: 120px;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    background: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 10px;
+
+}
+
+.os-preview-image {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: contain;
+
+    object-position: center;
+
+}
+
+.os-preview-placeholder {
+
+    color: #999;
+
+    font-size: 13px;
+
+    text-align: center;
+
+}
+
+/*
+        =========================================================
+        CONTENT
+        =========================================================
+        */
+
+.os-content {
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+
+}
+
+.os-row {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 14px;
+
+}
+
+.os-field {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+}
+
+.os-label {
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.08em;
+
+    color: #70798d;
+
+}
+
+.os-value {
+
+    font-size: 15px;
+
+    color: white;
+
+    line-height: 1.4;
+
+    word-break: break-word;
+
+}
+
+
+/*
+        =========================================================
+        ACTIONS
+        =========================================================
+        */
+
+.os-actions {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: auto;
+
+}
+
+.os-btn {
+
+    flex: 1;
+
+    border: none;
+
+    border-radius: 14px;
+
+    padding: 14px;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+
+}
+
+.os-btn:hover {
+
+    transform:
+        translateY(-2px);
+
+}
+
+.view-btn {
+
+    background: #232833;
+
+    color: white;
+
+}
+
+.view-btn:hover {
+
+    background: #2b3140;
+
+}
+
+.edit-btn {
+
+    background:
+        rgba(222, 59, 255, 0.12);
+
+    color: #7d1278;
+
+    border:
+        1px solid rgba(255, 59, 239, 0.25);
+
+}
+
+.edit-btn:hover {
+
+    background:
+        rgba(232, 59, 255, 0.2);
+
+}
+
+.delete-btn {
+
+    background:
+        rgba(255, 255, 255, 0.06);
+
+    color: #c6cada;
+
+}
+
+.delete-btn:hover {
+
+    background:
+        rgba(232, 59, 255, 0.2);
+
+}
+
+/*
+        =========================================================
+        LOADING OVERLAY
+        =========================================================
+        */
+
+.os-loading-overlay {
+
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    background:
+        rgba(10, 10, 10, .5);
+
+    backdrop-filter:
+        blur(4px);
+
+    z-index:
+        999;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    opacity:
+        0;
+
+    pointer-events:
+        none;
+
+    transition:
+        .25s;
+}
+
+.os-loading-overlay.active {
+
+    opacity:
+        1;
+
+    pointer-events:
+        all;
+}
+
+.os-loading-box {
+
+    background:
+        #171717;
+
+    border:
+        1px solid #2b2b2b;
+
+    border-radius:
+        18px;
+
+    padding:
+        24px 28px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    gap:
+        16px;
+
+    min-width:
+        220px;
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, .4);
+}
+
+.os-loading-spinner {
+
+    width:
+        44px;
+
+    height:
+        44px;
+
+    border-radius:
+        50%;
+
+    border:
+        3px solid #2b2b2b;
+
+    border-top:
+        3px solid #ff3b3b;
+
+    animation:
+        osSpin .8s linear infinite;
+}
+
+.os-loading-text {
+
+    color:
+        #fff;
+
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        .5px;
+}
+
+@keyframes osSpin {
+
+    to {
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+
+
+/*
+        =========================================================
+        LOCK BUTTONS
+        =========================================================
+        */
+
+.os-modal.loading button,
+.os-modal.loading input,
+.os-modal.loading textarea {
+
+    pointer-events:
+        none;
+
+    opacity:
+        .7;
+}
+/*
+        =====================================================
+        MODAL
+        =====================================================
+        */
+
+.modal {
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0, 0, 0, .5);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    z-index: 999;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+.modal.active {
+
+    opacity: 1;
+
+    pointer-events: all;
+}
+
+.modal-content {
+
+    width: 100%;
+
+    max-width: 950px;
+
+    max-height: 95vh;
+
+    overflow: auto;
+
+    background: white;
+
+    border-radius: 28px;
+
+    padding: 30px;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, .18);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 25px;
+}
+
+.modal-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+}
+
+.modal-title {
+
+    font-size: 28px;
+
+    font-weight: 700;
+}
+
+.close-btn {
+
+    width: 42px;
+
+    height: 42px;
+
+    border: none;
+
+    background: #ececec;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+}
+
+.form-grid {
+
+    display: grid;
+
+    gap: 20px;
+}
+
+.input-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.input-group label {
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    color: var(--soft);
+}
+
+input,
+textarea {
+
+    width: 100%;
+
+    border: 1px solid var(--border);
+
+    background: #f8f8f8;
+
+    border-radius: 16px;
+
+    padding: 16px;
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition: .2s;
+}
+
+input:focus,
+textarea:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 4px var(--primarySoft);
+}
+
+textarea {
+
+    min-height: 130px;
+
+    resize: none;
+}
+
+/*
+        =====================================================
+        FONT GRID
+        =====================================================
+        */
+
+.fonts-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(200px, 1fr));
+
+    gap: 15px;
+}
+
+.font-card {
+
+    background: #f7f7f7;
+
+    border: 2px solid transparent;
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+    cursor: pointer;
+
+    text-align: center;
+
+    transition: .2s;
+}
+
+.font-card.active {
+
+    border-color: var(--primary);
+
+    background:
+        rgba(107, 13, 103, .06);
+}
+
+.font-preview {
+
+    font-size: 28px;
+
+    margin-bottom: 12px;
+}
+
+/*
+        =====================================================
+        VECTOR GRID
+        =====================================================
+        */
+
+.catalog-tabs {
+
+    display: flex;
+
+    gap: 10px;
+
+    overflow: auto;
+
+    padding-bottom: 5px;
+}
+
+.catalog-tab {
+
+    padding: 12px 18px;
+
+    border-radius: 999px;
+
+    background: #f5f5f5;
+
+    border: 1px solid var(--border);
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    font-weight: 600;
+}
+
+.catalog-tab.active {
+
+    background: var(--primary);
+
+    color: white;
+
+    border-color: var(--primary);
+}
+
+.vectors-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(170px, 1fr));
+
+    gap: 15px;
+}
+
+.vector-card {
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    border: 2px solid transparent;
+
+    background: #f8f8f8;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.vector-card.active {
+
+    border-color: var(--primary);
+}
+
+.vector-card img {
+
+    width: 100%;
+
+    height: 170px;
+
+    object-fit: contain;
+
+    background: white;
+
+    padding: 10px;
+}
+
+.vector-name {
+
+    padding: 12px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+/*
+        =====================================================
+        FOOTER
+        =====================================================
+        */
+
+.modal-footer {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 15px;
+
+    padding-top: 10px;
+}
+
+.secondary-btn {
+
+    border: none;
+
+    background: #ececec;
+
+    color: var(--text);
+
+    padding: 15px 20px;
+
+    border-radius: 14px;
+
+    cursor: pointer;
+
+    font-weight: 700;
+}
+
+.primary-btn {
+
+    border: none;
+
+    background: var(--primary);
+
+    color: white;
+
+    padding: 15px 22px;
+
+    border-radius: 14px;
+
+    cursor: pointer;
+
+    font-weight: 700;
+}
+
+/*
+        =====================================================
+        DELETE DIALOG
+        =====================================================
+        */
+
+.confirm-box {
+
+    width: 100%;
+
+    max-width: 420px;
+
+    background: white;
+
+    border-radius: 24px;
+
+    padding: 28px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 22px;
+}
+
+.confirm-title {
+
+    font-size: 24px;
+
+    font-weight: 700;
+}
+
+.confirm-text {
+
+    color: var(--soft);
+
+    line-height: 1.6;
+}
+
+.confirm-actions {
+
+    display: flex;
+
+    gap: 12px;
+}
+
+.danger-btn {
+
+    flex: 1;
+
+    border: none;
+
+    background: var(--danger);
+
+    color: white;
+
+    padding: 15px;
+
+    border-radius: 14px;
+
+    cursor: pointer;
+
+    font-weight: 700;
+}
+
 /* =========================================================
 OS MODAL
 ========================================================= */
