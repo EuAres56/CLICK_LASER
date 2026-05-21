@@ -346,7 +346,7 @@ function populateFontsGallery(fonts) {
 
     const tabs =
         document.getElementById(
-            "fontsTabs"
+            "fontsCategories"
         );
 
     const searchInput =
@@ -824,7 +824,7 @@ function populateVectorsGallery(categoriesData) {
 
     const tabs =
         document.getElementById(
-            "vectorsTabs"
+            "vectorsCategories"
         );
 
     const searchInput =
