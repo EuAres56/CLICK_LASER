@@ -155,9 +155,6 @@ function updateFontPreviews() {
 
 }
 
- = null;
-let selectedVector = null;
-
 
 /*
 =========================================================
