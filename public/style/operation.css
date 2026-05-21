@@ -1502,9 +1502,9 @@ ACTIONS
 
     grid-column: 1 / -1;
 
-    background: #1a1d24;
+    background: var(--page-bg);
 
-    border: 1px solid #2b303b;
+    border: 1px solid var(--text-soft);
 
     border-radius: 24px;
 
@@ -1534,7 +1534,7 @@ ACTIONS
 
 .os-empty-text {
 
-    color: #8b93a7;
+    color: var(--text-soft);
 
     font-size: 15px;
 
