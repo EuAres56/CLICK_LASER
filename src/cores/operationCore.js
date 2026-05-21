@@ -958,7 +958,9 @@ export default async function operationCore(request, env) {
                         job_uid:
                             job?.uid || null,
 
-                        obs: job?.job_observ || null
+                        obs: job?.job_observ || null,
+
+                        status: job?.job_status || null
 
                     };
 
